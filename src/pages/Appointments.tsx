@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -47,13 +47,37 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Doctor profile schema
+const doctorProfileSchema = z.object({
+  name: z.string(),
+  specialty: z.string(),
+  bio: z.string(),
+  photo: z.string().optional(),
+  address: z.string(),
+  phone: z.string(),
+  email: z.string(),
+});
+
 type FormValues = z.infer<typeof formSchema>;
+type DoctorProfile = z.infer<typeof doctorProfileSchema>;
+
+// Initial doctor profile (same as in SecretaryDashboard)
+const initialDoctorProfile: DoctorProfile = {
+  name: "Dra. Ana Silva",
+  specialty: "Clínico Geral",
+  bio: "Médica com mais de 10 anos de experiência em clínica geral, especializada em saúde preventiva e bem-estar.",
+  photo: "https://randomuser.me/api/portraits/women/68.jpg",
+  address: "Av. Paulista, 1000, São Paulo - SP",
+  phone: "(11) 95555-5555",
+  email: "dra.anasilva@clinica.com.br",
+};
 
 export default function Appointments() {
   const navigate = useNavigate();
   const [step, setStep] = useState<"calendar" | "time" | "form">("calendar");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
+  const [doctorProfile, setDoctorProfile] = useState<DoctorProfile>(initialDoctorProfile);
   
   // Initialize form with default values
   const form = useForm<FormValues>({
@@ -65,6 +89,19 @@ export default function Appointments() {
       notes: "",
     },
   });
+
+  // Fetch doctor profile from local storage if available
+  useEffect(() => {
+    const storedProfile = localStorage.getItem('doctorProfile');
+    if (storedProfile) {
+      try {
+        const parsedProfile = JSON.parse(storedProfile);
+        setDoctorProfile(parsedProfile);
+      } catch (error) {
+        console.error("Error parsing doctor profile:", error);
+      }
+    }
+  }, []);
 
   // Function to handle date selection and move to time selection step
   const handleDateSelection = (date: Date | undefined) => {
@@ -159,15 +196,19 @@ export default function Appointments() {
               <div className="flex items-center space-x-3">
                 <div className="h-14 w-14 rounded-full bg-gray-200 overflow-hidden">
                   <img 
-                    src="https://randomuser.me/api/portraits/women/68.jpg" 
-                    alt="Dr. Ana Silva"
+                    src={doctorProfile.photo || "https://via.placeholder.com/150"} 
+                    alt={doctorProfile.name}
                     className="h-full w-full object-cover"
                   />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">Dra. Ana Silva</h3>
-                  <p className="text-sm text-gray-600">Clínico Geral</p>
+                  <h3 className="font-semibold text-gray-800">{doctorProfile.name}</h3>
+                  <p className="text-sm text-gray-600">{doctorProfile.specialty}</p>
                 </div>
+              </div>
+              
+              <div className="mt-4 text-sm text-gray-600">
+                <p>{doctorProfile.bio}</p>
               </div>
             </CardContent>
           </Card>
