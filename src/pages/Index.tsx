@@ -5,12 +5,16 @@ import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { Conversation, mockConversations } from "@/data/mockData";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 const Index = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [showConversation, setShowConversation] = useState(false);
   const [conversations, setConversations] = useState(mockConversations);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   // Select first conversation by default on desktop
   useEffect(() => {
@@ -101,7 +105,17 @@ const Index = () => {
                   <span className="text-sm font-medium">Email</span>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
+              
+              <Button 
+                onClick={() => navigate("/agendamentos")}
+                className="w-full mt-4"
+                variant="default"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Agendar Consulta
+              </Button>
+              
+              <p className="text-sm text-muted-foreground mt-4">
                 Todos os seus canais de comunicação em um só lugar.
               </p>
             </div>
