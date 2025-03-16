@@ -119,7 +119,7 @@ export function ConversationView({
 
   return (
     <div className={cn(
-      "flex flex-col h-full bg-background", 
+      "flex flex-col h-full bg-background overflow-hidden", 
       isMobile && "fixed inset-0 z-50",
       className
     )}>
@@ -137,21 +137,21 @@ export function ConversationView({
           status="online"
         />
         
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center">
-            <h2 className="font-medium">{conversation.contact.name}</h2>
+            <h2 className="font-medium truncate">{conversation.contact.name}</h2>
             <ChannelBadge 
               channel={conversation.channel} 
               size="sm" 
-              className="ml-2"
+              className="ml-2 flex-shrink-0"
             />
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground truncate">
             via {conversation.channel}
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button variant="outline" size="icon" onClick={handleSchedule}>
             <Calendar className="h-5 w-5" />
           </Button>
@@ -181,6 +181,7 @@ export function ConversationView({
                 message.isOutgoing ? "items-end" : "items-start"
               )}>
                 <div className={cn(
+                  "max-w-[80%]",
                   message.isOutgoing 
                     ? "message-bubble-outgoing" 
                     : "message-bubble-incoming"

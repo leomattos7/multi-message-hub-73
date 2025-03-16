@@ -71,7 +71,7 @@ export function ConversationList({
   };
 
   return (
-    <div className={cn("flex flex-col h-full border-r border-border", className)}>
+    <div className={cn("flex flex-col h-full border-r border-border overflow-hidden", className)}>
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">

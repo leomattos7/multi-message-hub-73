@@ -33,14 +33,14 @@ const Index = () => {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background animate-fade-in">
-      <Sidebar />
+      <Sidebar className="flex-shrink-0" />
       
-      <div className="flex-1 flex relative">
+      <div className="flex-1 flex relative overflow-hidden">
         {(!isMobile || !showConversation) && (
           <ConversationList 
             onSelectConversation={handleSelectConversation}
             selectedConversationId={selectedConversation?.id}
-            className={isMobile ? "w-full" : "w-1/3"}
+            className={isMobile ? "w-full" : "w-1/3 flex-shrink-0"}
           />
         )}
         
@@ -48,7 +48,7 @@ const Index = () => {
           <ConversationView 
             conversation={selectedConversation} 
             onBackClick={handleBackClick}
-            className={isMobile ? "w-full" : "w-2/3"}
+            className={isMobile ? "w-full" : "w-2/3 flex-shrink-0"}
           />
         )}
         
