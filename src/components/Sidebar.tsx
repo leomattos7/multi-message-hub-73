@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { 
   MessageSquare, 
   Mail, 
@@ -21,16 +22,17 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const [expanded, setExpanded] = useState(true);
+  const location = useLocation();
 
   const toggleSidebar = () => {
     setExpanded(!expanded);
   };
 
   const navItems = [
-    { icon: Inbox, label: "Inbox", active: true },
-    { icon: Users, label: "Contatos", active: false },
-    { icon: Calendar, label: "Agenda", active: false },
-    { icon: Settings, label: "Configurações", active: false },
+    { icon: Inbox, label: "Inbox", path: "/", active: location.pathname === "/" },
+    { icon: Users, label: "Contatos", path: "/pacientes", active: location.pathname === "/pacientes" },
+    { icon: Calendar, label: "Agenda", path: "/agendamentos", active: location.pathname === "/agendamentos" },
+    { icon: Settings, label: "Configurações", path: "/configuracoes", active: location.pathname === "/configuracoes" },
   ];
 
   const channelItems = [
@@ -67,11 +69,14 @@ export function Sidebar({ className }: SidebarProps) {
                 "w-full justify-start gap-3 font-normal",
                 item.active && "font-medium"
               )}
+              asChild
             >
-              <item.icon size={20} />
-              <span className={cn("transition-opacity duration-200", !expanded && "opacity-0 invisible hidden")}>
-                {item.label}
-              </span>
+              <Link to={item.path}>
+                <item.icon size={20} />
+                <span className={cn("transition-opacity duration-200", !expanded && "opacity-0 invisible hidden")}>
+                  {item.label}
+                </span>
+              </Link>
             </Button>
           ))}
         </nav>
