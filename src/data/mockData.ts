@@ -1,4 +1,3 @@
-
 export type ChannelType = 'whatsapp' | 'instagram' | 'facebook' | 'email';
 
 export interface Message {
@@ -20,6 +19,7 @@ export interface Conversation {
   messages: Message[];
   unread: number;
   lastActivity: Date;
+  tags: string[]; // Array de IDs de tags
 }
 
 const generateRandomTime = (hoursBack: number) => {
@@ -40,6 +40,7 @@ export const mockConversations: Conversation[] = [
     channel: 'whatsapp',
     unread: 2,
     lastActivity: generateRandomTime(1),
+    tags: ['pending', 'appointment'],
     messages: [
       {
         id: '1001',
@@ -88,6 +89,7 @@ export const mockConversations: Conversation[] = [
     channel: 'facebook',
     unread: 0,
     lastActivity: generateRandomTime(5),
+    tags: ['scheduled', 'exam'],
     messages: [
       {
         id: '2001',
@@ -115,6 +117,7 @@ export const mockConversations: Conversation[] = [
     channel: 'instagram',
     unread: 1,
     lastActivity: generateRandomTime(2),
+    tags: ['pending', 'information'],
     messages: [
       {
         id: '3001',
@@ -149,6 +152,7 @@ export const mockConversations: Conversation[] = [
     channel: 'email',
     unread: 0,
     lastActivity: generateRandomTime(8),
+    tags: ['completed', 'prescription'],
     messages: [
       {
         id: '4001',
@@ -176,6 +180,7 @@ export const mockConversations: Conversation[] = [
     channel: 'whatsapp',
     unread: 3,
     lastActivity: generateRandomTime(1),
+    tags: ['urgent', 'appointment'],
     messages: [
       {
         id: '5001',

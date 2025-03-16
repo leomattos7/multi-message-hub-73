@@ -9,17 +9,20 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const Index = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [showConversation, setShowConversation] = useState(false);
+  const [conversations, setConversations] = useState(mockConversations);
   const isMobile = useIsMobile();
 
   // Select first conversation by default on desktop
   useEffect(() => {
-    if (!isMobile && mockConversations.length > 0 && !selectedConversation) {
-      setSelectedConversation(mockConversations[0]);
+    if (!isMobile && conversations.length > 0 && !selectedConversation) {
+      setSelectedConversation(conversations[0]);
     }
-  }, [isMobile, selectedConversation]);
+  }, [isMobile, selectedConversation, conversations]);
 
   const handleSelectConversation = (conversation: Conversation) => {
-    setSelectedConversation(conversation);
+    // Encontrar a conversa atualizada no array de conversas
+    const updatedConversation = conversations.find(c => c.id === conversation.id) || conversation;
+    setSelectedConversation(updatedConversation);
     if (isMobile) {
       setShowConversation(true);
     }
@@ -28,6 +31,19 @@ const Index = () => {
   const handleBackClick = () => {
     if (isMobile) {
       setShowConversation(false);
+    }
+  };
+
+  const handleTagsUpdate = (conversationId: string, tags: string[]) => {
+    // Atualizar as tags na conversa específica
+    const updatedConversations = conversations.map(conv =>
+      conv.id === conversationId ? { ...conv, tags } : conv
+    );
+    setConversations(updatedConversations);
+    
+    // Atualizar a conversa selecionada se for a mesma
+    if (selectedConversation && selectedConversation.id === conversationId) {
+      setSelectedConversation({ ...selectedConversation, tags });
     }
   };
 

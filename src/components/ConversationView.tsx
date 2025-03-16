@@ -4,7 +4,8 @@ import {
   Phone, 
   Info, 
   Calendar,
-  ChevronLeft
+  ChevronLeft,
+  TagIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./Avatar";
@@ -14,6 +15,7 @@ import { Conversation, Message } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TagManager } from "./TagManager";
 
 interface ConversationViewProps {
   conversation: Conversation;
@@ -22,12 +24,14 @@ interface ConversationViewProps {
 }
 
 export function ConversationView({ 
-  conversation, 
+  conversation: initialConversation, 
   onBackClick,
   className 
 }: ConversationViewProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [messages, setMessages] = useState<Message[]>(conversation.messages);
+  const [conversation, setConversation] = useState<Conversation>(initialConversation);
+  const [messages, setMessages] = useState<Message[]>(initialConversation.messages);
+  const [showTagManager, setShowTagManager] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -40,8 +44,9 @@ export function ConversationView({
 
   // Update messages when conversation changes
   useEffect(() => {
-    setMessages(conversation.messages);
-  }, [conversation]);
+    setConversation(initialConversation);
+    setMessages(initialConversation.messages);
+  }, [initialConversation]);
 
   const formatMessageTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -83,6 +88,14 @@ export function ConversationView({
       title: "Agendar Consulta",
       description: "Funcionalidade de agendamento será implementada em breve.",
     });
+  };
+
+  const handleTagsUpdate = (tags: string[]) => {
+    // Atualizar as tags da conversa
+    setConversation(prev => ({
+      ...prev,
+      tags
+    }));
   };
 
   const shouldRenderDate = (index: number) => {
@@ -152,6 +165,13 @@ export function ConversationView({
         </div>
         
         <div className="flex items-center gap-2 flex-shrink-0">
+          <Button 
+            variant={showTagManager ? "secondary" : "outline"} 
+            size="icon"
+            onClick={() => setShowTagManager(!showTagManager)}
+          >
+            <TagIcon className="h-5 w-5" />
+          </Button>
           <Button variant="outline" size="icon" onClick={handleSchedule}>
             <Calendar className="h-5 w-5" />
           </Button>
@@ -163,6 +183,15 @@ export function ConversationView({
           </Button>
         </div>
       </div>
+      
+      {showTagManager && (
+        <div className="p-3 bg-muted/40 border-b border-border">
+          <TagManager 
+            conversation={conversation} 
+            onTagsUpdate={handleTagsUpdate}
+          />
+        </div>
+      )}
       
       <div className="flex-1 overflow-y-auto p-4 bg-secondary/30">
         <div className="flex flex-col space-y-4">

@@ -1,25 +1,20 @@
 
 import { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
+import { Avatar } from "./Avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { ChannelBadge } from "./ChannelBadge";
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChannelType, Conversation, filterByChannel, searchConversations, sortedConversations } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { Avatar } from "./Avatar";
-import { ChannelBadge } from "./ChannelBadge";
-import { 
-  Conversation, 
-  ChannelType, 
-  sortedConversations, 
-  filterByChannel,
-  searchConversations 
-} from "@/data/mockData";
+import { getTagById } from "@/data/tagsData";
+import { Tag } from "./Tag";
 
 interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void;
@@ -34,40 +29,46 @@ export function ConversationList({
 }: ConversationListProps) {
   const [conversations, setConversations] = useState<Conversation[]>(sortedConversations());
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<ChannelType | "all">("all");
+  const [channelFilter, setChannelFilter] = useState<ChannelType | "all">("all");
 
   useEffect(() => {
-    let filtered = sortedConversations();
-    
     if (searchQuery) {
-      filtered = searchConversations(searchQuery);
-    } else if (activeFilter !== "all") {
-      filtered = filterByChannel(activeFilter);
+      setConversations(searchConversations(searchQuery));
+    } else if (channelFilter !== "all") {
+      setConversations(filterByChannel(channelFilter));
+    } else {
+      setConversations(sortedConversations());
     }
-    
-    setConversations(filtered);
-  }, [searchQuery, activeFilter]);
+  }, [searchQuery, channelFilter]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
-  const handleFilterChange = (channel: ChannelType | "all") => {
-    setActiveFilter(channel);
+  const handleFilterChannel = (channel: ChannelType | "all") => {
+    setChannelFilter(channel);
   };
 
-  const formatTimestamp = (date: Date) => {
+  const formatLastActivity = (date: Date) => {
     const now = new Date();
-    const diffHours = Math.abs(now.getTime() - date.getTime()) / 36e5;
-    
-    if (diffHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return "Agora";
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}d`;
   };
 
-  const getLastMessage = (conv: Conversation) => {
-    return conv.messages[conv.messages.length - 1];
+  // Extract the first part of the first message for preview
+  const getPreviewMessage = (conversation: Conversation) => {
+    const lastMessage = conversation.messages[conversation.messages.length - 1];
+    if (!lastMessage) return "";
+    return lastMessage.content.length > 35 
+      ? lastMessage.content.substring(0, 35) + "..."
+      : lastMessage.content;
   };
 
   return (
@@ -75,12 +76,13 @@ export function ConversationList({
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
+              type="search"
               placeholder="Buscar conversas..."
+              className="pl-8"
               value={searchQuery}
               onChange={handleSearch}
-              className="pl-9 bg-secondary/50"
             />
           </div>
           <DropdownMenu>
@@ -90,100 +92,83 @@ export function ConversationList({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleFilterChange("all")}>
+              <DropdownMenuItem onClick={() => handleFilterChannel("all")}>
                 Todos os canais
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleFilterChange("whatsapp")}>
+              <DropdownMenuItem onClick={() => handleFilterChannel("whatsapp")}>
                 WhatsApp
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleFilterChange("instagram")}>
+              <DropdownMenuItem onClick={() => handleFilterChannel("instagram")}>
                 Instagram
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleFilterChange("facebook")}>
+              <DropdownMenuItem onClick={() => handleFilterChannel("facebook")}>
                 Facebook
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleFilterChange("email")}>
+              <DropdownMenuItem onClick={() => handleFilterChannel("email")}>
                 Email
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        
-        {activeFilter !== "all" && (
-          <div className="mt-2 flex">
-            <Badge 
-              variant="outline" 
-              className="flex gap-1 items-center"
-              onClick={() => handleFilterChange("all")}
-            >
-              {activeFilter === "whatsapp" && "WhatsApp"}
-              {activeFilter === "instagram" && "Instagram"}
-              {activeFilter === "facebook" && "Facebook"}
-              {activeFilter === "email" && "Email"}
-              <X className="h-3 w-3" />
-            </Badge>
-          </div>
-        )}
       </div>
-      
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
-        {conversations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4 text-center">
-            <SearchX className="h-12 w-12 mb-2 opacity-20" />
-            <p>Nenhuma conversa encontrada</p>
-            <p className="text-sm">Tente outro termo de busca ou filtro</p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-border">
-            {conversations.map((conversation) => {
-              const lastMessage = getLastMessage(conversation);
-              const isSelected = selectedConversationId === conversation.id;
-              
-              return (
-                <li 
-                  key={conversation.id} 
-                  className={cn(
-                    "p-4 hover:bg-secondary/50 cursor-pointer transition-colors",
-                    isSelected && "bg-secondary"
-                  )}
-                  onClick={() => onSelectConversation(conversation)}
-                >
-                  <div className="flex gap-3">
-                    <Avatar 
-                      src={conversation.contact.avatar} 
-                      name={conversation.contact.name}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium truncate">{conversation.contact.name}</h3>
-                        <div className="flex items-center gap-1">
-                          <ChannelBadge channel={conversation.channel} size="sm" />
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {formatTimestamp(conversation.lastActivity)}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground truncate mt-1">
-                        {lastMessage.isOutgoing && "Você: "}
-                        {lastMessage.content}
-                      </p>
-                      {conversation.unread > 0 && (
-                        <div className="mt-1 flex justify-between items-center">
-                          <Badge variant="default" className="bg-primary text-white rounded-full px-2 py-0.5 text-xs">
-                            {conversation.unread} nova{conversation.unread > 1 ? 's' : ''}
-                          </Badge>
+
+      <div className="flex-1 overflow-y-auto">
+        {conversations.map((conversation) => {
+          const isSelected = conversation.id === selectedConversationId;
+          return (
+            <div
+              key={conversation.id}
+              className={cn(
+                "p-3 border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors",
+                isSelected && "bg-secondary"
+              )}
+              onClick={() => onSelectConversation(conversation)}
+            >
+              <div className="flex items-start gap-3">
+                <Avatar
+                  src={conversation.contact.avatar}
+                  name={conversation.contact.name}
+                  showStatus
+                  status={conversation.unread > 0 ? "online" : "offline"}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium truncate">
+                      {conversation.contact.name}
+                    </h3>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <ChannelBadge channel={conversation.channel} size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        {formatLastActivity(conversation.lastActivity)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground truncate mt-0.5">
+                    {getPreviewMessage(conversation)}
+                  </p>
+                  
+                  {conversation.tags && conversation.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {conversation.tags.slice(0, 3).map(tagId => {
+                        const tag = getTagById(tagId);
+                        return tag ? (
+                          <Tag key={tagId} tag={tag} size="sm" />
+                        ) : null;
+                      })}
+                      {conversation.tags.length > 3 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{conversation.tags.length - 3}
                         </div>
                       )}
                     </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
-
-import { X, SearchX } from "lucide-react";
