@@ -2,20 +2,20 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle, Plus, Calendar, UserCog } from "lucide-react";
-import ConversationList from "@/components/ConversationList";
-import ConversationView from "@/components/ConversationView";
-import Sidebar from "@/components/Sidebar";
-import { CONVERSATIONS } from "@/data/mockData";
+import { ConversationList } from "@/components/ConversationList";
+import { ConversationView } from "@/components/ConversationView";
+import { Sidebar } from "@/components/Sidebar";
+import { mockConversations } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Index() {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showConversation, setShowConversation] = useState(!isMobile);
 
   const selectedConversation = selectedConversationId 
-    ? CONVERSATIONS.find(c => c.id === selectedConversationId) || null
+    ? mockConversations.find(c => c.id === selectedConversationId) || null
     : null;
 
   const handleSelectConversation = (id: string) => {
@@ -52,7 +52,7 @@ export default function Index() {
               </div>
             </div>
             <ConversationList 
-              conversations={CONVERSATIONS} 
+              conversations={mockConversations} 
               onSelectConversation={handleSelectConversation}
               selectedConversationId={selectedConversationId}
             />
