@@ -12,12 +12,14 @@ interface ChannelBadgeProps {
   channel: ChannelType;
   size?: "sm" | "md" | "lg";
   showLabel?: boolean;
+  className?: string;
 }
 
 export function ChannelBadge({ 
   channel, 
   size = "md", 
-  showLabel = false 
+  showLabel = false,
+  className
 }: ChannelBadgeProps) {
   const channelConfig = {
     whatsapp: {
@@ -52,7 +54,7 @@ export function ChannelBadge({
   };
 
   return (
-    <span className={cn("channel-pill", config.color)}>
+    <span className={cn("channel-pill", config.color, className)}>
       <Icon className={sizeClasses[size]} />
       {showLabel && <span>{config.label}</span>}
     </span>
