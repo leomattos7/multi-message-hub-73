@@ -35,7 +35,7 @@ const Index = () => {
     <div className="flex h-screen w-full overflow-hidden bg-background animate-fade-in">
       <Sidebar />
       
-      <div className="flex-1 flex">
+      <div className="flex-1 flex relative">
         {(!isMobile || !showConversation) && (
           <ConversationList 
             onSelectConversation={handleSelectConversation}

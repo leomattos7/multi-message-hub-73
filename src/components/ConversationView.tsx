@@ -118,7 +118,11 @@ export function ConversationView({
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)}>
+    <div className={cn(
+      "flex flex-col h-full bg-background", 
+      isMobile && "fixed inset-0 z-50",
+      className
+    )}>
       <div className="flex items-center gap-3 p-4 border-b border-border">
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={onBackClick} className="mr-1">
