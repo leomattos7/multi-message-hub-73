@@ -5,7 +5,7 @@ import { MessageCircle, Plus, Calendar, UserCog } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { Sidebar } from "@/components/Sidebar";
-import { mockConversations } from "@/data/mockData";
+import { mockConversations, Conversation } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -18,8 +18,8 @@ export default function Index() {
     ? mockConversations.find(c => c.id === selectedConversationId) || null
     : null;
 
-  const handleSelectConversation = (id: string) => {
-    setSelectedConversationId(id);
+  const handleSelectConversation = (conversation: Conversation) => {
+    setSelectedConversationId(conversation.id);
     setShowConversation(true);
   };
 
@@ -64,7 +64,7 @@ export default function Index() {
             {selectedConversation ? (
               <ConversationView 
                 conversation={selectedConversation}
-                onBack={isMobile ? handleBackToList : undefined}
+                onBackClick={isMobile ? handleBackToList : undefined}
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
