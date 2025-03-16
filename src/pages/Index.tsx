@@ -52,9 +52,9 @@ export default function Index() {
               </div>
             </div>
             <ConversationList 
-              conversations={mockConversations} 
               onSelectConversation={handleSelectConversation}
               selectedConversationId={selectedConversationId}
+              className="flex-1"
             />
           </div>
         )}
