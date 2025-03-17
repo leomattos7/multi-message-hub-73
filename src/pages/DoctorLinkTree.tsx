@@ -1,22 +1,24 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ProfileManager } from '@/components/DoctorProfile/ProfileManager';
 import { useAuth } from '@/components/AuthGuard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
 const DoctorLinkTree: React.FC = () => {
-  const { user, isLoading } = useAuth();
-  const [isReady, setIsReady] = useState(false);
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Simulate loading for smooth UX
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
-  useEffect(() => {
-    // Wait for auth to be ready
-    if (!isLoading) {
-      setIsReady(true);
-    }
-  }, [isLoading]);
-
-  if (!isReady || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -36,7 +38,7 @@ const DoctorLinkTree: React.FC = () => {
     );
   }
 
-  return <ProfileManager doctorId={user.id} />;
+  return <ProfileManager />;
 };
 
 export default DoctorLinkTree;
