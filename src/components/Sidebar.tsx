@@ -1,30 +1,59 @@
 
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   Inbox,
   Users,
-  Calendar
+  Calendar,
+  X,
+  Menu,
+  UserPlus,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "./Avatar";
+import { toast } from "sonner";
 
 interface SidebarProps {
   className?: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 export function Sidebar({ className }: SidebarProps) {
   const [expanded, setExpanded] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const toggleSidebar = () => {
     setExpanded(!expanded);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    toast.success("Logout realizado com sucesso");
+    navigate("/login");
   };
 
   const navItems = [
     { icon: Inbox, label: "Inbox", path: "/", active: location.pathname === "/" },
     { icon: Users, label: "Contatos", path: "/pacientes", active: location.pathname === "/pacientes" },
     { icon: Calendar, label: "Agenda", path: "/secretaria", active: location.pathname === "/secretaria" },
+    { icon: UserPlus, label: "Funcionários", path: "/funcionarios", active: location.pathname === "/funcionarios" },
   ];
 
   return (
@@ -67,21 +96,30 @@ export function Sidebar({ className }: SidebarProps) {
         </nav>
       </div>
 
-      <div className="p-4 border-t border-border mt-auto flex items-center gap-3">
-        <Avatar
-          src="https://i.pravatar.cc/150?img=36"
-          name="Secretária"
-          showStatus
-          status="online"
-        />
-        <div className={cn("flex flex-col transition-opacity duration-200", !expanded && "opacity-0 invisible")}>
-          <p className="font-medium text-sm">Amanda Costa</p>
-          <p className="text-xs text-muted-foreground">Secretária</p>
+      <div className="p-4 border-t border-border mt-auto">
+        <div className="flex items-center gap-3 mb-2">
+          <Avatar
+            src="https://i.pravatar.cc/150?img=36"
+            name={user?.name || "Usuário"}
+            showStatus
+            status="online"
+          />
+          <div className={cn("flex flex-col transition-opacity duration-200", !expanded && "opacity-0 invisible")}>
+            <p className="font-medium text-sm">{user?.name || "Usuário"}</p>
+            <p className="text-xs text-muted-foreground">{user?.role || "Médico"}</p>
+          </div>
         </div>
+        
+        <Button 
+          variant="ghost" 
+          size={expanded ? "default" : "icon"} 
+          onClick={handleLogout}
+          className="w-full justify-start text-red-500 hover:bg-red-50 hover:text-red-600"
+        >
+          <LogOut size={18} />
+          {expanded && <span className="ml-2">Sair</span>}
+        </Button>
       </div>
     </aside>
   );
 }
-
-import { X, Menu } from "lucide-react";
-import { Avatar } from "./Avatar";
