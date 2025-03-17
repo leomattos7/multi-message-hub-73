@@ -41,9 +41,8 @@ export function VisualWeeklySchedule({
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
   const [localAvailability, setLocalAvailability] = useState<Availability[]>([]);
   
-  // Initialize local availability state with all slots available by default
+  // Initialize local availability state from props
   useEffect(() => {
-    // Use the database entries but default to all available
     setLocalAvailability(weeklyAvailability);
   }, [weeklyAvailability]);
   
@@ -165,9 +164,9 @@ export function VisualWeeklySchedule({
                               "border-t border-gray-100 cursor-pointer transition-colors h-12 flex items-center justify-center",
                               isBlocked 
                                 ? "bg-red-500 hover:bg-red-600" 
-                                : "bg-green-500 hover:bg-green-600", // Default is green (available)
+                                : "bg-green-500 hover:bg-green-600",
                               day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-opacity-90" : "",
-                              hoveredCell === cellId ? "ring-2 ring-offset-1 ring-blue-400" : "",
+                              hoveredCell === cellId ? "ring-2 ring-offset-1 ring-blue-400" : ""
                             )}
                             onClick={() => handleCellClick(day.dayOfWeek, timeSlot)}
                             onMouseEnter={() => setHoveredCell(cellId)}
