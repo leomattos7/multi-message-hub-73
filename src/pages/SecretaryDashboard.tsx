@@ -13,11 +13,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Sidebar } from "@/components/Sidebar";
 import { supabase } from "@/integrations/supabase/client";
+
+// Types of appointments
+const APPOINTMENT_TYPES = [
+  { id: "routine", name: "Consulta de Rotina" },
+  { id: "followup", name: "Retorno" },
+  { id: "emergency", name: "Urgência" },
+  { id: "exam", name: "Resultado de Exame" }
+];
 
 // Mock data for appointments
 const MOCK_APPOINTMENTS = [
@@ -27,6 +37,18 @@ const MOCK_APPOINTMENTS = [
   { id: 4, name: "Ana Pereira", time: "14:30", type: "Resultado de Exame", status: "confirmado" },
   { id: 5, name: "Carlos Ferreira", time: "16:00", type: "Consulta de Rotina", status: "cancelado" }
 ];
+
+// Appointment schema
+const appointmentSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
+  time: z.string().min(5, { message: "Horário é obrigatório" }),
+  type: z.string().min(1, { message: "Tipo de consulta é obrigatório" }),
+  status: z.enum(["confirmado", "aguardando", "cancelado"]),
+  notes: z.string().optional(),
+});
+
+type Appointment = z.infer<typeof appointmentSchema>;
 
 // Doctor profile schema
 const doctorProfileSchema = z.object({
@@ -58,13 +80,34 @@ export default function SecretaryDashboard() {
   const [view, setView] = useState<"day" | "week">("day");
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile>(initialDoctorProfile);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [appointments, setAppointments] = useState<any[]>(MOCK_APPOINTMENTS);
+  const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [isEditAppointmentOpen, setIsEditAppointmentOpen] = useState(false);
 
   // Initialize profile edit form
-  const form = useForm<DoctorProfile>({
+  const profileForm = useForm<DoctorProfile>({
     resolver: zodResolver(doctorProfileSchema),
     defaultValues: doctorProfile,
   });
+  
+  // Initialize appointment edit form
+  const appointmentForm = useForm<Appointment>({
+    resolver: zodResolver(appointmentSchema),
+    defaultValues: {
+      name: "",
+      time: "",
+      type: "",
+      status: "aguardando",
+      notes: "",
+    }
+  });
+
+  // Reset appointment form when editing appointment changes
+  useEffect(() => {
+    if (editingAppointment) {
+      appointmentForm.reset(editingAppointment);
+    }
+  }, [editingAppointment, appointmentForm]);
 
   // Fetch appointments from Supabase
   useEffect(() => {
@@ -165,7 +208,30 @@ export default function SecretaryDashboard() {
   const onProfileSubmit = (data: DoctorProfile) => {
     setDoctorProfile(data);
     setIsEditProfileOpen(false);
+    
+    // Save to localStorage for persistence across app
+    localStorage.setItem('doctorProfile', JSON.stringify(data));
+    
     toast.success("Perfil do médico atualizado com sucesso!");
+  };
+  
+  // Handle appointment edit
+  const handleEditAppointment = (appointment: Appointment) => {
+    setEditingAppointment(appointment);
+    setIsEditAppointmentOpen(true);
+  };
+  
+  // Handle appointment update
+  const onAppointmentSubmit = (data: Appointment) => {
+    // In a real app, update in the database
+    setAppointments(appointments.map(app => 
+      app.id === data.id ? data : app
+    ));
+    
+    setIsEditAppointmentOpen(false);
+    setEditingAppointment(null);
+    
+    toast.success("Consulta atualizada com sucesso!");
   };
 
   // Get status badge class
@@ -200,6 +266,12 @@ export default function SecretaryDashboard() {
     return appointments;
   };
 
+  // Get appointment type label
+  const getAppointmentTypeLabel = (typeId: string) => {
+    const type = APPOINTMENT_TYPES.find(t => t.id === typeId);
+    return type ? type.name : typeId;
+  };
+
   // Render the appointments for day view
   const renderDayView = () => {
     const dayAppointments = getDayAppointments();
@@ -216,13 +288,18 @@ export default function SecretaryDashboard() {
                     <Clock className="h-3 w-3" /> {appointment.time}
                   </span>
                   <span>•</span>
-                  <span>{appointment.type}</span>
+                  <span>{getAppointmentTypeLabel(appointment.type)}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 {getStatusBadge(appointment.status)}
                 <div className="flex gap-1">
-                  <Button variant="outline" size="sm" className="h-8 px-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 px-2"
+                    onClick={() => handleEditAppointment(appointment)}
+                  >
                     <Edit className="h-3 w-3" />
                   </Button>
                 </div>
@@ -257,7 +334,7 @@ export default function SecretaryDashboard() {
               {index < 5 && appointments.slice(0, 2).map((apt, i) => (
                 <div key={i} className="bg-blue-50 p-2 rounded border-l-2 border-blue-500">
                   <div className="font-semibold">{apt.time} - {apt.name}</div>
-                  <div className="text-gray-500">{apt.type}</div>
+                  <div className="text-gray-500">{getAppointmentTypeLabel(apt.type)}</div>
                 </div>
               ))}
             </div>
@@ -291,10 +368,10 @@ export default function SecretaryDashboard() {
                         <DialogHeader>
                           <DialogTitle>Editar Perfil do Médico</DialogTitle>
                         </DialogHeader>
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit(onProfileSubmit)} className="space-y-4">
+                        <Form {...profileForm}>
+                          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="name"
                               render={({ field }) => (
                                 <FormItem>
@@ -307,7 +384,7 @@ export default function SecretaryDashboard() {
                               )}
                             />
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="specialty"
                               render={({ field }) => (
                                 <FormItem>
@@ -320,7 +397,7 @@ export default function SecretaryDashboard() {
                               )}
                             />
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="bio"
                               render={({ field }) => (
                                 <FormItem>
@@ -333,7 +410,7 @@ export default function SecretaryDashboard() {
                               )}
                             />
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="photo"
                               render={({ field }) => (
                                 <FormItem>
@@ -346,7 +423,7 @@ export default function SecretaryDashboard() {
                               )}
                             />
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="address"
                               render={({ field }) => (
                                 <FormItem>
@@ -359,7 +436,7 @@ export default function SecretaryDashboard() {
                               )}
                             />
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="phone"
                               render={({ field }) => (
                                 <FormItem>
@@ -372,7 +449,7 @@ export default function SecretaryDashboard() {
                               )}
                             />
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="email"
                               render={({ field }) => (
                                 <FormItem>
@@ -499,6 +576,127 @@ export default function SecretaryDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Edit Appointment Sheet */}
+      <Sheet open={isEditAppointmentOpen} onOpenChange={setIsEditAppointmentOpen}>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Editar Consulta</SheetTitle>
+          </SheetHeader>
+          
+          <div className="py-6">
+            <Form {...appointmentForm}>
+              <form onSubmit={appointmentForm.handleSubmit(onAppointmentSubmit)} className="space-y-6">
+                <FormField
+                  control={appointmentForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Paciente</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={appointmentForm.control}
+                  name="time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Horário</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="00:00" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={appointmentForm.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Consulta</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {APPOINTMENT_TYPES.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={appointmentForm.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="confirmado">Confirmado</SelectItem>
+                          <SelectItem value="aguardando">Aguardando</SelectItem>
+                          <SelectItem value="cancelado">Cancelado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={appointmentForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="Observações ou detalhes adicionais"
+                          className="resize-none min-h-[100px]"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <SheetFooter>
+                  <Button type="submit">Salvar Alterações</Button>
+                </SheetFooter>
+              </form>
+            </Form>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
