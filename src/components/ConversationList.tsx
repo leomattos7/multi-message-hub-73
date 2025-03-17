@@ -37,6 +37,29 @@ interface ConversationListProps {
   useMockData?: boolean;
 }
 
+// Define a unified conversation type for both mock and real data
+type UnifiedConversation = {
+  id: string;
+  channel: string;
+  unread?: number;
+  lastActivity?: Date;
+  last_activity?: string;
+  is_archived?: boolean;
+  contact?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  patient?: {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    avatar_url?: string;
+  };
+  messages?: any[];
+};
+
 export function ConversationList({ 
   onSelectConversation, 
   selectedConversationId,
@@ -51,7 +74,7 @@ export function ConversationList({
 
   // Use mock data if indicated, otherwise fetch from Supabase
   const { data: conversations = [], isLoading, error } = useMockData 
-    ? { data: mockConversations, isLoading: false, error: null }
+    ? { data: mockConversations as UnifiedConversation[], isLoading: false, error: null }
     : useQuery({
         queryKey: ['conversations'],
         queryFn: () => conversationService.getConversations(),
@@ -61,14 +84,16 @@ export function ConversationList({
   const archiveMutation = useMutation({
     mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
       if (useMockData) {
-        // Just return a mock success response
+        // Just return a mock success response with the same shape for both conditions
         return { success: true };
       }
       
       if (archive) {
-        return conversationService.archiveConversation(id);
+        const result = await conversationService.archiveConversation(id);
+        return { success: true, ...result };
       } else {
-        return conversationService.unarchiveConversation(id);
+        const result = await conversationService.unarchiveConversation(id);
+        return { success: true, ...result };
       }
     },
     onSuccess: () => {
@@ -90,12 +115,14 @@ export function ConversationList({
 
   // Mock mutation for adding to patients
   const addToPatientsMutation = useMutation({
-    mutationFn: (conversation: any) => {
+    mutationFn: (conversation: UnifiedConversation) => {
       if (useMockData) {
         // Just return a mock success response
         return Promise.resolve({ success: true });
       }
-      return conversationService.addPatientFromConversation(conversation);
+      return conversationService.addPatientFromConversation(conversation).then(result => {
+        return { success: true, ...result };
+      });
     },
     onSuccess: () => {
       toast({
@@ -123,7 +150,7 @@ export function ConversationList({
     archiveMutation.mutate({ id, archive });
   };
 
-  const handleAddToPatients = (conversation: any) => {
+  const handleAddToPatients = (conversation: UnifiedConversation) => {
     addToPatientsMutation.mutate(conversation);
   };
 
@@ -136,37 +163,32 @@ export function ConversationList({
   };
 
   // Filter conversations based on search, channel filter, and active tab
-  const filteredConversations = useMockData
-    ? conversations.filter(conversation => {
-        // For mock data, we'll just do simple filtering
-        if (channelFilter !== "all" && conversation.channel !== channelFilter) {
-          return false;
-        }
-        
-        if (searchQuery && !conversation.contact.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-          return false;
-        }
-        
-        return true;
-      })
-    : conversations.filter(conversation => {
-        // First filter by tab (archived status)
-        if ((activeTab === "archived") !== (conversation.is_archived || false)) {
-          return false;
-        }
-        
-        // Then filter by channel if needed
-        if (channelFilter !== "all" && conversation.channel !== channelFilter) {
-          return false;
-        }
-        
-        // Then filter by search query if present
-        if (searchQuery && !conversation.patient?.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
-          return false;
-        }
-        
-        return true;
-      });
+  const filteredConversations = (conversations as UnifiedConversation[]).filter(conversation => {
+    // First filter by tab (archived status)
+    const isArchived = useMockData 
+      ? false // Mock data doesn't have archived status, assume all active
+      : (conversation.is_archived || false);
+
+    if ((activeTab === "archived") !== isArchived) {
+      return false;
+    }
+    
+    // Then filter by channel if needed
+    if (channelFilter !== "all" && conversation.channel !== channelFilter) {
+      return false;
+    }
+    
+    // Then filter by search query if present
+    const name = useMockData 
+      ? conversation.contact?.name
+      : conversation.patient?.name;
+
+    if (searchQuery && name && !name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    
+    return true;
+  });
 
   const formatLastActivity = (date: string | Date) => {
     const activityDate = new Date(date);
@@ -183,13 +205,13 @@ export function ConversationList({
   };
 
   // Get preview message from the last message in conversation
-  const getPreviewMessage = (conversation: any) => {
-    if (useMockData && conversation.messages && conversation.messages.length > 0) {
-      // For mock data, get the last message content
+  const getPreviewMessage = (conversation: UnifiedConversation) => {
+    if (conversation.messages && conversation.messages.length > 0) {
+      // Get the last message content
       const lastMessage = conversation.messages[conversation.messages.length - 1];
       return lastMessage.content.substring(0, 50) + (lastMessage.content.length > 50 ? '...' : '');
     }
-    // For real data or fallback
+    // Fallback
     return "Click to view conversation...";
   };
 
@@ -266,13 +288,25 @@ export function ConversationList({
           ) : (
             filteredConversations.map((conversation) => {
               const isSelected = conversation.id === selectedConversationId;
-              // For mock data, use conversation.channel directly
-              const channelType = useMockData ? conversation.channel : getChannelType(conversation.channel);
               
-              // Get name and avatar from either mock or real data structure
-              const name = useMockData ? conversation.contact.name : (conversation.patient?.name || "Unknown");
-              const avatar = useMockData ? conversation.contact.avatar : conversation.patient?.avatar_url;
+              // Get name and avatar based on the data source
+              const name = useMockData 
+                ? conversation.contact?.name 
+                : conversation.patient?.name || "Unknown";
+                
+              const avatar = useMockData 
+                ? conversation.contact?.avatar 
+                : conversation.patient?.avatar_url;
+                
               const unread = conversation.unread || 0;
+              
+              // For channel badge, ensure we have a valid ChannelType
+              const channelType = getChannelType(conversation.channel);
+              
+              // Get the last activity time from either source
+              const lastActivityTime = useMockData
+                ? conversation.lastActivity
+                : conversation.last_activity;
               
               return (
                 <div
@@ -298,7 +332,7 @@ export function ConversationList({
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <ChannelBadge channel={channelType} size="sm" />
                             <span className="text-xs text-muted-foreground">
-                              {formatLastActivity(conversation.lastActivity || conversation.last_activity)}
+                              {lastActivityTime && formatLastActivity(lastActivityTime)}
                             </span>
                           </div>
                         </div>
@@ -364,12 +398,23 @@ export function ConversationList({
           ) : (
             filteredConversations.map((conversation) => {
               const isSelected = conversation.id === selectedConversationId;
-              // For mock data, use conversation.channel directly
-              const channelType = useMockData ? conversation.channel : getChannelType(conversation.channel);
               
-              // Get name and avatar from either mock or real data structure
-              const name = useMockData ? conversation.contact.name : (conversation.patient?.name || "Unknown");
-              const avatar = useMockData ? conversation.contact.avatar : conversation.patient?.avatar_url;
+              // Get name and avatar based on the data source
+              const name = useMockData 
+                ? conversation.contact?.name 
+                : conversation.patient?.name || "Unknown";
+                
+              const avatar = useMockData 
+                ? conversation.contact?.avatar 
+                : conversation.patient?.avatar_url;
+              
+              // For channel badge, ensure we have a valid ChannelType
+              const channelType = getChannelType(conversation.channel);
+              
+              // Get the last activity time from either source
+              const lastActivityTime = useMockData
+                ? conversation.lastActivity
+                : conversation.last_activity;
               
               return (
                 <div
@@ -395,7 +440,7 @@ export function ConversationList({
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <ChannelBadge channel={channelType} size="sm" />
                             <span className="text-xs text-muted-foreground">
-                              {formatLastActivity(conversation.lastActivity || conversation.last_activity)}
+                              {lastActivityTime && formatLastActivity(lastActivityTime)}
                             </span>
                           </div>
                         </div>

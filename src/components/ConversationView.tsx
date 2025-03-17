@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 import { 
   ChevronLeft,
@@ -68,14 +67,18 @@ export function ConversationView({
   const archiveMutation = useMutation({
     mutationFn: (archive: boolean) => {
       if (useMockData) {
-        // Just return a mock success response
-        return Promise.resolve({ success: true });
+        // Just return a mock success response with consistent shape
+        return Promise.resolve({ success: true, id: conversation.id });
       }
       
       if (archive) {
-        return conversationService.archiveConversation(conversation.id);
+        return conversationService.archiveConversation(conversation.id).then(result => {
+          return { success: true, id: conversation.id, ...result };
+        });
       } else {
-        return conversationService.unarchiveConversation(conversation.id);
+        return conversationService.unarchiveConversation(conversation.id).then(result => {
+          return { success: true, id: conversation.id, ...result };
+        });
       }
     },
     onSuccess: () => {
@@ -103,7 +106,9 @@ export function ConversationView({
         // Just return a mock success response
         return Promise.resolve({ success: true });
       }
-      return conversationService.addPatientFromConversation(conversation);
+      return conversationService.addPatientFromConversation(conversation).then(result => {
+        return { success: true, ...result };
+      });
     },
     onSuccess: () => {
       toast({
@@ -144,7 +149,10 @@ export function ConversationView({
         setLocalMessages(prev => [...prev, newMessage]);
         return Promise.resolve({ success: true });
       }
-      return conversationService.sendMessage(conversation.id, content);
+      // For real data, call the API and return result with success property
+      return conversationService.sendMessage(conversation.id, content).then(result => {
+        return { success: true, ...result };
+      });
     },
     onSuccess: () => {
       if (!useMockData) {
@@ -278,7 +286,7 @@ export function ConversationView({
             <div className="flex items-center">
               <h2 className="font-medium truncate">{patientName}</h2>
               <ChannelBadge 
-                channel={channel} 
+                channel={channel as any} 
                 size="sm" 
                 className="ml-2 flex-shrink-0"
               />
