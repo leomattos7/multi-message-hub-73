@@ -37,6 +37,8 @@ export interface PatientFilters {
   hasMessages: boolean | null;
   sortBy: "name" | "lastAppointment" | "lastMessage";
   sortOrder: "asc" | "desc";
+  address: string;
+  notes: string;
 }
 
 export function ContactFilters({ 
@@ -103,6 +105,28 @@ export function ContactFilters({
               name="phone"
               placeholder="Filtrar por telefone" 
               value={filters.phone} 
+              onChange={handleInputChange}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="address">Endereço</Label>
+            <Input 
+              id="address"
+              name="address"
+              placeholder="Filtrar por endereço" 
+              value={filters.address || ""} 
+              onChange={handleInputChange}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="notes">Anotações</Label>
+            <Input 
+              id="notes"
+              name="notes"
+              placeholder="Filtrar por anotações" 
+              value={filters.notes || ""} 
               onChange={handleInputChange}
             />
           </div>

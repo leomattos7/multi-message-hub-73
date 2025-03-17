@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { 
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Dialog, 
   DialogContent, 
@@ -42,7 +44,9 @@ import {
   Trash2, 
   CalendarClock,
   Save,
-  X
+  X,
+  MapPin,
+  Clipboard
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
@@ -57,6 +61,8 @@ interface Patient {
   name: string;
   email: string;
   phone: string;
+  address?: string;
+  notes?: string;
   lastMessageDate: Date | null;
   lastAppointmentDate: Date | null;
 }
@@ -67,6 +73,8 @@ const mockPatients: Patient[] = [
     name: "Maria Silva",
     email: "maria.silva@email.com",
     phone: "(11) 98765-4321",
+    address: "Av. Paulista, 1000, São Paulo - SP",
+    notes: "Paciente com histórico de hipertensão",
     lastMessageDate: new Date(2023, 9, 15),
     lastAppointmentDate: new Date(2023, 11, 10),
   },
@@ -75,6 +83,8 @@ const mockPatients: Patient[] = [
     name: "João Oliveira",
     email: "joao.oliveira@email.com",
     phone: "(11) 91234-5678",
+    address: "Rua Augusta, 500, São Paulo - SP",
+    notes: "Preferência por consultas matutinas",
     lastMessageDate: new Date(2023, 8, 28),
     lastAppointmentDate: new Date(2023, 10, 5),
   },
@@ -117,12 +127,16 @@ export default function PatientCRM() {
     name: "",
     email: "",
     phone: "",
+    address: "",
+    notes: "",
   });
   const [editingPatient, setEditingPatient] = useState({
     id: "",
     name: "",
     email: "",
     phone: "",
+    address: "",
+    notes: "",
   });
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [patientFilters, setPatientFilters] = useState<PatientFilters>({
@@ -132,7 +146,9 @@ export default function PatientCRM() {
     hasAppointment: null,
     hasMessages: null,
     sortBy: "name",
-    sortOrder: "asc"
+    sortOrder: "asc",
+    address: "",
+    notes: ""
   });
   
   const { user } = useAuth();
@@ -157,7 +173,7 @@ export default function PatientCRM() {
 
         const { data: patientsData, error: patientsError } = await supabase
           .from('patients')
-          .select('id, name, email, phone');
+          .select('id, name, email, phone, address');
 
         if (patientsError || appointmentsError || messagesError || conversationsError) {
           console.error("Error fetching data:", { patientsError, appointmentsError, messagesError, conversationsError });
@@ -192,6 +208,8 @@ export default function PatientCRM() {
             name: patient.name,
             email: patient.email ?? "",
             phone: patient.phone ?? "",
+            address: patient.address ?? "",
+            notes: patient.notes ?? "",
             lastMessageDate: patientMessages.has(patient.id) ? new Date(patientMessages.get(patient.id)) : null,
             lastAppointmentDate: patientAppointments.has(patient.id) ? new Date(patientAppointments.get(patient.id)) : null,
           }));
@@ -233,6 +251,18 @@ export default function PatientCRM() {
     if (patientFilters.phone) {
       filtered = filtered.filter(patient => 
         patient.phone.includes(patientFilters.phone)
+      );
+    }
+    
+    if (patientFilters.address) {
+      filtered = filtered.filter(patient => 
+        patient.address?.toLowerCase().includes(patientFilters.address.toLowerCase())
+      );
+    }
+    
+    if (patientFilters.notes) {
+      filtered = filtered.filter(patient => 
+        patient.notes?.toLowerCase().includes(patientFilters.notes.toLowerCase())
       );
     }
     
@@ -287,25 +317,58 @@ export default function PatientCRM() {
 
   const filteredPatients = applyFilters(patients);
 
-  const handleAddPatient = () => {
-    if (!newPatient.name || !newPatient.email || !newPatient.phone) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
+  const handleAddPatient = async () => {
+    if (!newPatient.name) {
+      toast.error("Por favor, preencha o nome do contato");
       return;
     }
 
-    const newPatientObj: Patient = {
-      id: `${patients.length + 1}`,
-      name: newPatient.name,
-      email: newPatient.email,
-      phone: newPatient.phone,
-      lastMessageDate: null,
-      lastAppointmentDate: null,
-    };
+    try {
+      let newPatientId = "";
+      
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('patients')
+          .insert({
+            name: newPatient.name,
+            email: newPatient.email || null,
+            phone: newPatient.phone || null,
+            address: newPatient.address || null,
+            notes: newPatient.notes || null
+          })
+          .select();
+          
+        if (error) {
+          console.error("Error inserting patient in Supabase:", error);
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          newPatientId = data[0].id;
+        }
+      } else {
+        newPatientId = `${patients.length + 1}`;
+      }
 
-    setPatients([...patients, newPatientObj]);
-    setNewPatient({ name: "", email: "", phone: "" });
-    setIsAddPatientOpen(false);
-    toast.success("Paciente adicionado com sucesso!");
+      const newPatientObj: Patient = {
+        id: newPatientId,
+        name: newPatient.name,
+        email: newPatient.email,
+        phone: newPatient.phone,
+        address: newPatient.address,
+        notes: newPatient.notes,
+        lastMessageDate: null,
+        lastAppointmentDate: null,
+      };
+
+      setPatients([...patients, newPatientObj]);
+      setNewPatient({ name: "", email: "", phone: "", address: "", notes: "" });
+      setIsAddPatientOpen(false);
+      toast.success("Paciente adicionado com sucesso!");
+    } catch (error) {
+      console.error("Error adding patient:", error);
+      toast.error("Erro ao adicionar paciente. Por favor, tente novamente.");
+    }
   };
 
   const handleEditClick = (patient: Patient, e: React.MouseEvent) => {
@@ -315,13 +378,15 @@ export default function PatientCRM() {
       name: patient.name,
       email: patient.email,
       phone: patient.phone,
+      address: patient.address || "",
+      notes: patient.notes || "",
     });
     setIsEditPatientOpen(true);
   };
 
   const handleUpdatePatient = async () => {
-    if (!editingPatient.name || !editingPatient.email || !editingPatient.phone) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
+    if (!editingPatient.name) {
+      toast.error("Por favor, preencha o nome do contato");
       return;
     }
 
@@ -331,13 +396,16 @@ export default function PatientCRM() {
           .from('patients')
           .update({
             name: editingPatient.name,
-            email: editingPatient.email,
-            phone: editingPatient.phone
+            email: editingPatient.email || null,
+            phone: editingPatient.phone || null,
+            address: editingPatient.address || null,
+            notes: editingPatient.notes || null
           })
           .eq('id', editingPatient.id);
           
         if (error) {
           console.error("Error updating patient in Supabase:", error);
+          throw error;
         }
       }
       
@@ -348,6 +416,8 @@ export default function PatientCRM() {
             name: editingPatient.name,
             email: editingPatient.email,
             phone: editingPatient.phone,
+            address: editingPatient.address,
+            notes: editingPatient.notes,
           };
         }
         return patient;
@@ -361,6 +431,8 @@ export default function PatientCRM() {
           name: editingPatient.name,
           email: editingPatient.email,
           phone: editingPatient.phone,
+          address: editingPatient.address,
+          notes: editingPatient.notes,
         });
       }
       
@@ -540,13 +612,31 @@ export default function PatientCRM() {
               <div className="space-y-4">
                 <div className="flex items-center text-sm">
                   <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                  {selectedPatient.email}
+                  {selectedPatient.email || "Não informado"}
                 </div>
                 <div className="flex items-center text-sm">
                   <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                  {selectedPatient.phone}
+                  {selectedPatient.phone || "Não informado"}
                 </div>
-                <div className="pt-2">
+                
+                {selectedPatient.address && (
+                  <div className="flex items-center text-sm">
+                    <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                    {selectedPatient.address}
+                  </div>
+                )}
+                
+                {selectedPatient.notes && (
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center text-sm font-medium mb-1">
+                      <Clipboard className="h-4 w-4 mr-2 text-gray-500" />
+                      Anotações
+                    </div>
+                    <p className="text-sm text-gray-700 pl-6">{selectedPatient.notes}</p>
+                  </div>
+                )}
+                
+                <div className="pt-2 border-t">
                   <p className="text-sm text-gray-500">Última Mensagem: {formatDate(selectedPatient.lastMessageDate)}</p>
                   <p className="text-sm text-gray-500 mt-1">Última Consulta: {formatDate(selectedPatient.lastAppointmentDate)}</p>
                 </div>
@@ -653,7 +743,7 @@ export default function PatientCRM() {
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -663,11 +753,30 @@ export default function PatientCRM() {
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="phone">Telefone *</Label>
+              <Label htmlFor="phone">Telefone</Label>
               <Input
                 id="phone"
                 value={newPatient.phone}
                 onChange={(e) => setNewPatient({...newPatient, phone: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="address">Endereço</Label>
+              <Input
+                id="address"
+                value={newPatient.address}
+                onChange={(e) => setNewPatient({...newPatient, address: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Anotações</Label>
+              <Textarea
+                id="notes"
+                value={newPatient.notes}
+                onChange={(e) => setNewPatient({...newPatient, notes: e.target.value})}
+                placeholder="Informações adicionais sobre o contato..."
               />
             </div>
           </div>
@@ -699,7 +808,7 @@ export default function PatientCRM() {
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="edit-email">Email *</Label>
+              <Label htmlFor="edit-email">Email</Label>
               <Input
                 id="edit-email"
                 type="email"
@@ -709,11 +818,30 @@ export default function PatientCRM() {
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="edit-phone">Telefone *</Label>
+              <Label htmlFor="edit-phone">Telefone</Label>
               <Input
                 id="edit-phone"
                 value={editingPatient.phone}
                 onChange={(e) => setEditingPatient({...editingPatient, phone: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="edit-address">Endereço</Label>
+              <Input
+                id="edit-address"
+                value={editingPatient.address}
+                onChange={(e) => setEditingPatient({...editingPatient, address: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="edit-notes">Anotações</Label>
+              <Textarea
+                id="edit-notes"
+                value={editingPatient.notes}
+                onChange={(e) => setEditingPatient({...editingPatient, notes: e.target.value})}
+                placeholder="Informações adicionais sobre o contato..."
               />
             </div>
           </div>

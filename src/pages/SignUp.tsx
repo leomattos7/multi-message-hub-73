@@ -7,16 +7,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ArrowRight, LucideStethoscope } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
-  phone: z.string().min(10, { message: "Telefone deve ser válido" }),
-  email: z.string().email({ message: "E-mail inválido" }),
+  phone: z.string().optional(),
+  email: z.string().email({ message: "E-mail inválido" }).optional().or(z.literal("")),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string().min(6, { message: "Confirme sua senha" }),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  notes: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
@@ -92,6 +98,11 @@ export default function SignUp() {
       email: "",
       password: "",
       confirmPassword: "",
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      notes: "",
     },
   });
 
@@ -105,10 +116,17 @@ export default function SignUp() {
       // Store user in localStorage
       const user = {
         id: "user-" + Math.random().toString(36).substr(2, 9),
-        email: data.email,
+        email: data.email || "",
         role: "doctor",
         name: data.name,
-        phone: data.phone
+        phone: data.phone || "",
+        address: {
+          street: data.street || "",
+          city: data.city || "",
+          state: data.state || "",
+          zipCode: data.zipCode || "",
+        },
+        notes: data.notes || "",
       };
       
       localStorage.setItem("user", JSON.stringify(user));
@@ -165,7 +183,7 @@ export default function SignUp() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome completo</FormLabel>
+                        <FormLabel>Nome completo *</FormLabel>
                         <FormControl>
                           <Input placeholder="Dr. João Silva" {...field} />
                         </FormControl>
@@ -199,32 +217,118 @@ export default function SignUp() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Senha</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirmar senha</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-sm font-medium">Endereço</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="street"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Rua/Avenida</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Av. Paulista, 1000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cidade</FormLabel>
+                              <FormControl>
+                                <Input placeholder="São Paulo" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="state"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Estado</FormLabel>
+                              <FormControl>
+                                <Input placeholder="SP" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="zipCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CEP</FormLabel>
+                            <FormControl>
+                              <Input placeholder="01311-000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Anotações</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Informações adicionais..." 
+                              className="min-h-[80px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Senha</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirmar senha</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Criando conta..." : "Criar conta"}
                   </Button>
