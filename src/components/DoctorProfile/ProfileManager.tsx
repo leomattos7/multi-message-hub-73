@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthGuard';
 import { doctorProfileService } from '@/integrations/supabase/client';
@@ -13,8 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar } from '@/components/Avatar';
 import { LinksManager } from './LinksManager';
 import { DoctorProfile, ProfileTheme, ThemeOption } from './types';
-import { Loader2, LinkIcon, Palette, User, Mail, Phone, MapPin } from 'lucide-react';
+import { Loader2, LinkIcon, Palette, User, Mail, Phone, MapPin, AlertTriangle } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const themeOptions: ThemeOption[] = [
   { value: 'default', label: 'Padrão', previewClass: 'bg-primary text-primary-foreground' },
@@ -32,6 +32,7 @@ export const ProfileManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<DoctorProfile | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     bio: '',
     specialty: '',
@@ -58,7 +59,8 @@ export const ProfileManager: React.FC = () => {
     
     try {
       setLoading(true);
-      // Use user.id directly without checking format, the service will handle this
+      setError(null);
+      
       console.log("Loading profile for user ID:", user.id);
       const profileData = await doctorProfileService.getProfileByDoctorId(user.id);
       console.log("Profile data received:", profileData);
@@ -77,8 +79,9 @@ export const ProfileManager: React.FC = () => {
           address: profileData.address || '',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar perfil:', error);
+      setError(`Erro ao carregar perfil: ${error.message || "Ocorreu um erro desconhecido"}`);
       // No profile exists yet, that's okay
     } finally {
       setLoading(false);
@@ -99,6 +102,7 @@ export const ProfileManager: React.FC = () => {
     
     try {
       setSaving(true);
+      setError(null);
       
       // Required validation
       if (!formData.public_url_slug) {
@@ -135,6 +139,7 @@ export const ProfileManager: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Erro ao salvar perfil:', error);
+      setError(`Erro ao salvar: ${error.message || "Ocorreu um erro ao salvar o perfil."}`);
       sonnerToast.error(`Erro ao salvar: ${error.message || "Ocorreu um erro ao salvar o perfil."}`);
       toast({
         variant: "destructive",
@@ -179,6 +184,14 @@ export const ProfileManager: React.FC = () => {
             Crie sua página de perfil com links importantes para compartilhar com seus pacientes.
           </p>
         </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Erro</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         {hasProfile && (
           <Card>
