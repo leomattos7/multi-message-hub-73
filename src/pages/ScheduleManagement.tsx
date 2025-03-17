@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
-import { format, startOfWeek, endOfWeek, addDays, parseISO } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays, parseISO, isSameDay, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, Clock, Plus, Trash2, Save, AlertTriangle } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Trash2, Save, AlertTriangle, Ban, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,6 +69,15 @@ const EVENT_TYPES = [
   { id: "other", name: "Outro" },
 ];
 
+// Common time slots
+const COMMON_TIME_SLOTS = [
+  { start: "08:00", end: "12:00", label: "Manhã (8h - 12h)" },
+  { start: "12:00", end: "13:00", label: "Almoço (12h - 13h)" },
+  { start: "13:00", end: "17:00", label: "Tarde (13h - 17h)" },
+  { start: "17:00", end: "21:00", label: "Noite (17h - 21h)" },
+  { start: "08:00", end: "17:00", label: "Dia Todo (8h - 17h)" },
+];
+
 // Form schema for regular availability
 const availabilityFormSchema = z.object({
   day_of_week: z.string(),
@@ -93,7 +103,11 @@ export default function ScheduleManagement() {
   const [specialEvents, setSpecialEvents] = useState<CalendarEvent[]>([]);
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   const [isAddAvailabilityDialogOpen, setIsAddAvailabilityDialogOpen] = useState(false);
+  const [isQuickBlockDialogOpen, setIsQuickBlockDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{start: string, end: string}>({start: "08:00", end: "17:00"});
+  const [quickBlockDays, setQuickBlockDays] = useState<number[]>([1, 2, 3, 4, 5]); // Monday to Friday by default
+  const [blockType, setBlockType] = useState<'block' | 'unblock'>('block');
   
   // Initialize the doctor ID (in a real app, this would come from authentication)
   const doctorId = "00000000-0000-0000-0000-000000000000"; // Placeholder
@@ -267,6 +281,72 @@ export default function ScheduleManagement() {
     }
   };
 
+  // Handle quick block/unblock of multiple days
+  const handleQuickBlockUnblock = async () => {
+    try {
+      // Check if this is a block or unblock operation
+      if (blockType === 'block') {
+        // Create a batch of entries
+        const availabilityEntries = quickBlockDays.map(day => ({
+          doctor_id: doctorId,
+          day_of_week: day,
+          start_time: selectedTimeSlot.start,
+          end_time: selectedTimeSlot.end,
+          is_available: false, // blocked
+        }));
+
+        // Insert all entries
+        const { data, error } = await supabase
+          .from("doctor_availability")
+          .insert(availabilityEntries)
+          .select();
+
+        if (error) {
+          console.error("Error blocking schedule:", error);
+          toast.error("Erro ao bloquear horários");
+          return;
+        }
+
+        if (data) {
+          setWeeklyAvailability([...weeklyAvailability, ...data]);
+          toast.success(`${quickBlockDays.length} dias bloqueados com sucesso`);
+        }
+      } else {
+        // For unblock operation, remove all entries that match the criteria
+        // Find entries that match the days and time slots
+        const entriesToDelete = weeklyAvailability.filter(
+          avail => 
+            quickBlockDays.includes(avail.day_of_week) && 
+            avail.start_time === selectedTimeSlot.start && 
+            avail.end_time === selectedTimeSlot.end &&
+            !avail.is_available
+        );
+        
+        // Delete each matching entry
+        for (const entry of entriesToDelete) {
+          if (entry.id) {
+            await supabase
+              .from("doctor_availability")
+              .delete()
+              .eq("id", entry.id);
+          }
+        }
+        
+        // Update state by removing the deleted entries
+        setWeeklyAvailability(weeklyAvailability.filter(
+          avail => !entriesToDelete.some(e => e.id === avail.id)
+        ));
+        
+        toast.success(`Horários desbloqueados com sucesso`);
+      }
+      
+      setIsQuickBlockDialogOpen(false);
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(`Erro ao ${blockType === 'block' ? 'bloquear' : 'desbloquear'} horários`);
+    }
+  };
+
   // Handle deleting special event
   const handleDeleteEvent = async (id: string) => {
     try {
@@ -301,9 +381,41 @@ export default function ScheduleManagement() {
     return eventType ? eventType.name : eventTypeId;
   };
 
+  // Check if a day is blocked in the weekly availability
+  const isDayBlocked = (dayNumber: number, startTime: string, endTime: string) => {
+    return weeklyAvailability.some(
+      avail => 
+        avail.day_of_week === dayNumber && 
+        avail.start_time === startTime && 
+        avail.end_time === endTime && 
+        !avail.is_available
+    );
+  };
+
   return (
     <div className="container max-w-full mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold text-gray-800 mb-8">Gerenciamento de Agenda</h1>
+
+      <div className="flex justify-between mb-6">
+        <Button 
+          variant="block" 
+          onClick={() => {
+            setBlockType('block');
+            setIsQuickBlockDialogOpen(true);
+          }}
+        >
+          <Ban className="h-4 w-4 mr-2" /> Bloquear Horários
+        </Button>
+        <Button 
+          variant="available" 
+          onClick={() => {
+            setBlockType('unblock');
+            setIsQuickBlockDialogOpen(true);
+          }}
+        >
+          <Check className="h-4 w-4 mr-2" /> Desbloquear Horários
+        </Button>
+      </div>
 
       <Tabs defaultValue="weekly" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
@@ -681,6 +793,86 @@ export default function ScheduleManagement() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog for quick block/unblock */}
+      <Dialog open={isQuickBlockDialogOpen} onOpenChange={setIsQuickBlockDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {blockType === 'block' ? 'Bloquear Horários Rapidamente' : 'Desbloquear Horários Rapidamente'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <FormLabel>Selecione os dias da semana</FormLabel>
+              <div className="flex flex-wrap gap-2">
+                {DAYS_OF_WEEK.map((day) => (
+                  <Button
+                    key={day.id}
+                    type="button"
+                    variant={quickBlockDays.includes(day.id) ? "default" : "outline"}
+                    className="w-[calc(33.33%-0.5rem)]"
+                    onClick={() => {
+                      if (quickBlockDays.includes(day.id)) {
+                        setQuickBlockDays(quickBlockDays.filter(d => d !== day.id));
+                      } else {
+                        setQuickBlockDays([...quickBlockDays, day.id]);
+                      }
+                    }}
+                  >
+                    {day.shortName}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <FormLabel>Selecione o período</FormLabel>
+              <div className="flex flex-col space-y-2">
+                {COMMON_TIME_SLOTS.map((slot, index) => (
+                  <Button
+                    key={index}
+                    type="button"
+                    variant={selectedTimeSlot.start === slot.start && selectedTimeSlot.end === slot.end ? "default" : "outline"}
+                    className="justify-between"
+                    onClick={() => setSelectedTimeSlot({ start: slot.start, end: slot.end })}
+                  >
+                    <span>{slot.label}</span>
+                    <span className="text-xs opacity-70">
+                      {slot.start} - {slot.end}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="py-2">
+              <p className="text-sm text-muted-foreground mb-2">
+                {blockType === 'block' ? 
+                  'Esta ação irá bloquear os horários selecionados.' : 
+                  'Esta ação irá desbloquear os horários selecionados se estiverem bloqueados.'}
+              </p>
+              <div className="font-medium">
+                Dias selecionados: {quickBlockDays.map(d => DAYS_OF_WEEK.find(day => day.id === d)?.shortName).join(', ')}
+              </div>
+              <div className="font-medium">
+                Horário: {selectedTimeSlot.start} - {selectedTimeSlot.end}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button 
+                variant={blockType === 'block' ? "block" : "available"} 
+                onClick={handleQuickBlockUnblock}
+              >
+                {blockType === 'block' ? 
+                  <><Ban className="mr-2 h-4 w-4" /> Bloquear</> : 
+                  <><Check className="mr-2 h-4 w-4" /> Desbloquear</>}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
