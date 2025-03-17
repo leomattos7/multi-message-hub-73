@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -109,6 +108,7 @@ export default function Appointments() {
   const [doctorAvailability, setDoctorAvailability] = useState<Availability[]>([]);
   const [specialEvents, setSpecialEvents] = useState<CalendarEvent[]>([]);
   const [availableDays, setAvailableDays] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize the doctor ID (in a real app, this would come from authentication)
   const doctorId = "00000000-0000-0000-0000-000000000000"; // Placeholder
@@ -141,6 +141,7 @@ export default function Appointments() {
   // Fetch doctor's availability
   useEffect(() => {
     const fetchDoctorAvailability = async () => {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from("doctor_availability")
@@ -150,6 +151,7 @@ export default function Appointments() {
 
         if (error) {
           console.error("Error fetching availability:", error);
+          toast.error("Erro ao carregar disponibilidade do médico");
           return;
         }
 
@@ -162,6 +164,9 @@ export default function Appointments() {
         }
       } catch (error) {
         console.error("Error:", error);
+        toast.error("Erro ao carregar disponibilidade do médico");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -171,6 +176,7 @@ export default function Appointments() {
   // Fetch special events
   useEffect(() => {
     const fetchSpecialEvents = async () => {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from("calendar_events")
@@ -179,6 +185,7 @@ export default function Appointments() {
 
         if (error) {
           console.error("Error fetching events:", error);
+          toast.error("Erro ao carregar eventos especiais");
           return;
         }
 
@@ -187,6 +194,9 @@ export default function Appointments() {
         }
       } catch (error) {
         console.error("Error:", error);
+        toast.error("Erro ao carregar eventos especiais");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -197,6 +207,7 @@ export default function Appointments() {
   useEffect(() => {
     if (selectedDate) {
       const fetchReservedTimes = async () => {
+        setIsLoading(true);
         const formattedDate = format(selectedDate, "yyyy-MM-dd");
         
         try {
@@ -208,6 +219,7 @@ export default function Appointments() {
 
           if (error) {
             console.error("Error fetching appointments:", error);
+            toast.error("Erro ao carregar horários reservados");
             return;
           }
 
@@ -217,8 +229,9 @@ export default function Appointments() {
           }
         } catch (error) {
           console.error("Error:", error);
-          // Fallback to mock data
-          setReservedTimes(["09:00", "14:00", "15:00"]);
+          toast.error("Erro ao carregar horários reservados");
+        } finally {
+          setIsLoading(false);
         }
       };
 
@@ -244,26 +257,73 @@ export default function Appointments() {
 
   // Function to handle form submission
   const onSubmit = async (data: FormValues) => {
-    // Here you would normally send this data to your backend
-    console.log("Appointment data:", data);
-    
+    setIsLoading(true);
     try {
-      // Try to insert into Supabase
-      const { error } = await supabase
+      // First, check if patient exists by email
+      let patientId;
+      const { data: existingPatients, error: patientError } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('email', data.email);
+        
+      if (patientError) {
+        console.error("Error checking patient:", patientError);
+        toast.error("Erro ao verificar paciente");
+        return;
+      }
+      
+      // If patient doesn't exist, create one
+      if (!existingPatients || existingPatients.length === 0) {
+        const { data: newPatient, error: createError } = await supabase
+          .from('patients')
+          .insert({
+            name: data.name,
+            email: data.email,
+            phone: data.phone
+          })
+          .select();
+          
+        if (createError) {
+          console.error("Error creating patient:", createError);
+          toast.error("Erro ao criar paciente");
+          return;
+        }
+        
+        patientId = newPatient[0].id;
+      } else {
+        patientId = existingPatients[0].id;
+        
+        // Update patient info
+        const { error: updateError } = await supabase
+          .from('patients')
+          .update({
+            name: data.name,
+            phone: data.phone
+          })
+          .eq('id', patientId);
+          
+        if (updateError) {
+          console.error("Error updating patient:", updateError);
+          toast.error("Erro ao atualizar paciente");
+          return;
+        }
+      }
+      
+      // Now create appointment
+      const { error: appointmentError } = await supabase
         .from('appointments')
         .insert({
           date: format(data.date, "yyyy-MM-dd"),
           time: data.time,
           type: data.type,
           status: "aguardando",
-          notes: data.notes,
-          payment_method: data.paymentMethod, // Add payment method to appointment
-          // In a real application, we would create or look up the patient first
-          patient_id: "00000000-0000-0000-0000-000000000000" // Placeholder patient ID
+          notes: data.notes || null,
+          payment_method: data.paymentMethod,
+          patient_id: patientId
         });
         
-      if (error) {
-        console.error("Error saving appointment:", error);
+      if (appointmentError) {
+        console.error("Error saving appointment:", appointmentError);
         toast.error("Erro ao agendar consulta");
         return;
       }
@@ -282,6 +342,8 @@ export default function Appointments() {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Erro ao agendar consulta");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -397,6 +459,14 @@ export default function Appointments() {
         </Button>
         <h1 className="text-2xl font-bold text-gray-800">Agendamento de Consultas</h1>
       </div>
+
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-md shadow-md">
+            <p className="text-gray-700">Carregando...</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left side - Calendar selection */}
@@ -671,8 +741,9 @@ export default function Appointments() {
                       )}
                     />
 
-                    <Button type="submit" className="w-full md:w-auto">
-                      <Check className="mr-2 h-4 w-4" /> Confirmar Agendamento
+                    <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
+                      <Check className="mr-2 h-4 w-4" /> 
+                      {isLoading ? "Processando..." : "Confirmar Agendamento"}
                     </Button>
                   </form>
                 </Form>

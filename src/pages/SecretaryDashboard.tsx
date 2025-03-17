@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, subDays, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,7 +22,6 @@ import { z } from "zod";
 import { Sidebar } from "@/components/Sidebar";
 import { supabase } from "@/integrations/supabase/client";
 
-// Types of appointments
 const APPOINTMENT_TYPES = [
   { id: "routine", name: "Consulta de Rotina" },
   { id: "followup", name: "Retorno" },
@@ -31,16 +29,27 @@ const APPOINTMENT_TYPES = [
   { id: "exam", name: "Resultado de Exame" }
 ];
 
-// Define more specific status type
 type AppointmentStatus = "confirmado" | "aguardando" | "cancelado";
 
-// Payment methods
 const PAYMENT_METHODS = [
   { id: "insurance", name: "Plano de Saúde" },
   { id: "private", name: "Particular" }
 ];
 
-// Mock data for appointments with corrected types
+interface AppointmentFromDB {
+  id: string;
+  date: string;
+  time: string;
+  type: string;
+  status: AppointmentStatus;
+  notes: string | null;
+  payment_method: string | null;
+  patient_id: string;
+  patients: {
+    name: string;
+  } | null;
+}
+
 const MOCK_APPOINTMENTS = [
   { id: 1, name: "João Silva", time: "09:00", type: "routine", status: "confirmado" as AppointmentStatus, notes: "", paymentMethod: "insurance" },
   { id: 2, name: "Maria Oliveira", time: "10:30", type: "followup", status: "confirmado" as AppointmentStatus, notes: "", paymentMethod: "private" },
@@ -49,7 +58,6 @@ const MOCK_APPOINTMENTS = [
   { id: 5, name: "Carlos Ferreira", time: "16:00", type: "routine", status: "cancelado" as AppointmentStatus, notes: "", paymentMethod: "private" }
 ];
 
-// Appointment schema
 const appointmentSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
@@ -62,7 +70,6 @@ const appointmentSchema = z.object({
 
 type Appointment = z.infer<typeof appointmentSchema>;
 
-// Doctor profile schema
 const doctorProfileSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   specialty: z.string().min(2, { message: "Especialidade é obrigatória" }),
@@ -75,7 +82,6 @@ const doctorProfileSchema = z.object({
 
 type DoctorProfile = z.infer<typeof doctorProfileSchema>;
 
-// Initial doctor profile
 const initialDoctorProfile: DoctorProfile = {
   name: "Dra. Ana Silva",
   specialty: "Clínico Geral",
@@ -92,17 +98,16 @@ export default function SecretaryDashboard() {
   const [view, setView] = useState<"day" | "week">("day");
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile>(initialDoctorProfile);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [isEditAppointmentOpen, setIsEditAppointmentOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize profile edit form
   const profileForm = useForm<DoctorProfile>({
     resolver: zodResolver(doctorProfileSchema),
     defaultValues: doctorProfile,
   });
-  
-  // Initialize appointment edit form
+
   const appointmentForm = useForm<Appointment>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
@@ -115,64 +120,90 @@ export default function SecretaryDashboard() {
     }
   });
 
-  // Reset appointment form when editing appointment changes
   useEffect(() => {
     if (editingAppointment) {
       appointmentForm.reset(editingAppointment);
     }
   }, [editingAppointment, appointmentForm]);
 
-  // Fetch appointments from Supabase
   useEffect(() => {
     const fetchAppointments = async () => {
+      setIsLoading(true);
       try {
-        const formattedDate = format(date, 'yyyy-MM-dd');
-        const { data, error } = await supabase
-          .from('appointments')
-          .select(`
-            id,
-            date,
-            time,
-            type,
-            status,
-            notes,
-            payment_method,
-            patients(name)
-          `)
-          .eq('date', formattedDate);
+        let query;
+        
+        if (view === "day") {
+          const formattedDate = format(date, 'yyyy-MM-dd');
+          query = supabase
+            .from('appointments')
+            .select(`
+              id,
+              date,
+              time,
+              type,
+              status,
+              notes,
+              payment_method,
+              patient_id,
+              patients(name)
+            `)
+            .eq('date', formattedDate);
+        } else if (view === "week") {
+          const startDate = format(startOfWeek(date, { weekStartsOn: 0 }), 'yyyy-MM-dd');
+          const endDate = format(endOfWeek(date, { weekStartsOn: 0 }), 'yyyy-MM-dd');
+          
+          query = supabase
+            .from('appointments')
+            .select(`
+              id,
+              date,
+              time,
+              type,
+              status,
+              notes,
+              payment_method,
+              patient_id,
+              patients(name)
+            `)
+            .gte('date', startDate)
+            .lte('date', endDate);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
           console.error('Error fetching appointments:', error);
+          toast.error("Erro ao carregar agendamentos");
           return;
         }
 
         if (data && data.length > 0) {
-          // Transform data to match our component format
-          const formattedAppointments = data.map(apt => ({
+          const formattedAppointments = data.map((apt: AppointmentFromDB) => ({
             id: Number(apt.id),
-            name: apt.patients?.name || 'Unknown',
+            name: apt.patients?.name || 'Paciente sem nome',
             time: apt.time.substring(0, 5),
             type: apt.type,
             status: apt.status as AppointmentStatus,
             notes: apt.notes || "",
-            paymentMethod: apt.payment_method || "insurance" // Map from Supabase field
+            paymentMethod: apt.payment_method || "insurance",
+            date: apt.date,
+            patient_id: apt.patient_id
           }));
           setAppointments(formattedAppointments);
         } else {
-          // If no appointments, use mock data for demo purposes
-          setAppointments(MOCK_APPOINTMENTS);
+          setAppointments([]);
         }
       } catch (error) {
         console.error('Error fetching appointments:', error);
-        // Fallback to mock data
-        setAppointments(MOCK_APPOINTMENTS);
+        toast.error("Erro ao carregar agendamentos");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchAppointments();
-  }, [date]);
+  }, [date, view]);
 
-  // Navigation functions for different views
   const navigatePrevious = () => {
     if (view === "day") {
       const newDate = subDays(date, 1);
@@ -183,7 +214,7 @@ export default function SecretaryDashboard() {
       setDate(newDate);
       const startDate = startOfWeek(newDate, { weekStartsOn: 0 });
       const endDate = endOfWeek(newDate, { weekStartsOn: 0 });
-      toast.info(`Visualizando semana de ${format(startDate, "dd/MM", { locale: ptBR })} a ${format(endDate, "dd/MM", { locale: ptBR })}`);
+      toast.info(`Visualizando semana de ${format(startDate, "dd/MM", { locale: ptBR })} a ${format(endDate, "dd/MM/yyyy", { locale: ptBR })}`);
     }
   };
 
@@ -207,7 +238,6 @@ export default function SecretaryDashboard() {
     toast.success("Visualizando hoje");
   };
 
-  // Get view range text
   const getViewRangeText = () => {
     if (view === "day") {
       return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -219,43 +249,60 @@ export default function SecretaryDashboard() {
     return "";
   };
 
-  // Handle profile update
   const onProfileSubmit = (data: DoctorProfile) => {
     setDoctorProfile(data);
     setIsEditProfileOpen(false);
     
-    // Save to localStorage for persistence across app
     localStorage.setItem('doctorProfile', JSON.stringify(data));
     
     toast.success("Perfil do médico atualizado com sucesso!");
   };
-  
-  // Handle appointment edit
+
   const handleEditAppointment = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setIsEditAppointmentOpen(true);
   };
-  
-  // Handle appointment update
+
   const onAppointmentSubmit = async (data: Appointment) => {
+    setIsLoading(true);
     try {
-      // In a real application, this would update the appointment in Supabase
-      // For example:
-      // const { error } = await supabase
-      //   .from('appointments')
-      //   .update({
-      //     status: data.status,
-      //     type: data.type,
-      //     notes: data.notes,
-      //     payment_method: data.paymentMethod
-      //   })
-      //   .eq('id', data.id);
+      const appointmentId = editingAppointment?.id;
       
-      // if (error) throw error;
+      if (!appointmentId) {
+        toast.error("ID do agendamento não encontrado");
+        return;
+      }
       
-      // For now, we'll just update the local state
+      const originalAppointment = appointments.find(app => app.id === appointmentId);
+      
+      if (!originalAppointment) {
+        toast.error("Agendamento original não encontrado");
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          time: data.time,
+          status: data.status,
+          type: data.type,
+          notes: data.notes,
+          payment_method: data.paymentMethod
+        })
+        .eq('id', appointmentId);
+      
+      if (error) {
+        console.error('Error updating appointment:', error);
+        toast.error("Erro ao atualizar consulta");
+        return;
+      }
+      
       setAppointments(appointments.map(app => 
-        app.id === data.id ? data : app
+        app.id === appointmentId ? {
+          ...data,
+          date: originalAppointment.date,
+          patient_id: originalAppointment.patient_id
+        } : app
       ));
       
       setIsEditAppointmentOpen(false);
@@ -265,10 +312,44 @@ export default function SecretaryDashboard() {
     } catch (error) {
       console.error('Error updating appointment:', error);
       toast.error("Erro ao atualizar consulta");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Get status badge class
+  const handleDeleteAppointment = async (appointmentId: number) => {
+    if (!confirm("Tem certeza que deseja cancelar este agendamento?")) {
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          status: 'cancelado'
+        })
+        .eq('id', appointmentId);
+      
+      if (error) {
+        console.error('Error canceling appointment:', error);
+        toast.error("Erro ao cancelar consulta");
+        return;
+      }
+      
+      setAppointments(appointments.map(app => 
+        app.id === appointmentId ? { ...app, status: 'cancelado' as AppointmentStatus } : app
+      ));
+      
+      toast.success("Consulta cancelada com sucesso!");
+    } catch (error) {
+      console.error('Error canceling appointment:', error);
+      toast.error("Erro ao cancelar consulta");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: AppointmentStatus) => {
     switch (status) {
       case "confirmado":
@@ -294,7 +375,6 @@ export default function SecretaryDashboard() {
     }
   };
 
-  // Get border color class based on status
   const getStatusBorderColor = (status: AppointmentStatus) => {
     switch (status) {
       case "confirmado":
@@ -308,7 +388,6 @@ export default function SecretaryDashboard() {
     }
   };
 
-  // Get background color class based on status for week view
   const getStatusBackgroundColor = (status: AppointmentStatus) => {
     switch (status) {
       case "confirmado":
@@ -322,25 +401,20 @@ export default function SecretaryDashboard() {
     }
   };
 
-  // Filter appointments for the current day
   const getDayAppointments = () => {
-    // In a real application, filter from backend based on date
     return appointments;
   };
 
-  // Get appointment type label
   const getAppointmentTypeLabel = (typeId: string) => {
     const type = APPOINTMENT_TYPES.find(t => t.id === typeId);
     return type ? type.name : typeId;
   };
 
-  // Get payment method label
   const getPaymentMethodLabel = (methodId: string) => {
     const method = PAYMENT_METHODS.find(m => m.id === methodId);
     return method ? method.name : methodId;
   };
 
-  // Get statistics for appointments
   const getStatistics = () => {
     const total = appointments.length;
     const confirmed = appointments.filter(app => app.status === "confirmado").length;
@@ -350,7 +424,6 @@ export default function SecretaryDashboard() {
     return { total, confirmed, pending, cancelled };
   };
 
-  // Render the statistics section
   const renderStatistics = () => {
     const stats = getStatistics();
     
@@ -379,9 +452,26 @@ export default function SecretaryDashboard() {
     );
   };
 
-  // Render the appointments for day view
   const renderDayView = () => {
     const dayAppointments = getDayAppointments();
+    
+    if (isLoading) {
+      return (
+        <div className="text-center py-10">
+          <p className="text-gray-500">Carregando agendamentos...</p>
+        </div>
+      );
+    }
+    
+    if (dayAppointments.length === 0) {
+      return (
+        <div className="text-center py-10 text-gray-500">
+          <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+          <h3 className="text-lg font-medium mb-1">Nenhum agendamento</h3>
+          <p className="text-sm">Não há agendamentos para esta data.</p>
+        </div>
+      );
+    }
     
     return (
       <div className="space-y-4">
@@ -408,9 +498,21 @@ export default function SecretaryDashboard() {
                     size="sm" 
                     className="h-8 px-2"
                     onClick={() => handleEditAppointment(appointment)}
+                    disabled={appointment.status === "cancelado" || isLoading}
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
+                  {appointment.status !== "cancelado" && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 px-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => handleDeleteAppointment(appointment.id)}
+                      disabled={isLoading}
+                    >
+                      <XCircle className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -420,7 +522,6 @@ export default function SecretaryDashboard() {
     );
   };
 
-  // Render the appointments for week view
   const renderWeekView = () => {
     const daysOfWeek = [];
     const weekStart = startOfWeek(date, { weekStartsOn: 0 });
@@ -430,51 +531,87 @@ export default function SecretaryDashboard() {
       daysOfWeek.push(day);
     }
     
+    if (isLoading) {
+      return (
+        <div className="text-center py-10">
+          <p className="text-gray-500">Carregando agendamentos...</p>
+        </div>
+      );
+    }
+    
     return (
       <div className="grid grid-cols-7 gap-4 h-[600px]">
-        {daysOfWeek.map((day, index) => (
-          <div key={index} className="border rounded-md overflow-hidden h-full">
-            <div className={`p-2 text-center ${isSameDay(day, new Date()) ? 'bg-blue-100' : 'bg-gray-50'}`}>
-              <div className="text-xs text-gray-500">{format(day, 'EEE', { locale: ptBR })}</div>
-              <div className="font-semibold">{format(day, 'dd')}</div>
+        {daysOfWeek.map((day, index) => {
+          const formattedDate = format(day, 'yyyy-MM-dd');
+          const dayAppointments = appointments.filter(apt => 
+            apt.date === formattedDate
+          );
+          
+          return (
+            <div key={index} className="border rounded-md overflow-hidden h-full">
+              <div className={`p-2 text-center ${isSameDay(day, new Date()) ? 'bg-blue-100' : 'bg-gray-50'}`}>
+                <div className="text-xs text-gray-500">{format(day, 'EEE', { locale: ptBR })}</div>
+                <div className="font-semibold">{format(day, 'dd')}</div>
+              </div>
+              <div className="p-2 space-y-2 text-xs overflow-y-auto max-h-[540px]">
+                {dayAppointments.length === 0 ? (
+                  <div className="text-center py-4 text-gray-400 text-xs">
+                    Sem agendamentos
+                  </div>
+                ) : (
+                  dayAppointments.map((apt) => (
+                    <div 
+                      key={apt.id} 
+                      className={`${getStatusBackgroundColor(apt.status)} p-2 rounded relative group`}
+                    >
+                      <div className="font-semibold">{apt.time} - {apt.name}</div>
+                      <div className="text-gray-500">{getAppointmentTypeLabel(apt.type)}</div>
+                      
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-5 w-5"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditAppointment(apt);
+                          }}
+                          disabled={apt.status === "cancelado" || isLoading}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        
+                        {apt.status !== "cancelado" && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-5 w-5 text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteAppointment(apt.id);
+                            }}
+                            disabled={isLoading}
+                          >
+                            <XCircle className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-            <div className="p-2 space-y-2 text-xs">
-              {/* In a real app, filter appointments for each day */}
-              {index < 5 && appointments.slice(0, 2).map((apt, i) => (
-                <div 
-                  key={i} 
-                  className={`${getStatusBackgroundColor(apt.status)} p-2 rounded relative group`}
-                >
-                  <div className="font-semibold">{apt.time} - {apt.name}</div>
-                  <div className="text-gray-500">{getAppointmentTypeLabel(apt.type)}</div>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-5 w-5 absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditAppointment(apt);
-                    }}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
 
-  // Function to handle navigation to calendar view
   const handleNavigateToCalendar = () => {
     navigate("/agendamentos");
     toast.info("Navegando para a tela de agendamentos");
   };
 
-  // Function to handle navigation to schedule management
   const handleNavigateToScheduleManagement = () => {
     navigate("/agenda");
     toast.info("Navegando para a tela de gerenciamento de agenda");
@@ -487,7 +624,6 @@ export default function SecretaryDashboard() {
           <h1 className="text-2xl font-bold text-gray-800 mb-8">Painel da Secretária</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left sidebar - Unified card with doctor profile and navigation */}
             <div className="lg:col-span-3 space-y-6">
               <Card>
                 <CardHeader className="pb-0 text-center">
@@ -633,7 +769,6 @@ export default function SecretaryDashboard() {
               </Card>
             </div>
 
-            {/* Main content - Calendar views */}
             <div className="lg:col-span-9">
               <Card className="h-full">
                 <CardHeader className="pb-2 flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
@@ -647,20 +782,19 @@ export default function SecretaryDashboard() {
                     </CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={navigatePrevious}>
+                    <Button variant="outline" size="sm" onClick={navigatePrevious} disabled={isLoading}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={navigateToday}>
+                    <Button variant="outline" size="sm" onClick={navigateToday} disabled={isLoading}>
                       Hoje
                     </Button>
-                    <Button variant="outline" size="sm" onClick={navigateNext}>
+                    <Button variant="outline" size="sm" onClick={navigateNext} disabled={isLoading}>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardHeader>
                 
                 <CardContent>
-                  {/* Statistics section at the top of the calendar */}
                   {renderStatistics()}
                   
                   <Tabs defaultValue="day" value={view} onValueChange={(v) => setView(v as "day" | "week")}>
@@ -684,7 +818,6 @@ export default function SecretaryDashboard() {
         </div>
       </div>
 
-      {/* Edit Appointment Sheet */}
       <Sheet open={isEditAppointmentOpen} onOpenChange={setIsEditAppointmentOpen}>
         <SheetContent className="sm:max-w-md">
           <SheetHeader>
@@ -701,7 +834,7 @@ export default function SecretaryDashboard() {
                     <FormItem>
                       <FormLabel>Nome do Paciente</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} disabled />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -826,7 +959,9 @@ export default function SecretaryDashboard() {
                 />
                 
                 <SheetFooter>
-                  <Button type="submit">Salvar Alterações</Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
                 </SheetFooter>
               </form>
             </Form>
