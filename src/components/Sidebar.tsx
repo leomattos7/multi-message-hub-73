@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -7,6 +8,9 @@ import {
   Inbox,
   Menu,
   X,
+  User,
+  Briefcase,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,19 +25,19 @@ const sidebarItems = [
     icon: <Inbox />,
   },
   {
-    name: "Secretária",
+    name: "Agenda",
     href: "/secretaria",
-    icon: <CalendarCheck2 />,
+    icon: <Calendar />,
   },
   {
     name: "Pacientes",
     href: "/pacientes",
-    icon: <Users />,
+    icon: <User />,
   },
   {
     name: "Funcionários",
     href: "/funcionarios",
-    icon: <Users />,
+    icon: <Briefcase />,
   },
 ];
 
