@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -83,9 +84,39 @@ function App() {
               </AuthGuard>
             } />
             
-            <Route path="/prontuarios" element={<MedicalRecords />} />
-            <Route path="/prontuarios/:id" element={<MedicalRecordDetail />} />
-            <Route path="/prontuarios/paciente/:patientId" element={<PatientMedicalRecords />} />
+            {/* Medical Records routes with sidebar */}
+            <Route path="/prontuarios" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <MedicalRecords />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/prontuarios/:id" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <MedicalRecordDetail />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/prontuarios/paciente/:patientId" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <PatientMedicalRecords />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
             
             <Route path="/gestao-agenda" element={
               <AuthGuard>
