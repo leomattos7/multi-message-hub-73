@@ -40,13 +40,13 @@ export function ProfileEditForm({ doctorId, initialProfile, onProfileUpdate }: P
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <BasicInfoFields form={form} />
-            
-            {/* Consultation duration fields */}
-            <div className="my-6">
+            {/* Consultation duration fields - moved to the top */}
+            <div className="mb-6">
               <h3 className="text-lg font-medium mb-4">Duração das Consultas</h3>
               <ConsultationDurationFields form={form} />
             </div>
+            
+            <BasicInfoFields form={form} />
             
             <BioField form={form} />
 
