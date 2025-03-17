@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { UserPlus, Trash2, Mail, UserCircle } from "lucide-react";
+import { UserPlus, Trash2, Mail, UserCircle, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const employeeFormSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
@@ -26,27 +27,17 @@ interface Employee {
   email: string;
   role: string;
   status: "active" | "inactive";
-  dateAdded: string;
+  date_added: string;
 }
-
-// Mock initial employee data
-const initialEmployees: Employee[] = [
-  {
-    id: "emp-1",
-    name: "Amanda Costa",
-    email: "amanda.costa@exemplo.com",
-    role: "Secretária",
-    status: "active",
-    dateAdded: "2023-10-15",
-  },
-];
 
 export default function EmployeeManagement() {
   const navigate = useNavigate();
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
@@ -57,20 +48,131 @@ export default function EmployeeManagement() {
     },
   });
 
-  const onAddEmployee = (data: EmployeeFormValues) => {
-    const newEmployee: Employee = {
-      id: "emp-" + Math.random().toString(36).substr(2, 9),
-      name: data.name,
-      email: data.email,
-      role: data.role,
-      status: "active",
-      dateAdded: new Date().toISOString().split('T')[0],
-    };
-    
-    setEmployees([...employees, newEmployee]);
-    toast.success(`${data.name} adicionado(a) como ${data.role}`);
-    setIsAddDialogOpen(false);
-    form.reset();
+  const editForm = useForm<EmployeeFormValues>({
+    resolver: zodResolver(employeeFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      role: "",
+    },
+  });
+
+  // Load employees on component mount
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("*")
+        .order("name");
+
+      if (error) {
+        throw error;
+      }
+
+      // Convert database format to our Employee interface
+      const fetchedEmployees = data.map((emp) => ({
+        id: emp.id,
+        name: emp.name,
+        email: emp.email,
+        role: emp.role,
+        status: emp.status as "active" | "inactive",
+        date_added: new Date(emp.date_added).toISOString().split('T')[0],
+      }));
+
+      setEmployees(fetchedEmployees);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+      toast.error("Erro ao carregar funcionários");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onAddEmployee = async (data: EmployeeFormValues) => {
+    try {
+      // Insert new employee to Supabase
+      const { data: newEmployee, error } = await supabase
+        .from("employees")
+        .insert([
+          {
+            name: data.name,
+            email: data.email,
+            role: data.role,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Format for our UI
+      const formattedEmployee: Employee = {
+        id: newEmployee.id,
+        name: newEmployee.name,
+        email: newEmployee.email,
+        role: newEmployee.role,
+        status: newEmployee.status as "active" | "inactive",
+        date_added: new Date(newEmployee.date_added).toISOString().split('T')[0],
+      };
+
+      setEmployees([...employees, formattedEmployee]);
+      toast.success(`${data.name} adicionado(a) como ${data.role}`);
+      setIsAddDialogOpen(false);
+      form.reset();
+    } catch (error) {
+      console.error("Error adding employee:", error);
+      toast.error("Erro ao adicionar funcionário");
+    }
+  };
+
+  const openEditDialog = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    editForm.reset({
+      name: employee.name,
+      email: employee.email,
+      role: employee.role,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const onEditEmployee = async (data: EmployeeFormValues) => {
+    if (!selectedEmployee) return;
+
+    try {
+      // Update employee in Supabase
+      const { error } = await supabase
+        .from("employees")
+        .update({
+          name: data.name,
+          email: data.email,
+          role: data.role,
+        })
+        .eq('id', selectedEmployee.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setEmployees(employees.map(emp => 
+        emp.id === selectedEmployee.id 
+          ? { ...emp, name: data.name, email: data.email, role: data.role }
+          : emp
+      ));
+
+      toast.success(`${data.name} atualizado(a) com sucesso`);
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      toast.error("Erro ao atualizar funcionário");
+    }
   };
 
   const openRemoveDialog = (employee: Employee) => {
@@ -78,11 +180,27 @@ export default function EmployeeManagement() {
     setIsRemoveDialogOpen(true);
   };
 
-  const removeEmployee = () => {
+  const removeEmployee = async () => {
     if (selectedEmployee) {
-      setEmployees(employees.filter(emp => emp.id !== selectedEmployee.id));
-      toast.success(`${selectedEmployee.name} removido(a) com sucesso`);
-      setIsRemoveDialogOpen(false);
+      try {
+        // Delete from Supabase
+        const { error } = await supabase
+          .from("employees")
+          .delete()
+          .eq('id', selectedEmployee.id);
+
+        if (error) {
+          throw error;
+        }
+
+        // Update local state
+        setEmployees(employees.filter(emp => emp.id !== selectedEmployee.id));
+        toast.success(`${selectedEmployee.name} removido(a) com sucesso`);
+        setIsRemoveDialogOpen(false);
+      } catch (error) {
+        console.error("Error removing employee:", error);
+        toast.error("Erro ao remover funcionário");
+      }
     }
   };
 
@@ -117,7 +235,11 @@ export default function EmployeeManagement() {
             <CardTitle>Funcionários</CardTitle>
           </CardHeader>
           <CardContent>
-            {employees.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Carregando funcionários...
+              </div>
+            ) : employees.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Nenhum funcionário adicionado ainda
               </div>
@@ -141,14 +263,24 @@ export default function EmployeeManagement() {
                       <span className="text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">
                         {employee.role}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openRemoveDialog(employee)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditDialog(employee)}
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openRemoveDialog(employee)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -215,6 +347,69 @@ export default function EmployeeManagement() {
                   <Button variant="outline" type="button">Cancelar</Button>
                 </DialogClose>
                 <Button type="submit">Adicionar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Funcionário</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do funcionário.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditEmployee)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome do funcionário" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input placeholder="email@exemplo.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cargo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Cargo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">Cancelar</Button>
+                </DialogClose>
+                <Button type="submit">Salvar Alterações</Button>
               </DialogFooter>
             </form>
           </Form>

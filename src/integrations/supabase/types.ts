@@ -157,6 +157,33 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          date_added: string
+          email: string
+          id: string
+          name: string
+          role: string
+          status: string
+        }
+        Insert: {
+          date_added?: string
+          email: string
+          id?: string
+          name: string
+          role: string
+          status?: string
+        }
+        Update: {
+          date_added?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+          status?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
