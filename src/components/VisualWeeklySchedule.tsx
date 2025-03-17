@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Lock, Check } from "lucide-react";
+import { Lock, Check, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -33,11 +33,6 @@ const generateTimeSlots = () => {
   return slots;
 };
 
-// Format time slot for display
-const formatTimeSlot = (time: string) => {
-  return time.substring(0, 5);
-};
-
 export function VisualWeeklySchedule({
   doctorId,
   weeklyAvailability,
@@ -60,38 +55,33 @@ export function VisualWeeklySchedule({
   // Generate time slots
   const timeSlots = generateTimeSlots();
 
-  // Find availability entry for a given day and time
-  const findAvailabilityEntry = (dayOfWeek: number, timeSlot: string): Availability | undefined => {
-    return weeklyAvailability.find(
+  // Helper function to check if a time slot is available or blocked
+  const getSlotStatus = (dayOfWeek: number, timeSlot: string): 'available' | 'blocked' | 'undefined' => {
+    const availabilityEntry = weeklyAvailability.find(
+      avail => 
+        avail.day_of_week === dayOfWeek && 
+        avail.start_time === timeSlot
+    );
+    
+    if (!availabilityEntry) return 'undefined';
+    return availabilityEntry.is_available ? 'available' : 'blocked';
+  };
+  
+  // Handle click on a cell to toggle availability
+  const handleCellClick = (dayOfWeek: number, timeSlot: string) => {
+    // Create a deep copy of the current availability
+    const updatedAvailability = [...weeklyAvailability];
+    
+    // Find the existing entry if it exists
+    const existingEntryIndex = updatedAvailability.findIndex(
       avail => avail.day_of_week === dayOfWeek && avail.start_time === timeSlot
     );
-  };
-  
-  // Check if a time slot is available or blocked for a specific day
-  const getTimeSlotStatus = (dayOfWeek: number, timeSlot: string): 'available' | 'blocked' | 'undefined' => {
-    const slot = findAvailabilityEntry(dayOfWeek, timeSlot);
     
-    if (!slot) return 'undefined';
-    return slot.is_available ? 'available' : 'blocked';
-  };
-  
-  // Handle cell click to toggle status
-  const handleCellClick = (dayOfWeek: number, timeSlot: string) => {
-    // First, get the current availability state for this cell
-    const currentStatus = getTimeSlotStatus(dayOfWeek, timeSlot);
+    // Current status of the cell
+    const currentStatus = getSlotStatus(dayOfWeek, timeSlot);
     
-    // Create a copy of the current availability array
-    let updatedAvailability = [...weeklyAvailability];
-    
-    // Find the existing entry for this cell if it exists
-    const existingEntry = findAvailabilityEntry(dayOfWeek, timeSlot);
-    const existingEntryIndex = existingEntry ? 
-      updatedAvailability.findIndex(a => a.id === existingEntry.id) : -1;
-    
-    // Determine the new status based on the current status
-    // If current status is available -> make it blocked
-    // If current status is blocked or undefined -> make it available
-    const newIsAvailable = currentStatus === 'available' ? false : true;
+    // New availability status - toggle the current status
+    const newIsAvailable = currentStatus !== 'available';
     
     if (existingEntryIndex >= 0) {
       // Update existing entry
@@ -101,34 +91,37 @@ export function VisualWeeklySchedule({
       };
     } else {
       // Create new entry
-      const newEntry: Availability = {
+      updatedAvailability.push({
         doctor_id: doctorId,
         day_of_week: dayOfWeek,
         start_time: timeSlot,
-        end_time: timeSlot.replace("00", "59"), // End at XX:59
-        is_available: newIsAvailable,
-      };
-      
-      updatedAvailability.push(newEntry);
+        end_time: timeSlot.replace(":00", ":59"), // End at XX:59
+        is_available: newIsAvailable
+      });
     }
     
-    // Apply changes and show notification
+    // Apply changes
     onAvailabilityChange(updatedAvailability);
     
-    toast.success(
-      newIsAvailable 
-        ? `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} disponibilizado` 
-        : `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} bloqueado`
-    );
+    // Show notification
+    const dayName = daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName || '';
+    if (newIsAvailable) {
+      toast.success(`Horário ${timeSlot} de ${dayName} disponibilizado`);
+    } else {
+      toast.success(`Horário ${timeSlot} de ${dayName} bloqueado`);
+    }
   };
   
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-auto">
         <div className="min-w-[900px]">
-          <div className="grid grid-cols-[100px_repeat(7,1fr)] gap-[1px] bg-gray-200 border border-gray-200 rounded-lg">
+          <div className="grid grid-cols-[100px_repeat(7,1fr)] gap-[1px] bg-gray-200 border border-gray-200 rounded-lg shadow-sm">
             {/* Header row with days of the week */}
-            <div className="bg-white p-2 font-semibold flex items-center justify-center">Horário</div>
+            <div className="bg-white p-2 font-semibold flex items-center justify-center">
+              <Calendar className="h-4 w-4 mr-2" />
+              Horário
+            </div>
             {daysOfWeek.map((day) => (
               <div 
                 key={day.dayOfWeek} 
@@ -145,11 +138,11 @@ export function VisualWeeklySchedule({
             {timeSlots.map((timeSlot) => (
               <React.Fragment key={timeSlot}>
                 <div className="bg-white p-2 text-center border-t border-gray-100 flex items-center justify-center">
-                  {formatTimeSlot(timeSlot)}
+                  {timeSlot}
                 </div>
                 
                 {daysOfWeek.map((day) => {
-                  const status = getTimeSlotStatus(day.dayOfWeek, timeSlot);
+                  const status = getSlotStatus(day.dayOfWeek, timeSlot);
                   const cellId = `${day.dayOfWeek}-${timeSlot}`;
                   
                   return (
@@ -159,11 +152,11 @@ export function VisualWeeklySchedule({
                           <div 
                             className={cn(
                               "border-t border-gray-100 cursor-pointer transition-colors h-12 flex items-center justify-center",
-                              status === 'blocked' ? "bg-red-600" : "",
-                              status === 'available' ? "bg-green-600" : "",
-                              status === 'undefined' ? "bg-white" : "",
-                              day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-opacity-80" : "",
-                              hoveredCell === cellId ? "opacity-80" : "",
+                              status === 'blocked' ? "bg-red-500 hover:bg-red-600" : "",
+                              status === 'available' ? "bg-green-500 hover:bg-green-600" : "",
+                              status === 'undefined' ? "bg-white hover:bg-gray-100" : "",
+                              day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-opacity-90" : "",
+                              hoveredCell === cellId ? "ring-2 ring-offset-1 ring-blue-400" : "",
                             )}
                             onClick={() => handleCellClick(day.dayOfWeek, timeSlot)}
                             onMouseEnter={() => setHoveredCell(cellId)}
@@ -192,8 +185,19 @@ export function VisualWeeklySchedule({
         </div>
       </div>
       
-      <div className="mt-4 text-sm text-gray-500">
-        <p>Clique para alternar entre disponível (verde) e bloqueado (vermelho)</p>
+      <div className="flex mt-4 gap-4 text-sm">
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-green-500 rounded-sm mr-2"></div>
+          <span>Disponível</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-red-500 rounded-sm mr-2"></div>
+          <span>Bloqueado</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-white border border-gray-200 rounded-sm mr-2"></div>
+          <span>Não definido (clique para configurar)</span>
+        </div>
       </div>
     </div>
   );
