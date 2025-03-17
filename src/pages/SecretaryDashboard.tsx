@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -275,6 +277,45 @@ export default function SecretaryDashboard() {
     return type ? type.name : typeId;
   };
 
+  // Get statistics for appointments
+  const getStatistics = () => {
+    const total = appointments.length;
+    const confirmed = appointments.filter(app => app.status === "confirmado").length;
+    const pending = appointments.filter(app => app.status === "aguardando").length;
+    const cancelled = appointments.filter(app => app.status === "cancelado").length;
+    
+    return { total, confirmed, pending, cancelled };
+  };
+
+  // Render the statistics section
+  const renderStatistics = () => {
+    const stats = getStatistics();
+    
+    return (
+      <div className="mb-6">
+        <h3 className="text-base font-medium mb-3">Estatísticas</h3>
+        <div className="grid grid-cols-4 gap-4">
+          <div className="bg-blue-50 p-4 rounded-md text-center">
+            <p className="text-sm text-gray-500">Consultas Hoje</p>
+            <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+          </div>
+          <div className="bg-emerald-50 p-4 rounded-md text-center">
+            <p className="text-sm text-gray-500">Confirmadas</p>
+            <p className="text-2xl font-bold text-emerald-600">{stats.confirmed}</p>
+          </div>
+          <div className="bg-amber-50 p-4 rounded-md text-center">
+            <p className="text-sm text-gray-500">Aguardando</p>
+            <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
+          </div>
+          <div className="bg-red-50 p-4 rounded-md text-center">
+            <p className="text-sm text-gray-500">Canceladas</p>
+            <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Render the appointments for day view
   const renderDayView = () => {
     const dayAppointments = getDayAppointments();
@@ -504,32 +545,6 @@ export default function SecretaryDashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl">Estatísticas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-blue-50 p-3 rounded-md">
-                      <p className="text-sm text-gray-500">Consultas Hoje</p>
-                      <p className="text-2xl font-bold text-blue-600">5</p>
-                    </div>
-                    <div className="bg-emerald-50 p-3 rounded-md">
-                      <p className="text-sm text-gray-500">Confirmadas</p>
-                      <p className="text-2xl font-bold text-emerald-600">3</p>
-                    </div>
-                    <div className="bg-amber-50 p-3 rounded-md">
-                      <p className="text-sm text-gray-500">Aguardando</p>
-                      <p className="text-2xl font-bold text-amber-600">1</p>
-                    </div>
-                    <div className="bg-red-50 p-3 rounded-md">
-                      <p className="text-sm text-gray-500">Canceladas</p>
-                      <p className="text-2xl font-bold text-red-600">1</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Main content - Calendar views */}
@@ -559,6 +574,9 @@ export default function SecretaryDashboard() {
                 </CardHeader>
                 
                 <CardContent>
+                  {/* Statistics section at the top of the calendar */}
+                  {renderStatistics()}
+                  
                   <Tabs defaultValue="day" value={view} onValueChange={(v) => setView(v as "day" | "week")}>
                     <TabsList className="mb-4">
                       <TabsTrigger value="day">Dia</TabsTrigger>
