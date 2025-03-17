@@ -14,6 +14,7 @@ import { Avatar } from '@/components/Avatar';
 import { LinksManager } from './LinksManager';
 import { DoctorProfile, ProfileTheme, ThemeOption } from './types';
 import { Loader2, LinkIcon, Palette, User, Mail, Phone, MapPin } from 'lucide-react';
+import { toast as sonnerToast } from 'sonner';
 
 const themeOptions: ThemeOption[] = [
   { value: 'default', label: 'Padrão', previewClass: 'bg-primary text-primary-foreground' },
@@ -57,6 +58,7 @@ export const ProfileManager: React.FC = () => {
     
     try {
       setLoading(true);
+      // Use user.id directly without checking format, the service will handle this
       console.log("Loading profile for user ID:", user.id);
       const profileData = await doctorProfileService.getProfileByDoctorId(user.id);
       console.log("Profile data received:", profileData);
