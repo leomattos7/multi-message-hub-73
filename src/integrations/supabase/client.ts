@@ -243,8 +243,8 @@ export const doctorProfileService = {
     
     // Check if the ID is not in UUID format (contains 'user-' prefix)
     if (doctorId.includes('user-')) {
-      // Use a properly typed approach to call the RPC function
-      const { data: uuidResult } = await supabase.rpc('generate_uuid_v4', {}) as unknown as { data: string, error: null | { message: string } };
+      // Fix the type error using a cast with no parameters for the RPC call
+      const { data: uuidResult } = await supabase.rpc('generate_uuid_v4') as unknown as { data: string };
       if (uuidResult) {
         profileId = uuidResult;
       } else {
