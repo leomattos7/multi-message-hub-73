@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,138 +21,123 @@ import DoctorLinkTree from "./pages/DoctorLinkTree";
 import PublicDoctorProfile from "./pages/PublicDoctorProfile";
 import MedicalRecords from "./pages/MedicalRecords";
 import MedicalRecordDetail from "./pages/MedicalRecordDetail";
+import PatientMedicalRecords from "./pages/PatientMedicalRecords";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Public routes - no sidebar */}
-          <Route path="/login" element={<SignIn />} />
-          <Route path="/cadastro" element={<SignUp />} />
-          <Route path="/d/:slug" element={<PublicDoctorProfile />} />
-          
-          {/* Protected routes with sidebar */}
-          <Route path="/" element={
-            <AuthGuard>
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
-                  <Index />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/agendamentos" element={
-            <AuthGuard>
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
-                  <Appointments />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/secretaria" element={
-            <AuthGuard>
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
-                  <SecretaryDashboard />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/pacientes" element={
-            <AuthGuard>
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
-                  <PatientCRM />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/prontuarios" element={
-            <AuthGuard>
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
-                  <MedicalRecords />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/prontuarios/:id" element={
-            <AuthGuard>
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
-                  <MedicalRecordDetail />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/gestao-agenda" element={
-            <AuthGuard>
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
-                  <ScheduleManagementSecretary />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/agenda" element={
-            <AuthGuard requiredRole="doctor">
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
-                  <ScheduleManagement />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/funcionarios" element={
-            <AuthGuard requiredRole="doctor">
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">
-                  <EmployeeManagement />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          <Route path="/linktree" element={
-            <AuthGuard>
-              <div className="flex h-screen w-full overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">
-                  <DoctorLinkTree />
-                </main>
-              </div>
-            </AuthGuard>
-          } />
-          
-          {/* Redirect to login if not authenticated */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes - no sidebar */}
+            <Route path="/login" element={<SignIn />} />
+            <Route path="/cadastro" element={<SignUp />} />
+            <Route path="/d/:slug" element={<PublicDoctorProfile />} />
+            
+            {/* Protected routes with sidebar */}
+            <Route path="/" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <Index />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/agendamentos" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <Appointments />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/secretaria" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <SecretaryDashboard />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/pacientes" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <PatientCRM />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/prontuarios" element={<MedicalRecords />} />
+            <Route path="/prontuarios/:id" element={<MedicalRecordDetail />} />
+            <Route path="/prontuarios/paciente/:patientId" element={<PatientMedicalRecords />} />
+            
+            <Route path="/gestao-agenda" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <ScheduleManagementSecretary />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/agenda" element={
+              <AuthGuard requiredRole="doctor">
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <ScheduleManagement />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/funcionarios" element={
+              <AuthGuard requiredRole="doctor">
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">
+                    <EmployeeManagement />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/linktree" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">
+                    <DoctorLinkTree />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            {/* Redirect to login if not authenticated */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
