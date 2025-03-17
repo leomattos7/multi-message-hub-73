@@ -1,9 +1,6 @@
 
 import { useRef, useEffect, useState } from "react";
 import { 
-  Phone, 
-  Info, 
-  Calendar,
   ChevronLeft,
   TagIcon
 } from "lucide-react";
@@ -80,13 +77,6 @@ export function ConversationView({
     
     toast({
       description: "Mensagem enviada com sucesso",
-    });
-  };
-
-  const handleSchedule = () => {
-    toast({
-      title: "Agendar Consulta",
-      description: "Funcionalidade de agendamento será implementada em breve.",
     });
   };
 
@@ -171,15 +161,6 @@ export function ConversationView({
             onClick={() => setShowTagManager(!showTagManager)}
           >
             <TagIcon className="h-5 w-5" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleSchedule}>
-            <Calendar className="h-5 w-5" />
-          </Button>
-          <Button variant="outline" size="icon">
-            <Phone className="h-5 w-5" />
-          </Button>
-          <Button variant="outline" size="icon">
-            <Info className="h-5 w-5" />
           </Button>
         </div>
       </div>
