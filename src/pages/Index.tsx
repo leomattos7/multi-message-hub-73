@@ -1,12 +1,11 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MessageCircle, Plus, Calendar, UserCog } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { Sidebar } from "@/components/Sidebar";
 import { mockConversations, Conversation } from "@/data/mockData";
-import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Index() {
@@ -35,21 +34,6 @@ export default function Index() {
           <div className="w-full md:w-80 border-r flex flex-col">
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="font-semibold text-lg">Mensagens</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" asChild>
-                  <Link to="/agendamentos">
-                    <Calendar className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button variant="outline" size="icon" asChild>
-                  <Link to="/secretaria">
-                    <UserCog className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button variant="outline" size="icon">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
             <ConversationList 
               onSelectConversation={handleSelectConversation}
