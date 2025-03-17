@@ -285,66 +285,70 @@ export default function ScheduleManagement() {
   // Handle updating weekly availability from visual component
   const handleAvailabilityChange = async (updatedAvailability: Availability[]) => {
     try {
-      // Find the new or removed availability by comparing with the current state
-      const newAvailability = updatedAvailability.find(
-        newAvail => !newAvail.id && !weeklyAvailability.some(
-          oldAvail => 
-            oldAvail.day_of_week === newAvail.day_of_week && 
-            oldAvail.start_time === newAvail.start_time
+      console.log("Handling availability change:", updatedAvailability);
+      
+      // Find entries that need to be added to the database (those without an ID)
+      const newEntries = updatedAvailability.filter(avail => !avail.id);
+      
+      // Find entries that need to be removed (in current state but not in updated state)
+      const removedEntries = weeklyAvailability.filter(
+        oldAvail => !updatedAvailability.some(
+          newAvail => newAvail.id === oldAvail.id
         )
       );
       
-      const removedAvailabilityId = weeklyAvailability.find(
-        oldAvail => !updatedAvailability.some(
-          newAvail => 
-            (newAvail.id && newAvail.id === oldAvail.id) || 
-            (newAvail.day_of_week === oldAvail.day_of_week && 
-             newAvail.start_time === oldAvail.start_time)
-        )
-      )?.id;
+      console.log("New entries to add:", newEntries);
+      console.log("Entries to remove:", removedEntries);
       
-      // Process the change
-      if (newAvailability) {
-        // Insert the new availability
-        const { data, error } = await supabase
+      // Insert new entries
+      if (newEntries.length > 0) {
+        const { data: insertedData, error: insertError } = await supabase
           .from("doctor_availability")
-          .insert(newAvailability)
+          .insert(newEntries)
           .select();
           
-        if (error) {
-          console.error("Error updating availability:", error);
+        if (insertError) {
+          console.error("Error inserting availability:", insertError);
           toast.error("Erro ao atualizar disponibilidade");
           return;
         }
         
-        if (data) {
-          // Update the ID in our state
-          const finalUpdatedAvailability = updatedAvailability.map(
-            avail => avail === newAvailability ? data[0] : avail
-          );
-          
-          setWeeklyAvailability(finalUpdatedAvailability);
-        }
-      } else if (removedAvailabilityId) {
-        // Delete the removed availability
-        const { error } = await supabase
-          .from("doctor_availability")
-          .delete()
-          .eq("id", removedAvailabilityId);
-          
-        if (error) {
-          console.error("Error deleting availability:", error);
-          toast.error("Erro ao remover disponibilidade");
-          return;
-        }
+        console.log("Inserted data:", insertedData);
         
-        setWeeklyAvailability(updatedAvailability);
+        // Update the entries with their new IDs
+        const finalAvailability = updatedAvailability.map(
+          avail => newEntries.includes(avail) && insertedData 
+            ? insertedData.find(inserted => 
+                inserted.day_of_week === avail.day_of_week && 
+                inserted.start_time === avail.start_time
+              ) || avail
+            : avail
+        );
+        
+        // Set the updated availability with the new IDs
+        setWeeklyAvailability(finalAvailability);
       } else {
-        // Just update the state
+        // If no new entries, just remove the deleted ones
         setWeeklyAvailability(updatedAvailability);
       }
+      
+      // Delete removed entries
+      for (const entry of removedEntries) {
+        if (entry.id) {
+          const { error: deleteError } = await supabase
+            .from("doctor_availability")
+            .delete()
+            .eq("id", entry.id);
+            
+          if (deleteError) {
+            console.error("Error deleting availability:", deleteError);
+            toast.error("Erro ao remover disponibilidade");
+            return;
+          }
+        }
+      }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error updating availability:", error);
       toast.error("Erro ao atualizar disponibilidade");
     }
   };

@@ -43,6 +43,7 @@ export function VisualWeeklySchedule({
   
   // Initialize local availability state from props
   useEffect(() => {
+    console.log("Weekly availability updated:", weeklyAvailability);
     setLocalAvailability(weeklyAvailability);
   }, [weeklyAvailability]);
   
@@ -61,45 +62,39 @@ export function VisualWeeklySchedule({
   // Generate time slots
   const timeSlots = generateTimeSlots();
 
-  // Find a specific availability entry that indicates a blocked slot
-  const findBlockedSlot = (dayOfWeek: number, timeSlot: string) => {
+  // Find availability entry for a specific slot
+  const findAvailabilityEntry = (dayOfWeek: number, timeSlot: string) => {
     return localAvailability.find(
-      avail => avail.day_of_week === dayOfWeek && 
-              avail.start_time === timeSlot && 
-              !avail.is_available
+      avail => 
+        avail.day_of_week === dayOfWeek && 
+        avail.start_time === timeSlot
     );
   };
 
-  // Check if a time slot is blocked (default is available/green)
+  // Check if a time slot is blocked
   const isSlotBlocked = (dayOfWeek: number, timeSlot: string): boolean => {
-    const entry = findBlockedSlot(dayOfWeek, timeSlot);
-    return !!entry; // If an entry exists and is not available, it's blocked
+    const entry = findAvailabilityEntry(dayOfWeek, timeSlot);
+    // If an entry exists and is_available is false, it's blocked
+    return !!entry && !entry.is_available;
   };
   
   // Handle click on a cell to toggle availability
   const handleCellClick = (dayOfWeek: number, timeSlot: string) => {
-    // Check if it's currently blocked
+    // Check if the slot is currently blocked
     const isCurrentlyBlocked = isSlotBlocked(dayOfWeek, timeSlot);
     
-    // Create a deep copy of the current availability
-    const updatedAvailability = [...localAvailability];
-    
-    // Find existing entry if it exists (only for blocked entries, as available is the default)
-    const existingEntry = findBlockedSlot(dayOfWeek, timeSlot);
-    
-    if (isCurrentlyBlocked && existingEntry) {
-      // If currently blocked and exists in DB, remove it from our local state
-      // This will make it available (green) by default
-      const filteredAvailability = updatedAvailability.filter(avail => 
-        !(avail.day_of_week === dayOfWeek && 
-          avail.start_time === timeSlot && 
-          !avail.is_available)
-      );
+    if (isCurrentlyBlocked) {
+      // If currently blocked, remove the entry or mark as available
+      const existingEntry = findAvailabilityEntry(dayOfWeek, timeSlot);
       
-      setLocalAvailability(filteredAvailability);
-      onAvailabilityChange(filteredAvailability);
-    } else if (!isCurrentlyBlocked) {
-      // If it's currently available (green), add a blocked entry
+      if (existingEntry && existingEntry.id) {
+        // If it exists in the database, remove it
+        const updatedAvailability = localAvailability.filter(avail => avail.id !== existingEntry.id);
+        setLocalAvailability(updatedAvailability);
+        onAvailabilityChange(updatedAvailability);
+      }
+    } else {
+      // If not blocked, add a new blocked entry
       const newEntry: Availability = {
         doctor_id: doctorId,
         day_of_week: dayOfWeek,
@@ -108,7 +103,7 @@ export function VisualWeeklySchedule({
         is_available: false // Mark as blocked
       };
       
-      updatedAvailability.push(newEntry);
+      const updatedAvailability = [...localAvailability, newEntry];
       setLocalAvailability(updatedAvailability);
       onAvailabilityChange(updatedAvailability);
     }
