@@ -55,11 +55,13 @@ export const conversationService = {
   },
   
   async archiveConversation(id: string) {
-    return this.updateConversation(id, { is_archived: true });
+    const data = await this.updateConversation(id, { is_archived: true });
+    return { success: true, data };
   },
   
   async unarchiveConversation(id: string) {
-    return this.updateConversation(id, { is_archived: false });
+    const data = await this.updateConversation(id, { is_archived: false });
+    return { success: true, data };
   },
   
   async sendMessage(conversationId: string, content: string) {
@@ -86,77 +88,109 @@ export const conversationService = {
   },
   
   async addPatientFromConversation(conversation: any) {
-    // Check if the conversation has patient_id
-    const patientId = conversation.patient_id;
+    console.log("Adding patient from conversation:", conversation);
     
-    if (!patientId) {
-      throw new Error('No patient_id available in conversation');
-    }
-    
-    // Get patient data from conversation
-    const patientName = conversation.patient?.name || 
-                       conversation.contact?.name || 
-                       "Unknown Patient";
-    
-    const patientEmail = conversation.patient?.email || null;
-    const patientPhone = conversation.patient?.phone || null;
-    const patientAvatar = conversation.patient?.avatar_url || 
-                          conversation.contact?.avatar || 
-                          null;
-    
-    // Check if patient already exists
-    const { data: existingPatient, error: checkError } = await supabase
-      .from('patients')
-      .select('id')
-      .eq('id', patientId)
-      .maybeSingle();
-    
-    if (checkError) {
-      console.error('Error checking existing patient:', checkError);
-      throw checkError;
-    }
-    
-    // If patient exists, update their data
-    if (existingPatient) {
-      const { data: updatedPatient, error: updateError } = await supabase
-        .from('patients')
-        .update({
-          name: patientName,
-          email: patientEmail,
-          phone: patientPhone,
-          avatar_url: patientAvatar,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', patientId)
-        .select()
-        .single();
+    try {
+      // Check if the conversation has patient_id
+      const patientId = conversation.patient_id;
       
-      if (updateError) {
-        console.error('Error updating patient:', updateError);
-        throw updateError;
+      if (!patientId) {
+        console.error('No patient_id available in conversation');
+        throw new Error('No patient_id available in conversation');
       }
       
-      return updatedPatient;
-    }
-    
-    // Create a new patient if they don't exist
-    const { data: newPatient, error: insertError } = await supabase
-      .from('patients')
-      .insert({
+      // Get patient data from conversation
+      const patientName = conversation.patient?.name || 
+                         conversation.contact?.name || 
+                         "Unknown Patient";
+      
+      const patientEmail = conversation.patient?.email || 
+                          conversation.contact?.email || 
+                          null;
+                          
+      const patientPhone = conversation.patient?.phone || 
+                          conversation.contact?.phone || 
+                          null;
+                          
+      const patientAvatar = conversation.patient?.avatar_url || 
+                            conversation.contact?.avatar || 
+                            null;
+      
+      console.log("Patient data to save:", {
         id: patientId,
         name: patientName,
         email: patientEmail,
         phone: patientPhone,
         avatar_url: patientAvatar
-      })
-      .select()
-      .single();
-    
-    if (insertError) {
-      console.error('Error creating patient:', insertError);
-      throw insertError;
+      });
+      
+      // Check if patient already exists
+      const { data: existingPatient, error: checkError } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', patientId)
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Error checking existing patient:', checkError);
+        throw checkError;
+      }
+      
+      console.log("Existing patient check result:", existingPatient);
+      
+      let result;
+      
+      // If patient exists, update their data
+      if (existingPatient) {
+        console.log("Patient exists, updating...");
+        const { data: updatedPatient, error: updateError } = await supabase
+          .from('patients')
+          .update({
+            name: patientName,
+            email: patientEmail,
+            phone: patientPhone,
+            avatar_url: patientAvatar,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', patientId)
+          .select()
+          .single();
+        
+        if (updateError) {
+          console.error('Error updating patient:', updateError);
+          throw updateError;
+        }
+        
+        console.log("Patient updated successfully:", updatedPatient);
+        result = updatedPatient;
+      } else {
+        // Create a new patient if they don't exist
+        console.log("Patient doesn't exist, creating new...");
+        const { data: newPatient, error: insertError } = await supabase
+          .from('patients')
+          .insert({
+            id: patientId,
+            name: patientName,
+            email: patientEmail,
+            phone: patientPhone,
+            avatar_url: patientAvatar
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('Error creating patient:', insertError);
+          throw insertError;
+        }
+        
+        console.log("New patient created successfully:", newPatient);
+        result = newPatient;
+      }
+      
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error in addPatientFromConversation:", error);
+      return { success: false, error };
     }
-    
-    return newPatient;
   }
 };
