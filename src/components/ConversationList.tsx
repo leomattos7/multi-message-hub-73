@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Inbox as InboxIcon, UserPlus } from "lucide-react";
+import { Search, Filter, Inbox as InboxIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar } from "./Avatar";
 import { Input } from "@/components/ui/input";
@@ -68,42 +68,12 @@ export function ConversationList({
         queryFn: () => conversationService.getConversations(),
       });
 
-  // Mutation for adding to patients
-  const addToPatientsMutation = useMutation({
-    mutationFn: (conversation: UnifiedConversation) => {
-      if (useMockData) {
-        // Just return a mock success response
-        return Promise.resolve({ success: true });
-      }
-      return conversationService.addPatientFromConversation(conversation).then(result => {
-        return { success: true };
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['patients'] });
-      toast({
-        description: "Contact added to patients successfully",
-      });
-    },
-    onError: (error) => {
-      console.error('Error adding contact to patients:', error);
-      toast({
-        variant: "destructive",
-        description: "Failed to add contact to patients",
-      });
-    }
-  });
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
   const handleFilterChannel = (channel: ChannelType | "all") => {
     setChannelFilter(channel);
-  };
-
-  const handleAddToPatients = (conversation: UnifiedConversation) => {
-    addToPatientsMutation.mutate(conversation);
   };
 
   // Function to safely cast channel string to ChannelType

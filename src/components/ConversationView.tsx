@@ -2,8 +2,7 @@
 import { useRef, useEffect, useState } from "react";
 import { 
   ChevronLeft,
-  MoreVertical,
-  UserPlus
+  MoreVertical
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -50,31 +49,6 @@ export function ConversationView({
         queryFn: () => conversationService.getConversation(initialConversation.id),
         initialData: initialConversation,
       });
-
-  // Mock mutation for adding to patients
-  const addToPatientsMutation = useMutation({
-    mutationFn: () => {
-      if (useMockData) {
-        // Just return a mock success response
-        return Promise.resolve({ success: true });
-      }
-      return conversationService.addPatientFromConversation(conversation).then(result => {
-        return { success: true, ...result };
-      });
-    },
-    onSuccess: () => {
-      toast({
-        description: "Contact added to patients successfully",
-      });
-    },
-    onError: (error) => {
-      console.error('Error adding contact to patients:', error);
-      toast({
-        variant: "destructive",
-        description: "Failed to add contact to patients",
-      });
-    }
-  });
 
   // Mock mutation for sending messages
   const [localMessages, setLocalMessages] = useState<any[]>([]);
@@ -139,10 +113,6 @@ export function ConversationView({
 
   const handleSendMessage = (content: string) => {
     sendMessageMutation.mutate(content);
-  };
-
-  const handleAddToPatients = () => {
-    addToPatientsMutation.mutate();
   };
 
   const shouldRenderDate = (index: number, messages: any[]) => {
@@ -251,10 +221,7 @@ export function ConversationView({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleAddToPatients}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add to Patients
-            </DropdownMenuItem>
+            {/* Menu options can be added here if needed in the future */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
