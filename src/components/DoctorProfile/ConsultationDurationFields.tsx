@@ -4,19 +4,16 @@ import { Clock } from "lucide-react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { DoctorProfile } from "./types";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
+// Make the component accept any form that has the required fields
 interface ConsultationDurationFieldsProps {
-  form: UseFormReturn<DoctorProfile>;
+  form: UseFormReturn<any>;
 }
 
 export function ConsultationDurationFields({ form }: ConsultationDurationFieldsProps) {
   return (
     <div className="pt-2 pb-2">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="consultationDuration"
