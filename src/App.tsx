@@ -15,6 +15,7 @@ import PatientCRM from "./pages/PatientCRM";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import EmployeeManagement from "./pages/EmployeeManagement";
+import ScheduleManagement from "./pages/ScheduleManagement";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/agendamentos" element={<AuthGuard><Appointments /></AuthGuard>} />
           <Route path="/secretaria" element={<AuthGuard><SecretaryDashboard /></AuthGuard>} />
           <Route path="/pacientes" element={<AuthGuard><PatientCRM /></AuthGuard>} />
+          <Route path="/agenda" element={<AuthGuard requiredRole="doctor"><ScheduleManagement /></AuthGuard>} />
           
           {/* Doctor-only route */}
           <Route path="/funcionarios" element={<AuthGuard requiredRole="doctor"><EmployeeManagement /></AuthGuard>} />

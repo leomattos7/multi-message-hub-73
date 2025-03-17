@@ -56,6 +56,42 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          doctor_id: string
+          end_time: string
+          event_type: string
+          id: string
+          start_time: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          doctor_id: string
+          end_time: string
+          event_type: string
+          id?: string
+          start_time: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          doctor_id?: string
+          end_time?: string
+          event_type?: string
+          id?: string
+          start_time?: string
+          title?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           channel: string
@@ -90,6 +126,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      doctor_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+        }
+        Relationships: []
       }
       messages: {
         Row: {

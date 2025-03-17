@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format, addDays, startOfDay, isBefore, isToday, parseISO } from "date-fns";
+import { format, addDays, startOfDay, isBefore, isToday, parseISO, isWithinInterval, parse } from "date-fns";
 import { Calendar as CalendarIcon, Clock, Check, ArrowLeft, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,9 +25,6 @@ const AVAILABLE_TIMES = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
   "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
 ];
-
-// Mock data for reserved times
-const RESERVED_TIMES = ["09:00", "14:00", "15:00"];
 
 // Types of appointments
 const APPOINTMENT_TYPES = [
@@ -68,6 +66,28 @@ const doctorProfileSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 type DoctorProfile = z.infer<typeof doctorProfileSchema>;
 
+// Type for doctor availability
+type Availability = {
+  id: string;
+  doctor_id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+};
+
+// Type for special event/block
+type CalendarEvent = {
+  id: string;
+  doctor_id: string;
+  title: string;
+  description: string | null;
+  date: string;
+  start_time: string;
+  end_time: string;
+  event_type: string;
+};
+
 // Initial doctor profile (same as in SecretaryDashboard)
 const initialDoctorProfile: DoctorProfile = {
   name: "Dra. Ana Silva",
@@ -85,11 +105,12 @@ export default function Appointments() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile>(initialDoctorProfile);
-  
-  // Get the available times (filtering out reserved ones)
-  const getAvailableTimes = () => {
-    return AVAILABLE_TIMES.filter(time => !RESERVED_TIMES.includes(time));
-  };
+  const [reservedTimes, setReservedTimes] = useState<string[]>([]);
+  const [doctorAvailability, setDoctorAvailability] = useState<Availability[]>([]);
+  const [specialEvents, setSpecialEvents] = useState<CalendarEvent[]>([]);
+
+  // Initialize the doctor ID (in a real app, this would come from authentication)
+  const doctorId = "00000000-0000-0000-0000-000000000000"; // Placeholder
   
   // Initialize form with default values
   const form = useForm<FormValues>({
@@ -115,6 +136,89 @@ export default function Appointments() {
       }
     }
   }, []);
+
+  // Fetch doctor's availability
+  useEffect(() => {
+    const fetchDoctorAvailability = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("doctor_availability")
+          .select("*")
+          .eq("doctor_id", doctorId);
+
+        if (error) {
+          console.error("Error fetching availability:", error);
+          return;
+        }
+
+        if (data) {
+          setDoctorAvailability(data);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    fetchDoctorAvailability();
+  }, [doctorId]);
+
+  // Fetch special events
+  useEffect(() => {
+    const fetchSpecialEvents = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("calendar_events")
+          .select("*")
+          .eq("doctor_id", doctorId);
+
+        if (error) {
+          console.error("Error fetching events:", error);
+          return;
+        }
+
+        if (data) {
+          setSpecialEvents(data);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    fetchSpecialEvents();
+  }, [doctorId]);
+
+  // Fetch reserved times for the selected date
+  useEffect(() => {
+    if (selectedDate) {
+      const fetchReservedTimes = async () => {
+        const formattedDate = format(selectedDate, "yyyy-MM-dd");
+        
+        try {
+          const { data, error } = await supabase
+            .from("appointments")
+            .select("time")
+            .eq("date", formattedDate)
+            .neq("status", "cancelado");
+
+          if (error) {
+            console.error("Error fetching appointments:", error);
+            return;
+          }
+
+          if (data) {
+            const times = data.map(app => app.time.substring(0, 5));
+            setReservedTimes(times);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          // Fallback to mock data
+          setReservedTimes(["09:00", "14:00", "15:00"]);
+        }
+      };
+
+      fetchReservedTimes();
+    }
+  }, [selectedDate]);
 
   // Function to handle date selection and move to time selection step
   const handleDateSelection = (date: Date | undefined) => {
@@ -189,6 +293,71 @@ export default function Appointments() {
     return weekdays[date.getDay()];
   };
 
+  // Function to check if a date is available for appointments
+  const isDateAvailable = (date: Date) => {
+    const dayOfWeek = date.getDay(); // 0-6 for Sunday-Saturday
+    
+    // Check if there's any availability set for this day of the week
+    const dayAvailability = doctorAvailability.filter(
+      avail => avail.day_of_week === dayOfWeek && avail.is_available
+    );
+    
+    return dayAvailability.length > 0;
+  };
+
+  // Function to check if a time is within the doctor's availability for a specific date
+  const isTimeAvailable = (time: string, date: Date) => {
+    if (!date) return false;
+    
+    const dayOfWeek = date.getDay();
+    const formattedDate = format(date, "yyyy-MM-dd");
+    
+    // Convert time string to Date object for comparison
+    const timeObj = parse(time, "HH:mm", new Date());
+    
+    // Check if there are any special events blocking this time
+    const blockingEvents = specialEvents.filter(event => {
+      if (event.date !== formattedDate) return false;
+      
+      const eventStart = parse(event.start_time, "HH:mm", new Date());
+      const eventEnd = parse(event.end_time, "HH:mm", new Date());
+      
+      return isWithinInterval(timeObj, { 
+        start: eventStart, 
+        end: eventEnd 
+      });
+    });
+    
+    if (blockingEvents.length > 0) return false;
+    
+    // Check if the time is within any of the doctor's available time ranges for this day
+    const availableRanges = doctorAvailability.filter(
+      avail => avail.day_of_week === dayOfWeek && avail.is_available
+    );
+    
+    // If no availability is set for this day, default to available
+    if (availableRanges.length === 0) return true;
+    
+    return availableRanges.some(range => {
+      const rangeStart = parse(range.start_time, "HH:mm", new Date());
+      const rangeEnd = parse(range.end_time, "HH:mm", new Date());
+      
+      return isWithinInterval(timeObj, { 
+        start: rangeStart, 
+        end: rangeEnd 
+      });
+    });
+  };
+
+  // Get the available times (filtering out reserved ones and times outside availability)
+  const getAvailableTimes = () => {
+    if (!selectedDate) return [];
+    
+    return AVAILABLE_TIMES.filter(time => 
+      !reservedTimes.includes(time) && isTimeAvailable(time, selectedDate)
+    );
+  };
+
   return (
     <div className="container max-w-6xl mx-auto py-8 px-4">
       <div className="flex items-center mb-8">
@@ -219,7 +388,8 @@ export default function Appointments() {
                 onSelect={handleDateSelection}
                 disabled={(date) => 
                   isBefore(date, startOfDay(new Date())) || // No past dates
-                  date.getDay() === 0 || date.getDay() === 6 // No weekends
+                  date.getDay() === 0 || date.getDay() === 6 || // No weekends
+                  !isDateAvailable(date) // Check doctor availability
                 }
                 initialFocus
                 className="mx-auto border-none w-full"
@@ -281,23 +451,33 @@ export default function Appointments() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {getAvailableTimes().map((time) => (
-                    <div 
-                      key={time}
-                      className={cn(
-                        "border rounded-md p-3 flex justify-between items-center hover:border-blue-200 cursor-pointer"
-                      )}
-                      onClick={() => handleTimeSelection(time)}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-gray-500" />
-                        <span>{time}</span>
+                  {getAvailableTimes().length > 0 ? (
+                    getAvailableTimes().map((time) => (
+                      <div 
+                        key={time}
+                        className={cn(
+                          "border rounded-md p-3 flex justify-between items-center hover:border-blue-200 cursor-pointer"
+                        )}
+                        onClick={() => handleTimeSelection(time)}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <span>{time}</span>
+                        </div>
+                        <Button size="sm" variant="ghost" className="text-blue-500 p-0 h-8 hover:bg-blue-50">
+                          Agendar
+                        </Button>
                       </div>
-                      <Button size="sm" variant="ghost" className="text-blue-500 p-0 h-8 hover:bg-blue-50">
-                        Agendar
-                      </Button>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center py-10 text-gray-500">
+                      <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                      <h3 className="text-lg font-medium mb-1">Sem horários disponíveis</h3>
+                      <p className="text-sm max-w-md mx-auto">
+                        Não há horários disponíveis para esta data. Por favor, selecione outra data no calendário.
+                      </p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -307,13 +487,6 @@ export default function Appointments() {
             <Card>
               <CardHeader>
                 <div className="flex items-center">
-                  <Button 
-                    variant="ghost" 
-                    className="p-0 mr-2 h-8 w-8" 
-                    onClick={() => setStep("time")}
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
                   <div>
                     <CardTitle className="text-xl">Complete seu agendamento</CardTitle>
                     <CardDescription className="mt-1 flex items-center space-x-1">
