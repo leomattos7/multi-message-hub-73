@@ -148,11 +148,11 @@ export default function SecretaryDashboard() {
         if (data && data.length > 0) {
           // Transform data to match our component format
           const formattedAppointments = data.map(apt => ({
-            id: Number(apt.id), // Convert to number to match our schema
+            id: Number(apt.id),
             name: apt.patients?.name || 'Unknown',
-            time: apt.time.substring(0, 5), // Format time from "HH:MM:SS" to "HH:MM"
+            time: apt.time.substring(0, 5),
             type: apt.type,
-            status: apt.status as AppointmentStatus, // Explicitly type as our enum
+            status: apt.status as AppointmentStatus,
             notes: apt.notes || "",
             paymentMethod: apt.payment_method || "insurance" // Map from Supabase field
           }));
@@ -475,7 +475,7 @@ export default function SecretaryDashboard() {
           <h1 className="text-2xl font-bold text-gray-800 mb-8">Painel da Secretária</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left sidebar - Doctor profile */}
+            {/* Left sidebar - Only edit doctor profile button */}
             <div className="lg:col-span-3 space-y-6">
               <Card>
                 <CardHeader className="pb-4">
@@ -483,8 +483,9 @@ export default function SecretaryDashboard() {
                     <CardTitle className="text-xl">Perfil do Médico</CardTitle>
                     <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="outline" size="sm" className="flex gap-2 items-center">
                           <Edit className="h-4 w-4" />
+                          Editar Perfil
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[500px]">
@@ -593,35 +594,21 @@ export default function SecretaryDashboard() {
                     </Dialog>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col items-center">
-                    <div className="h-24 w-24 rounded-full overflow-hidden mb-3">
-                      <img
-                        src={doctorProfile.photo || "https://via.placeholder.com/150"}
-                        alt={doctorProfile.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <h3 className="font-semibold text-lg">{doctorProfile.name}</h3>
-                    <p className="text-blue-600">{doctorProfile.specialty}</p>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600">{doctorProfile.bio}</p>
-                  
-                  <div className="space-y-2 pt-2">
-                    <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
-                      <span>{doctorProfile.address}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <span>{doctorProfile.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <span>{doctorProfile.email}</span>
-                    </div>
-                  </div>
+              </Card>
+              
+              {/* Additional section for navigation options */}
+              <Card>
+                <CardContent className="p-6">
+                  <nav className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start" onClick={() => navigate("/appointments")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Agendar Nova Consulta
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start" onClick={() => navigate("/patientCRM")}>
+                      <User className="mr-2 h-4 w-4" />
+                      Gerenciar Pacientes
+                    </Button>
+                  </nav>
                 </CardContent>
               </Card>
             </div>
