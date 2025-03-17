@@ -361,11 +361,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_doctor_profile: {
+        Args: {
+          p_id: string
+          p_bio: string
+          p_specialty: string
+          p_name: string
+          p_email: string
+          p_phone: string
+          p_address: string
+          p_profile_image_url: string
+          p_public_url_slug: string
+          p_theme: string
+        }
+        Returns: undefined
+      }
       is_employee_of: {
         Args: {
           doctor_id: string
         }
         Returns: boolean
+      }
+      update_doctor_profile: {
+        Args: {
+          p_id: string
+          p_bio: string
+          p_specialty: string
+          p_name: string
+          p_email: string
+          p_phone: string
+          p_address: string
+          p_profile_image_url: string
+          p_theme: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

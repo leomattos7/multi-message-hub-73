@@ -295,31 +295,39 @@ export const doctorProfileService = {
       
       console.log("Creating profile with doctor ID:", doctorId);
       
-      // Insert directly into the doctor_profiles table
-      const { data, error } = await supabase
-        .from('doctor_profiles')
-        .insert({
-          id: doctorId,
-          bio: profile.bio,
-          specialty: profile.specialty,
-          name: profile.name,
-          email: profile.email,
-          phone: profile.phone,
-          address: profile.address,
-          profile_image_url: profile.profile_image_url,
-          public_url_slug: slug,
-          theme: profile.theme || 'default'
-        })
-        .select()
-        .single();
+      // Use the RPC function to create the profile
+      const { error } = await supabase.rpc('create_doctor_profile', {
+        p_id: doctorId,
+        p_bio: profile.bio || null,
+        p_specialty: profile.specialty || null,
+        p_name: profile.name || null,
+        p_email: profile.email || null,
+        p_phone: profile.phone || null,
+        p_address: profile.address || null,
+        p_profile_image_url: profile.profile_image_url || null,
+        p_public_url_slug: slug,
+        p_theme: profile.theme || 'default'
+      });
       
       if (error) {
         console.error("Error creating profile:", error);
         throw error;
       }
       
-      console.log("Profile created successfully:", data);
-      return data;
+      // Get the created profile
+      const { data: newProfile, error: getError } = await supabase
+        .from('doctor_profiles')
+        .select('*')
+        .eq('id', doctorId)
+        .single();
+        
+      if (getError) {
+        console.error("Error retrieving created profile:", getError);
+        throw getError;
+      }
+      
+      console.log("Profile created successfully:", newProfile);
+      return newProfile;
     } catch (error: any) {
       console.error("Error in createProfile:", error);
       throw error;
@@ -338,30 +346,38 @@ export const doctorProfileService = {
         throw new Error('Perfil não encontrado');
       }
       
-      // Update directly using the update method
-      const { data, error } = await supabase
-        .from('doctor_profiles')
-        .update({
-          bio: updates.bio,
-          specialty: updates.specialty,
-          name: updates.name,
-          email: updates.email,
-          phone: updates.phone,
-          address: updates.address,
-          profile_image_url: updates.profile_image_url,
-          theme: updates.theme || 'default'
-        })
-        .eq('id', doctorId)
-        .select()
-        .single();
+      // Use the RPC function to update the profile
+      const { error } = await supabase.rpc('update_doctor_profile', {
+        p_id: doctorId,
+        p_bio: updates.bio || null,
+        p_specialty: updates.specialty || null,
+        p_name: updates.name || null,
+        p_email: updates.email || null,
+        p_phone: updates.phone || null,
+        p_address: updates.address || null,
+        p_profile_image_url: updates.profile_image_url || null,
+        p_theme: updates.theme || 'default'
+      });
       
       if (error) {
         console.error("Error updating profile:", error);
         throw error;
       }
       
-      console.log("Profile updated successfully:", data);
-      return data;
+      // Get the updated profile
+      const { data: updatedProfile, error: getError } = await supabase
+        .from('doctor_profiles')
+        .select('*')
+        .eq('id', doctorId)
+        .single();
+        
+      if (getError) {
+        console.error("Error retrieving updated profile:", getError);
+        throw getError;
+      }
+      
+      console.log("Profile updated successfully:", updatedProfile);
+      return updatedProfile;
     } catch (error: any) {
       console.error("Error in updateProfile:", error);
       throw error;
