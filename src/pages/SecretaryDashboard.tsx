@@ -469,8 +469,8 @@ export default function SecretaryDashboard() {
 
   // Function to handle navigation to calendar view
   const handleNavigateToCalendar = () => {
-    navigate("/calendar");
-    toast.info("Navegando para a tela de calendário");
+    navigate("/agendamentos");
+    toast.info("Navegando para a tela de agendamentos");
   };
 
   return (
