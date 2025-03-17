@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar } from '@/components/Avatar';
 import { LinksManager } from './LinksManager';
 import { DoctorProfile, ProfileTheme, ThemeOption } from './types';
-import { Loader2, LinkIcon, Palette, User } from 'lucide-react';
+import { Loader2, LinkIcon, Palette, User, Mail, Phone, MapPin } from 'lucide-react';
 
 const themeOptions: ThemeOption[] = [
   { value: 'default', label: 'Padrão', previewClass: 'bg-primary text-primary-foreground' },
@@ -36,6 +36,11 @@ export const ProfileManager: React.FC = () => {
     specialty: '',
     public_url_slug: '',
     theme: 'default' as ProfileTheme,
+    name: '',
+    profile_image_url: '',
+    email: '',
+    phone: '',
+    address: '',
   });
   
   const hasProfile = !!profile;
@@ -63,6 +68,11 @@ export const ProfileManager: React.FC = () => {
           specialty: profileData.specialty || '',
           public_url_slug: profileData.public_url_slug,
           theme: profileData.theme as ProfileTheme,
+          name: profileData.name || '',
+          profile_image_url: profileData.profile_image_url || '',
+          email: profileData.email || '',
+          phone: profileData.phone || '',
+          address: profileData.address || '',
         });
       }
     } catch (error) {
@@ -213,6 +223,17 @@ export const ProfileManager: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="name">Nome Completo</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="Dr. Nome Sobrenome"
+                    value={formData.name}
+                    onChange={handleChange}
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="specialty">Especialidade</Label>
                   <Input
                     id="specialty"
@@ -233,6 +254,67 @@ export const ProfileManager: React.FC = () => {
                     value={formData.bio}
                     onChange={handleChange}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profile_image_url">URL da Foto de Perfil</Label>
+                  <Input
+                    id="profile_image_url"
+                    name="profile_image_url"
+                    placeholder="https://exemplo.com/sua-foto.jpg"
+                    value={formData.profile_image_url}
+                    onChange={handleChange}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Insira a URL de uma imagem para usar como foto de perfil.
+                  </p>
+                </div>
+                
+                <div className="pt-2 pb-1">
+                  <h3 className="font-medium text-sm mb-2">Informações de Contato</h3>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">
+                        <Mail className="h-3.5 w-3.5 inline-block mr-1 mb-0.5" />
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        placeholder="seu.email@exemplo.com"
+                        value={formData.email}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">
+                        <Phone className="h-3.5 w-3.5 inline-block mr-1 mb-0.5" />
+                        Telefone
+                      </Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        placeholder="(00) 00000-0000"
+                        value={formData.phone}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="address">
+                        <MapPin className="h-3.5 w-3.5 inline-block mr-1 mb-0.5" />
+                        Endereço
+                      </Label>
+                      <Input
+                        id="address"
+                        name="address"
+                        placeholder="Av. Principal, 123, Cidade - UF"
+                        value={formData.address}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="space-y-2">

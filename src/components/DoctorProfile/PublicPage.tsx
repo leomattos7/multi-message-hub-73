@@ -6,7 +6,7 @@ import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Calendar, Facebook, Instagram, Link, Loader2, Mail, MapPin, Phone, Twitter, Youtube } from 'lucide-react';
+import { Calendar, Facebook, Instagram, Link, Loader2, Mail, MapPin, Phone, Twitter, Youtube, User, Building, MapPinned } from 'lucide-react';
 
 export const PublicPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -26,6 +26,7 @@ export const PublicPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const data = await doctorProfileService.getProfileBySlug(profileSlug);
+      console.log("Profile data loaded:", data);
       setProfile(data);
       setLinks(data?.doctor_links || []);
     } catch (error) {
@@ -44,36 +45,48 @@ export const PublicPage: React.FC = () => {
           bg: 'bg-gray-900',
           text: 'text-white',
           button: 'bg-gray-800 hover:bg-gray-700 text-white',
+          contactBg: 'bg-gray-800',
+          contactText: 'text-gray-300',
         };
       case 'light':
         return {
           bg: 'bg-gray-50',
           text: 'text-gray-900',
           button: 'bg-white hover:bg-gray-100 text-gray-900 border border-gray-200',
+          contactBg: 'bg-white',
+          contactText: 'text-gray-600',
         };
       case 'blue':
         return {
           bg: 'bg-blue-100',
           text: 'text-blue-900',
           button: 'bg-blue-600 hover:bg-blue-700 text-white',
+          contactBg: 'bg-blue-50',
+          contactText: 'text-blue-800',
         };
       case 'green':
         return {
           bg: 'bg-green-100',
           text: 'text-green-900',
           button: 'bg-green-600 hover:bg-green-700 text-white',
+          contactBg: 'bg-green-50',
+          contactText: 'text-green-800',
         };
       case 'purple':
         return {
           bg: 'bg-purple-100',
           text: 'text-purple-900',
           button: 'bg-purple-600 hover:bg-purple-700 text-white',
+          contactBg: 'bg-purple-50',
+          contactText: 'text-purple-800',
         };
       default:
         return {
           bg: 'bg-background',
           text: 'text-foreground',
           button: 'bg-primary hover:bg-primary/90 text-primary-foreground',
+          contactBg: 'bg-muted',
+          contactText: 'text-muted-foreground',
         };
     }
   };
@@ -170,7 +183,45 @@ export const PublicPage: React.FC = () => {
           )}
         </div>
 
+        {/* Informações de contato e endereço */}
+        <div className={cn("rounded-lg p-4 space-y-3 mt-4", theme.contactBg)}>
+          <h2 className={cn("font-medium text-center", theme.text)}>
+            Informações de Contato
+          </h2>
+          
+          {profile.email && (
+            <div className="flex items-center gap-2">
+              <Mail className={cn("h-4 w-4", theme.contactText)} />
+              <span className={cn("text-sm", theme.contactText)}>
+                {profile.email}
+              </span>
+            </div>
+          )}
+          
+          {profile.phone && (
+            <div className="flex items-center gap-2">
+              <Phone className={cn("h-4 w-4", theme.contactText)} />
+              <span className={cn("text-sm", theme.contactText)}>
+                {profile.phone}
+              </span>
+            </div>
+          )}
+          
+          {profile.address && (
+            <div className="flex items-start gap-2">
+              <MapPinned className={cn("h-4 w-4 mt-0.5", theme.contactText)} />
+              <span className={cn("text-sm", theme.contactText)}>
+                {profile.address}
+              </span>
+            </div>
+          )}
+        </div>
+
         <div className="space-y-3 pt-6">
+          <h2 className={cn("font-medium text-center", theme.text)}>
+            Links
+          </h2>
+          
           {activeLinks.length === 0 ? (
             <p className={cn("text-center text-sm", theme.text)}>
               Nenhum link disponível no momento.
