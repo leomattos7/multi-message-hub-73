@@ -1,8 +1,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { 
-  ChevronLeft,
-  TagIcon
+  ChevronLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./Avatar";
@@ -12,7 +11,6 @@ import { Conversation, Message } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { TagManager } from "./TagManager";
 
 interface ConversationViewProps {
   conversation: Conversation;
@@ -28,7 +26,6 @@ export function ConversationView({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [conversation, setConversation] = useState<Conversation>(initialConversation);
   const [messages, setMessages] = useState<Message[]>(initialConversation.messages);
-  const [showTagManager, setShowTagManager] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -78,14 +75,6 @@ export function ConversationView({
     toast({
       description: "Mensagem enviada com sucesso",
     });
-  };
-
-  const handleTagsUpdate = (tags: string[]) => {
-    // Atualizar as tags da conversa
-    setConversation(prev => ({
-      ...prev,
-      tags
-    }));
   };
 
   const shouldRenderDate = (index: number) => {
@@ -153,26 +142,7 @@ export function ConversationView({
             via {conversation.channel}
           </p>
         </div>
-        
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Button 
-            variant={showTagManager ? "secondary" : "outline"} 
-            size="icon"
-            onClick={() => setShowTagManager(!showTagManager)}
-          >
-            <TagIcon className="h-5 w-5" />
-          </Button>
-        </div>
       </div>
-      
-      {showTagManager && (
-        <div className="p-3 bg-muted/40 border-b border-border">
-          <TagManager 
-            conversation={conversation} 
-            onTagsUpdate={handleTagsUpdate}
-          />
-        </div>
-      )}
       
       <div className="flex-1 overflow-y-auto p-4 bg-secondary/30">
         <div className="flex flex-col space-y-4">
