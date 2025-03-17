@@ -31,6 +31,25 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 
+// Define interfaces for our data
+interface Patient {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
+interface MedicalRecord {
+  id: string;
+  patient_id: string;
+  patient?: Patient;
+  record_date: string;
+  record_type: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function MedicalRecordDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -53,36 +72,32 @@ export default function MedicalRecordDetail() {
     queryFn: async () => {
       if (!id) throw new Error("Record ID is required");
 
-      const { data, error } = await supabase
+      // First fetch the medical record
+      const { data: recordData, error: recordError } = await supabase
         .from("patient_records")
-        .select(`
-          id, 
-          patient_id, 
-          record_date, 
-          record_type, 
-          content, 
-          created_at, 
-          updated_at,
-          patients(id, name, email, phone)
-        `)
+        .select("*")
         .eq("id", id)
         .single();
 
-      if (error) throw error;
+      if (recordError) throw recordError;
+      
+      // Then fetch the associated patient
+      const { data: patientData, error: patientError } = await supabase
+        .from("patients")
+        .select("id, name, email, phone")
+        .eq("id", recordData.patient_id)
+        .single();
+
+      if (patientError) throw patientError;
       
       // Set the initial edited content
-      setEditedContent(data.content);
+      setEditedContent(recordData.content);
       
+      // Combine the data
       return {
-        id: data.id,
-        patient_id: data.patient_id,
-        patient: data.patients,
-        record_date: data.record_date,
-        record_type: data.record_type,
-        content: data.content,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-      };
+        ...recordData,
+        patient: patientData
+      } as MedicalRecord;
     }
   });
 

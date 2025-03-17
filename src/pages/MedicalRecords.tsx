@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Search, 
@@ -84,18 +84,10 @@ export default function MedicalRecords() {
   const { data: records, isLoading: recordsLoading, refetch: refetchRecords } = useQuery({
     queryKey: ["medical-records", activeTab, searchQuery],
     queryFn: async () => {
+      // First build the query
       let query = supabase
         .from("patient_records")
-        .select(`
-          id, 
-          record_date, 
-          record_type, 
-          content, 
-          created_at, 
-          updated_at,
-          patient_id,
-          patients(name)
-        `);
+        .select("*, patients(name)");
 
       // Apply filter based on active tab
       if (activeTab !== "all") {
