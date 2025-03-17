@@ -55,16 +55,18 @@ export function VisualWeeklySchedule({
   // Generate time slots
   const timeSlots = generateTimeSlots();
 
+  // Find a specific availability entry
+  const findAvailabilityEntry = (dayOfWeek: number, timeSlot: string) => {
+    return weeklyAvailability.find(
+      avail => avail.day_of_week === dayOfWeek && avail.start_time === timeSlot
+    );
+  };
+
   // Helper function to check if a time slot is available or blocked
   const getSlotStatus = (dayOfWeek: number, timeSlot: string): 'available' | 'blocked' | 'undefined' => {
-    const availabilityEntry = weeklyAvailability.find(
-      avail => 
-        avail.day_of_week === dayOfWeek && 
-        avail.start_time === timeSlot
-    );
-    
-    if (!availabilityEntry) return 'undefined';
-    return availabilityEntry.is_available ? 'available' : 'blocked';
+    const entry = findAvailabilityEntry(dayOfWeek, timeSlot);
+    if (!entry) return 'undefined';
+    return entry.is_available ? 'available' : 'blocked';
   };
   
   // Handle click on a cell to toggle availability
@@ -73,24 +75,29 @@ export function VisualWeeklySchedule({
     const updatedAvailability = [...weeklyAvailability];
     
     // Find the existing entry if it exists
-    const existingEntryIndex = updatedAvailability.findIndex(
-      avail => avail.day_of_week === dayOfWeek && avail.start_time === timeSlot
-    );
-    
-    // Current status of the cell
+    const existingEntry = findAvailabilityEntry(dayOfWeek, timeSlot);
     const currentStatus = getSlotStatus(dayOfWeek, timeSlot);
     
-    // New availability status - toggle the current status
+    // Determine the new availability status (toggle current status)
     const newIsAvailable = currentStatus !== 'available';
     
-    if (existingEntryIndex >= 0) {
-      // Update existing entry
-      updatedAvailability[existingEntryIndex] = {
-        ...updatedAvailability[existingEntryIndex],
+    // If entry exists, update it; otherwise create a new one
+    if (existingEntry) {
+      const updatedEntry = {
+        ...existingEntry,
         is_available: newIsAvailable
       };
+      
+      // Find the index and update
+      const index = updatedAvailability.findIndex(
+        avail => avail.id === existingEntry.id
+      );
+      
+      if (index >= 0) {
+        updatedAvailability[index] = updatedEntry;
+      }
     } else {
-      // Create new entry
+      // Create a new entry
       updatedAvailability.push({
         doctor_id: doctorId,
         day_of_week: dayOfWeek,
