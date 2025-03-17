@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { 
@@ -176,31 +177,38 @@ export default function PatientCRM() {
 
         if (patientsError || appointmentsError || messagesError || conversationsError) {
           console.error("Error fetching data:", { patientsError, appointmentsError, messagesError, conversationsError });
+          setPatients(mockPatients);
           return;
         }
 
         if (patientsData) {
           const patientAppointments = new Map();
-          appointments?.forEach(appointment => {
-            if (!patientAppointments.has(appointment.patient_id) || 
-                new Date(appointment.date) > new Date(patientAppointments.get(appointment.patient_id))) {
-              patientAppointments.set(appointment.patient_id, appointment.date);
-            }
-          });
+          if (appointments) {
+            appointments.forEach(appointment => {
+              if (!patientAppointments.has(appointment.patient_id) || 
+                  new Date(appointment.date) > new Date(patientAppointments.get(appointment.patient_id))) {
+                patientAppointments.set(appointment.patient_id, appointment.date);
+              }
+            });
+          }
 
           const patientMessages = new Map();
           const conversationToPatient = new Map();
-          conversations?.forEach(conversation => {
-            conversationToPatient.set(conversation.id, conversation.patient_id);
-          });
+          if (conversations) {
+            conversations.forEach(conversation => {
+              conversationToPatient.set(conversation.id, conversation.patient_id);
+            });
+          }
 
-          messages?.forEach(message => {
-            const patientId = conversationToPatient.get(message.conversation_id);
-            if (patientId && (!patientMessages.has(patientId) || 
-                new Date(message.timestamp) > new Date(patientMessages.get(patientId)))) {
-              patientMessages.set(patientId, message.timestamp);
-            }
-          });
+          if (messages) {
+            messages.forEach(message => {
+              const patientId = conversationToPatient.get(message.conversation_id);
+              if (patientId && (!patientMessages.has(patientId) || 
+                  new Date(message.timestamp) > new Date(patientMessages.get(patientId)))) {
+                patientMessages.set(patientId, message.timestamp);
+              }
+            });
+          }
 
           const formattedPatients = patientsData.map(patient => ({
             id: patient.id,
