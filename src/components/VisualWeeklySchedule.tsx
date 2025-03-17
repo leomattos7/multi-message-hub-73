@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Lock, Unlock } from "lucide-react";
+import { Lock, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
@@ -44,7 +43,6 @@ export function VisualWeeklySchedule({
   weeklyAvailability,
   onAvailabilityChange,
 }: VisualWeeklyScheduleProps) {
-  const [selectedStatus, setSelectedStatus] = useState<"block" | "unblock">("block");
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
   
   // Generate days of the week
@@ -62,78 +60,55 @@ export function VisualWeeklySchedule({
   // Generate time slots
   const timeSlots = generateTimeSlots();
   
-  // Check if a time slot is blocked for a specific day
-  const isTimeSlotBlocked = (dayOfWeek: number, timeSlot: string) => {
-    return weeklyAvailability.some(
+  // Check if a time slot is available or blocked for a specific day
+  const getTimeSlotStatus = (dayOfWeek: number, timeSlot: string): 'available' | 'blocked' | 'undefined' => {
+    const slot = weeklyAvailability.find(
       avail => 
         avail.day_of_week === dayOfWeek && 
-        avail.start_time === timeSlot && 
-        !avail.is_available
+        avail.start_time === timeSlot
     );
+    
+    if (!slot) return 'undefined';
+    return slot.is_available ? 'available' : 'blocked';
   };
   
-  // Handle cell click to toggle blocked status
+  // Handle cell click to toggle status
   const handleCellClick = (dayOfWeek: number, timeSlot: string) => {
-    const isCurrentlyBlocked = isTimeSlotBlocked(dayOfWeek, timeSlot);
-    
-    // If we're in block mode and it's already blocked, or in unblock mode and it's not blocked, do nothing
-    if ((selectedStatus === "block" && isCurrentlyBlocked) || 
-        (selectedStatus === "unblock" && !isCurrentlyBlocked)) {
-      return;
-    }
-    
+    const currentStatus = getTimeSlotStatus(dayOfWeek, timeSlot);
     let updatedAvailability = [...weeklyAvailability];
     
-    if (selectedStatus === "block") {
-      // Add a new blocked availability
-      const newAvailability: Availability = {
-        doctor_id: doctorId,
-        day_of_week: dayOfWeek,
-        start_time: timeSlot,
-        end_time: timeSlot.replace("00", "59"), // End at XX:59
-        is_available: false,
-      };
-      updatedAvailability = [...updatedAvailability, newAvailability];
-    } else {
-      // Remove the blocked availability
-      updatedAvailability = updatedAvailability.filter(
-        avail => 
-          !(avail.day_of_week === dayOfWeek && 
-            avail.start_time === timeSlot && 
-            !avail.is_available)
-      );
-    }
+    // Remove any existing entry for this time slot
+    updatedAvailability = updatedAvailability.filter(
+      avail => 
+        !(avail.day_of_week === dayOfWeek && 
+          avail.start_time === timeSlot)
+    );
     
+    // Add new entry with toggled status
+    // If it was blocked or undefined, make it available
+    // If it was available, make it blocked
+    const newStatus = currentStatus === 'available' ? false : true;
+    
+    const newAvailability: Availability = {
+      doctor_id: doctorId,
+      day_of_week: dayOfWeek,
+      start_time: timeSlot,
+      end_time: timeSlot.replace("00", "59"), // End at XX:59
+      is_available: newStatus,
+    };
+    
+    updatedAvailability = [...updatedAvailability, newAvailability];
     onAvailabilityChange(updatedAvailability);
     
     toast.success(
-      selectedStatus === "block" 
-        ? `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} bloqueado`
-        : `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} desbloqueado`
+      newStatus 
+        ? `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} disponibilizado`
+        : `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} bloqueado`
     );
   };
   
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-center gap-4 mb-4">
-        <Button
-          variant={selectedStatus === "block" ? "destructive" : "outline"}
-          onClick={() => setSelectedStatus("block")}
-          className="flex gap-2 items-center"
-        >
-          <Lock className="h-4 w-4" />
-          Bloquear
-        </Button>
-        <Button
-          variant={selectedStatus === "unblock" ? "default" : "outline"}
-          onClick={() => setSelectedStatus("unblock")}
-          className="flex gap-2 items-center bg-green-600 text-white hover:bg-green-700"
-        >
-          <Unlock className="h-4 w-4" />
-          Desbloquear
-        </Button>
-      </div>
-
       <div className="overflow-auto">
         <div className="min-w-[900px]">
           <div className="grid grid-cols-[100px_repeat(7,1fr)] gap-[1px] bg-gray-200 border border-gray-200 rounded-lg">
@@ -159,7 +134,7 @@ export function VisualWeeklySchedule({
                 </div>
                 
                 {daysOfWeek.map((day) => {
-                  const isBlocked = isTimeSlotBlocked(day.dayOfWeek, timeSlot);
+                  const status = getTimeSlotStatus(day.dayOfWeek, timeSlot);
                   const cellId = `${day.dayOfWeek}-${timeSlot}`;
                   
                   return (
@@ -169,25 +144,29 @@ export function VisualWeeklySchedule({
                           <div 
                             className={cn(
                               "border-t border-gray-100 cursor-pointer transition-colors",
-                              isBlocked ? "bg-red-100" : "bg-white",
+                              status === 'blocked' ? "bg-red-100" : "",
+                              status === 'available' ? "bg-green-100" : "",
+                              status === 'undefined' ? "bg-white" : "",
                               day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-opacity-80" : "",
-                              hoveredCell === cellId && selectedStatus === "block" && !isBlocked ? "bg-red-50" : "",
-                              hoveredCell === cellId && selectedStatus === "unblock" && isBlocked ? "bg-green-50" : "",
+                              hoveredCell === cellId ? "opacity-80" : "",
                             )}
                             onClick={() => handleCellClick(day.dayOfWeek, timeSlot)}
                             onMouseEnter={() => setHoveredCell(cellId)}
                             onMouseLeave={() => setHoveredCell(null)}
                           >
                             <div className="h-12 flex items-center justify-center">
-                              {isBlocked && <Lock className="h-4 w-4 text-red-500" />}
+                              {status === 'blocked' && <Lock className="h-4 w-4 text-red-500" />}
+                              {status === 'available' && <Check className="h-4 w-4 text-green-500" />}
                             </div>
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>
-                            {isBlocked 
+                            {status === 'blocked' 
                               ? `${day.fullName} ${timeSlot} - Bloqueado` 
-                              : `${day.fullName} ${timeSlot} - Disponível`}
+                              : status === 'available'
+                                ? `${day.fullName} ${timeSlot} - Disponível`
+                                : `${day.fullName} ${timeSlot} - Clique para definir`}
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -201,11 +180,7 @@ export function VisualWeeklySchedule({
       </div>
       
       <div className="mt-4 text-sm text-gray-500">
-        <p>
-          {selectedStatus === "block" 
-            ? "Clique nos horários para bloquear"
-            : "Clique nos horários bloqueados para desbloquear"}
-        </p>
+        <p>Clique uma vez para disponibilizar (verde) ou duas vezes para bloquear (vermelho) o horário</p>
       </div>
     </div>
   );
