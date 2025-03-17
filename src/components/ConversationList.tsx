@@ -13,8 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChannelType, Conversation, filterByChannel, searchConversations, sortedConversations } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { getTagById } from "@/data/tagsData";
-import { Tag } from "./Tag";
 
 interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void;
@@ -147,22 +145,6 @@ export function ConversationList({
                   <p className="text-sm text-muted-foreground truncate mt-0.5">
                     {getPreviewMessage(conversation)}
                   </p>
-                  
-                  {conversation.tags && conversation.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {conversation.tags.slice(0, 3).map(tagId => {
-                        const tag = getTagById(tagId);
-                        return tag ? (
-                          <Tag key={tagId} tag={tag} size="sm" />
-                        ) : null;
-                      })}
-                      {conversation.tags.length > 3 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{conversation.tags.length - 3}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
