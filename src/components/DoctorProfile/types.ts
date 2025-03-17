@@ -1,4 +1,3 @@
-
 export interface DoctorProfile {
   id: string;
   bio: string | null;
@@ -12,9 +11,9 @@ export interface DoctorProfile {
   email: string | null;
   phone: string | null;
   address: string | null;
-  consultation_duration?: string | null;
-  follow_up_duration?: string | null;
-  urgent_duration?: string | null;
+  consultationDuration?: string | null;
+  followUpDuration?: string | null;
+  urgentDuration?: string | null;
 }
 
 export interface DoctorLink {
