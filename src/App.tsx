@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthGuard } from "./components/AuthGuard";
+import { Sidebar } from "./components/Sidebar";
 
 // Pages
 import Index from "./pages/Index";
@@ -25,24 +26,83 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<SignIn />} />
-          <Route path="/cadastro" element={<SignUp />} />
-          
-          {/* Protected routes */}
-          <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
-          <Route path="/agendamentos" element={<AuthGuard><Appointments /></AuthGuard>} />
-          <Route path="/secretaria" element={<AuthGuard><SecretaryDashboard /></AuthGuard>} />
-          <Route path="/pacientes" element={<AuthGuard><PatientCRM /></AuthGuard>} />
-          <Route path="/agenda" element={<AuthGuard requiredRole="doctor"><ScheduleManagement /></AuthGuard>} />
-          
-          {/* Doctor-only route */}
-          <Route path="/funcionarios" element={<AuthGuard requiredRole="doctor"><EmployeeManagement /></AuthGuard>} />
-          
-          {/* Redirect to login if not authenticated */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="flex">
+          <Routes>
+            {/* Public routes - no sidebar */}
+            <Route path="/login" element={<SignIn />} />
+            <Route path="/cadastro" element={<SignUp />} />
+            
+            {/* Protected routes with sidebar */}
+            <Route path="/" element={
+              <AuthGuard>
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <Index />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/agendamentos" element={
+              <AuthGuard>
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <Appointments />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/secretaria" element={
+              <AuthGuard>
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <SecretaryDashboard />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/pacientes" element={
+              <AuthGuard>
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <PatientCRM />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/agenda" element={
+              <AuthGuard requiredRole="doctor">
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <ScheduleManagement />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            <Route path="/funcionarios" element={
+              <AuthGuard requiredRole="doctor">
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <EmployeeManagement />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            {/* Redirect to login if not authenticated */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

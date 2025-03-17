@@ -71,7 +71,7 @@ export function Sidebar() {
           {isOpen ? <X /> : <Menu />}
         </Button>
       )}
-      <div
+      <aside
         className={cn(
           "fixed top-0 left-0 z-40 h-screen transition-transform bg-white border-r shadow-sm",
           isOpen ? "translate-x-0" : "-translate-x-full",
@@ -163,7 +163,14 @@ export function Sidebar() {
             </div>
           </div>
         </div>
-      </div>
+      </aside>
+      {/* This div adds the necessary space to prevent content overlap */}
+      <div 
+        className={cn(
+          "transition-all duration-300",
+          isOpen ? (isMobile ? "ml-0" : "ml-20 lg:ml-64") : "ml-0"
+        )}
+      />
     </>
   );
 }
