@@ -41,7 +41,13 @@ export function ProfileEditForm({ doctorId, initialProfile, onProfileUpdate }: P
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <BasicInfoFields form={form} />
-            <ConsultationDurationFields form={form} />
+            
+            {/* Consultation duration fields */}
+            <div className="my-6">
+              <h3 className="text-lg font-medium mb-4">Duração das Consultas</h3>
+              <ConsultationDurationFields form={form} />
+            </div>
+            
             <BioField form={form} />
 
             <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
