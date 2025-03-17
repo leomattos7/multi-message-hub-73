@@ -2,10 +2,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
-  MessageSquare, 
-  Mail, 
-  Facebook, 
-  Instagram, 
   Inbox,
   Users,
   Calendar
@@ -29,13 +25,6 @@ export function Sidebar({ className }: SidebarProps) {
     { icon: Inbox, label: "Inbox", path: "/", active: location.pathname === "/" },
     { icon: Users, label: "Contatos", path: "/pacientes", active: location.pathname === "/pacientes" },
     { icon: Calendar, label: "Agenda", path: "/secretaria", active: location.pathname === "/secretaria" },
-  ];
-
-  const channelItems = [
-    { icon: MessageSquare, label: "WhatsApp", color: "text-channel-whatsapp", active: false },
-    { icon: Instagram, label: "Instagram", color: "text-channel-instagram", active: false },
-    { icon: Facebook, label: "Facebook", color: "text-channel-facebook", active: false },
-    { icon: Mail, label: "Email", color: "text-channel-email", active: false },
   ];
 
   return (
@@ -76,26 +65,6 @@ export function Sidebar({ className }: SidebarProps) {
             </Button>
           ))}
         </nav>
-
-        <div className={cn("space-y-3", !expanded && "opacity-0 invisible hidden")}>
-          <h3 className="text-sm font-medium text-muted-foreground px-3">Canais</h3>
-          <nav className="space-y-1">
-            {channelItems.map((item) => (
-              <Button
-                key={item.label}
-                variant={item.active ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start gap-3 font-normal",
-                  item.active && "font-medium",
-                  item.color
-                )}
-              >
-                <item.icon size={20} />
-                <span className="transition-opacity duration-200">{item.label}</span>
-              </Button>
-            ))}
-          </nav>
-        </div>
       </div>
 
       <div className="p-4 border-t border-border mt-auto flex items-center gap-3">
