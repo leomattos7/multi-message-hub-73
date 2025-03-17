@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Archive, Inbox as InboxIcon, MoreVertical, UserPlus } from "lucide-react";
+import { Search, Filter, Archive, Inbox as InboxIcon, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar } from "./Avatar";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface ConversationListProps {
   onSelectConversation: (conversation: any) => void;
-  selectedConversationId?: string;
+  selectedConversationId?: string | null;
   className?: string;
   useMockData?: boolean;
 }
@@ -58,6 +58,7 @@ type UnifiedConversation = {
     avatar_url?: string;
   };
   messages?: any[];
+  patient_id?: string;
 };
 
 export function ConversationList({ 
@@ -80,20 +81,22 @@ export function ConversationList({
         queryFn: () => conversationService.getConversations(),
       });
 
-  // Mock mutations for archive/unarchive when using mock data
+  // Mutation for archive/unarchive
   const archiveMutation = useMutation({
     mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
       if (useMockData) {
-        // Just return a mock success response with the same shape for both conditions
+        // Just return a mock success response
         return { success: true };
       }
       
       if (archive) {
-        const result = await conversationService.archiveConversation(id);
-        return { success: true, ...result };
+        return conversationService.archiveConversation(id).then(result => {
+          return { success: true };
+        });
       } else {
-        const result = await conversationService.unarchiveConversation(id);
-        return { success: true, ...result };
+        return conversationService.unarchiveConversation(id).then(result => {
+          return { success: true };
+        });
       }
     },
     onSuccess: () => {
@@ -113,7 +116,7 @@ export function ConversationList({
     }
   });
 
-  // Mock mutation for adding to patients
+  // Mutation for adding to patients
   const addToPatientsMutation = useMutation({
     mutationFn: (conversation: UnifiedConversation) => {
       if (useMockData) {
@@ -121,10 +124,11 @@ export function ConversationList({
         return Promise.resolve({ success: true });
       }
       return conversationService.addPatientFromConversation(conversation).then(result => {
-        return { success: true, ...result };
+        return { success: true };
       });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients'] });
       toast({
         description: "Contact added to patients successfully",
       });
@@ -315,70 +319,32 @@ export function ConversationList({
                     "p-3 border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors",
                     isSelected && "bg-secondary"
                   )}
+                  onClick={() => onSelectConversation(conversation)}
                 >
                   <div className="flex items-start gap-3">
-                    <div onClick={() => onSelectConversation(conversation)} className="flex-grow flex items-start gap-3">
-                      <Avatar
-                        src={avatar}
-                        name={name}
-                        showStatus
-                        status={unread > 0 ? "online" : "offline"}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-medium truncate">
-                            {name}
-                          </h3>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <ChannelBadge channel={channelType} size="sm" />
-                            <span className="text-xs text-muted-foreground">
-                              {lastActivityTime && formatLastActivity(lastActivityTime)}
-                            </span>
-                          </div>
+                    <Avatar
+                      src={avatar}
+                      name={name}
+                      showStatus
+                      status={unread > 0 ? "online" : "offline"}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-medium truncate">
+                          {name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <ChannelBadge channel={channelType} size="sm" />
+                          <span className="text-xs text-muted-foreground">
+                            {lastActivityTime && formatLastActivity(lastActivityTime)}
+                          </span>
                         </div>
-                        
-                        <p className="text-sm text-muted-foreground truncate mt-0.5">
-                          {getPreviewMessage(conversation)}
-                        </p>
                       </div>
+                      
+                      <p className="text-sm text-muted-foreground truncate mt-0.5">
+                        {getPreviewMessage(conversation)}
+                      </p>
                     </div>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleAddToPatients(conversation)}>
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Add to Patients
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                              <Archive className="h-4 w-4 mr-2" />
-                              Archive
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Archive Conversation</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to archive this conversation? It will be moved to the archived tab.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleArchive(conversation.id, true)}>
-                                Archive
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                 </div>
               );

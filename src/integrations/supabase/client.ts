@@ -86,35 +86,77 @@ export const conversationService = {
   },
   
   async addPatientFromConversation(conversation: any) {
-    if (!conversation.patient) {
-      throw new Error('No patient data available');
+    // Check if the conversation has patient_id
+    const patientId = conversation.patient_id;
+    
+    if (!patientId) {
+      throw new Error('No patient_id available in conversation');
     }
     
+    // Get patient data from conversation
+    const patientName = conversation.patient?.name || 
+                       conversation.contact?.name || 
+                       "Unknown Patient";
+    
+    const patientEmail = conversation.patient?.email || null;
+    const patientPhone = conversation.patient?.phone || null;
+    const patientAvatar = conversation.patient?.avatar_url || 
+                          conversation.contact?.avatar || 
+                          null;
+    
     // Check if patient already exists
-    const { data: existingPatient } = await supabase
+    const { data: existingPatient, error: checkError } = await supabase
       .from('patients')
       .select('id')
-      .eq('id', conversation.patient_id)
-      .single();
+      .eq('id', patientId)
+      .maybeSingle();
     
+    if (checkError) {
+      console.error('Error checking existing patient:', checkError);
+      throw checkError;
+    }
+    
+    // If patient exists, update their data
     if (existingPatient) {
-      return existingPatient;
+      const { data: updatedPatient, error: updateError } = await supabase
+        .from('patients')
+        .update({
+          name: patientName,
+          email: patientEmail,
+          phone: patientPhone,
+          avatar_url: patientAvatar,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', patientId)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error('Error updating patient:', updateError);
+        throw updateError;
+      }
+      
+      return updatedPatient;
     }
     
     // Create a new patient if they don't exist
-    const { data, error } = await supabase
+    const { data: newPatient, error: insertError } = await supabase
       .from('patients')
       .insert({
-        id: conversation.patient_id,
-        name: conversation.patient.name,
-        email: conversation.patient.email,
-        phone: conversation.patient.phone,
-        avatar_url: conversation.patient.avatar_url
+        id: patientId,
+        name: patientName,
+        email: patientEmail,
+        phone: patientPhone,
+        avatar_url: patientAvatar
       })
       .select()
       .single();
     
-    if (error) throw error;
-    return data;
+    if (insertError) {
+      console.error('Error creating patient:', insertError);
+      throw insertError;
+    }
+    
+    return newPatient;
   }
 };
