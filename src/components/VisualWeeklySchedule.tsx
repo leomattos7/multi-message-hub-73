@@ -77,27 +77,43 @@ export function VisualWeeklySchedule({
     const currentStatus = getTimeSlotStatus(dayOfWeek, timeSlot);
     let updatedAvailability = [...weeklyAvailability];
     
-    // Remove any existing entry for this time slot
-    updatedAvailability = updatedAvailability.filter(
+    // Find existing entry for this time slot if it exists
+    const existingEntryIndex = updatedAvailability.findIndex(
       avail => 
-        !(avail.day_of_week === dayOfWeek && 
-          avail.start_time === timeSlot)
+        avail.day_of_week === dayOfWeek && 
+        avail.start_time === timeSlot
     );
     
-    // Add new entry with toggled status
-    // If it was blocked or undefined, make it available
-    // If it was available, make it blocked
-    const newStatus = currentStatus === 'available' ? false : true;
+    // Toggle status logic
+    let newStatus: boolean;
     
-    const newAvailability: Availability = {
-      doctor_id: doctorId,
-      day_of_week: dayOfWeek,
-      start_time: timeSlot,
-      end_time: timeSlot.replace("00", "59"), // End at XX:59
-      is_available: newStatus,
-    };
+    if (currentStatus === 'available') {
+      // If available, make it blocked
+      newStatus = false;
+    } else {
+      // If blocked or undefined, make it available
+      newStatus = true;
+    }
     
-    updatedAvailability = [...updatedAvailability, newAvailability];
+    if (existingEntryIndex >= 0) {
+      // Update existing entry
+      updatedAvailability[existingEntryIndex] = {
+        ...updatedAvailability[existingEntryIndex],
+        is_available: newStatus
+      };
+    } else {
+      // Add new entry
+      const newAvailability: Availability = {
+        doctor_id: doctorId,
+        day_of_week: dayOfWeek,
+        start_time: timeSlot,
+        end_time: timeSlot.replace("00", "59"), // End at XX:59
+        is_available: newStatus,
+      };
+      
+      updatedAvailability = [...updatedAvailability, newAvailability];
+    }
+    
     onAvailabilityChange(updatedAvailability);
     
     toast.success(
@@ -180,7 +196,7 @@ export function VisualWeeklySchedule({
       </div>
       
       <div className="mt-4 text-sm text-gray-500">
-        <p>Clique uma vez para disponibilizar (verde) ou duas vezes para bloquear (vermelho) o horário</p>
+        <p>Clique para alternar entre disponível (verde) e bloqueado (vermelho)</p>
       </div>
     </div>
   );
