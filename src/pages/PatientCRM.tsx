@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { 
@@ -21,6 +20,17 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
   Search, 
@@ -50,30 +60,29 @@ interface Patient {
   lastAppointmentDate: Date | null;
 }
 
-// Dados mockados para demonstração
 const mockPatients: Patient[] = [
   {
     id: "1",
     name: "Maria Silva",
     email: "maria.silva@email.com",
     phone: "(11) 98765-4321",
-    lastMessageDate: new Date(2023, 9, 15), // 15/10/2023
-    lastAppointmentDate: new Date(2023, 11, 10), // 10/12/2023
+    lastMessageDate: new Date(2023, 9, 15),
+    lastAppointmentDate: new Date(2023, 11, 10),
   },
   {
     id: "2",
     name: "João Oliveira",
     email: "joao.oliveira@email.com",
     phone: "(11) 91234-5678",
-    lastMessageDate: new Date(2023, 8, 28), // 28/09/2023
-    lastAppointmentDate: new Date(2023, 10, 5), // 05/11/2023
+    lastMessageDate: new Date(2023, 8, 28),
+    lastAppointmentDate: new Date(2023, 10, 5),
   },
   {
     id: "3",
     name: "Ana Rodrigues",
     email: "ana.rodrigues@email.com",
     phone: "(11) 97777-8888",
-    lastMessageDate: new Date(2023, 7, 10), // 10/08/2023
+    lastMessageDate: new Date(2023, 7, 10),
     lastAppointmentDate: null,
   },
   {
@@ -81,8 +90,8 @@ const mockPatients: Patient[] = [
     name: "Pedro Santos",
     email: "pedro.santos@email.com",
     phone: "(11) 95555-6666",
-    lastMessageDate: new Date(2023, 6, 20), // 20/07/2023
-    lastAppointmentDate: new Date(2023, 11, 15), // 15/12/2023
+    lastMessageDate: new Date(2023, 6, 20),
+    lastAppointmentDate: new Date(2023, 11, 15),
   },
   {
     id: "5",
@@ -90,7 +99,7 @@ const mockPatients: Patient[] = [
     email: "lucia.ferreira@email.com",
     phone: "(11) 93333-4444",
     lastMessageDate: null,
-    lastAppointmentDate: new Date(2023, 10, 22), // 22/11/2023
+    lastAppointmentDate: new Date(2023, 10, 22),
   }
 ];
 
@@ -101,6 +110,8 @@ export default function PatientCRM() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [newPatient, setNewPatient] = useState({
     name: "",
     email: "",
@@ -116,7 +127,6 @@ export default function PatientCRM() {
   const { user } = useAuth();
   const isDoctor = user?.role === "doctor";
   
-  // Fetch patients from Supabase
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -231,7 +241,6 @@ export default function PatientCRM() {
     }
 
     try {
-      // First try to update in Supabase if connected
       if (supabase) {
         const { error } = await supabase
           .from('patients')
@@ -244,11 +253,9 @@ export default function PatientCRM() {
           
         if (error) {
           console.error("Error updating patient in Supabase:", error);
-          // Fall back to local update if Supabase update fails
         }
       }
       
-      // Update patients state locally
       const updatedPatients = patients.map(patient => {
         if (patient.id === editingPatient.id) {
           return {
@@ -263,7 +270,6 @@ export default function PatientCRM() {
       
       setPatients(updatedPatients);
       
-      // If patient is currently selected, update selected patient too
       if (selectedPatient && selectedPatient.id === editingPatient.id) {
         setSelectedPatient({
           ...selectedPatient,
@@ -278,6 +284,83 @@ export default function PatientCRM() {
     } catch (error) {
       console.error("Error updating patient:", error);
       toast.error("Erro ao atualizar contato. Por favor, tente novamente.");
+    }
+  };
+
+  const handleDeleteClick = (patient: Patient, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPatientToDelete(patient);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeletePatient = async () => {
+    if (!patientToDelete) return;
+    
+    try {
+      if (supabase) {
+        const { data: conversations, error: conversationsError } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('patient_id', patientToDelete.id);
+          
+        if (conversationsError) {
+          console.error("Error fetching conversations:", conversationsError);
+        } else if (conversations && conversations.length > 0) {
+          for (const conversation of conversations) {
+            const { error: deleteMessagesError } = await supabase
+              .from('messages')
+              .delete()
+              .eq('conversation_id', conversation.id);
+              
+            if (deleteMessagesError) {
+              console.error("Error deleting messages:", deleteMessagesError);
+            }
+          }
+          
+          const { error: deleteConversationsError } = await supabase
+            .from('conversations')
+            .delete()
+            .eq('patient_id', patientToDelete.id);
+            
+          if (deleteConversationsError) {
+            console.error("Error deleting conversations:", deleteConversationsError);
+          }
+        }
+        
+        const { error: deleteAppointmentsError } = await supabase
+          .from('appointments')
+          .delete()
+          .eq('patient_id', patientToDelete.id);
+          
+        if (deleteAppointmentsError) {
+          console.error("Error deleting appointments:", deleteAppointmentsError);
+        }
+        
+        const { error: deletePatientError } = await supabase
+          .from('patients')
+          .delete()
+          .eq('id', patientToDelete.id);
+          
+        if (deletePatientError) {
+          console.error("Error deleting patient:", deletePatientError);
+          toast.error("Erro ao excluir contato. Tente novamente.");
+          return;
+        }
+      }
+      
+      const updatedPatients = patients.filter(p => p.id !== patientToDelete.id);
+      setPatients(updatedPatients);
+      
+      if (selectedPatient && selectedPatient.id === patientToDelete.id) {
+        setSelectedPatient(null);
+      }
+      
+      setIsDeleteDialogOpen(false);
+      setPatientToDelete(null);
+      toast.success("Contato excluído com sucesso!");
+    } catch (error) {
+      console.error("Error deleting patient:", error);
+      toast.error("Erro ao excluir contato. Por favor, tente novamente.");
     }
   };
 
@@ -332,6 +415,16 @@ export default function PatientCRM() {
                     <FileEdit className="h-4 w-4 mr-2" />
                     Editar
                   </Button>
+                  {isDoctor && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => handleDeleteClick(selectedPatient, e)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir
+                    </Button>
+                  )}
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -419,10 +512,11 @@ export default function PatientCRM() {
                             <FileEdit className="h-4 w-4" />
                           </Button>
                           {isDoctor && (
-                            <Button variant="ghost" size="icon" onClick={(e) => {
-                              e.stopPropagation();
-                              toast.error("Função de exclusão em desenvolvimento");
-                            }}>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={(e) => handleDeleteClick(patient, e)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
@@ -437,7 +531,6 @@ export default function PatientCRM() {
         </div>
       </div>
 
-      {/* Dialog para adicionar novo paciente */}
       <Dialog open={isAddPatientOpen} onOpenChange={setIsAddPatientOpen}>
         <DialogContent>
           <DialogHeader>
@@ -484,7 +577,6 @@ export default function PatientCRM() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para editar paciente */}
       <Dialog open={isEditPatientOpen} onOpenChange={setIsEditPatientOpen}>
         <DialogContent>
           <DialogHeader>
@@ -536,6 +628,25 @@ export default function PatientCRM() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente o contato
+              <strong> {patientToDelete?.name}</strong> e todos os dados associados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPatientToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDeletePatient}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
