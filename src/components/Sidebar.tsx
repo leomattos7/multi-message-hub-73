@@ -8,10 +8,7 @@ import {
   Instagram, 
   Inbox,
   Users,
-  Calendar,
-  Settings,
-  Menu,
-  X
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,8 +28,7 @@ export function Sidebar({ className }: SidebarProps) {
   const navItems = [
     { icon: Inbox, label: "Inbox", path: "/", active: location.pathname === "/" },
     { icon: Users, label: "Contatos", path: "/pacientes", active: location.pathname === "/pacientes" },
-    { icon: Calendar, label: "Agenda", path: "/agendamentos", active: location.pathname === "/agendamentos" },
-    { icon: Settings, label: "Configurações", path: "/configuracoes", active: location.pathname === "/configuracoes" },
+    { icon: Calendar, label: "Agenda", path: "/secretaria", active: location.pathname === "/secretaria" },
   ];
 
   const channelItems = [
@@ -118,4 +114,5 @@ export function Sidebar({ className }: SidebarProps) {
   );
 }
 
+import { X, Menu } from "lucide-react";
 import { Avatar } from "./Avatar";
