@@ -6,13 +6,9 @@ import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Calendar, Facebook, Instagram, Link, Loader2, Mail, MapPin, Twitter, Youtube, User, Building, MapPinned, Phone } from 'lucide-react';
+import { Calendar, Facebook, Instagram, Link, Loader2, Mail, MapPin, Phone, Twitter, Youtube, User, Building, MapPinned } from 'lucide-react';
 
-interface PublicPageProps {
-  previewDoctorId?: string;
-}
-
-export const PublicPage: React.FC<PublicPageProps> = ({ previewDoctorId }) => {
+export const PublicPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,51 +16,21 @@ export const PublicPage: React.FC<PublicPageProps> = ({ previewDoctorId }) => {
   const [links, setLinks] = useState<any[]>([]);
 
   useEffect(() => {
-    if (previewDoctorId) {
-      loadProfileById(previewDoctorId);
-    } else if (slug) {
-      loadProfileBySlug(slug);
+    if (slug) {
+      loadProfile(slug);
     }
-  }, [slug, previewDoctorId]);
+  }, [slug]);
 
-  const loadProfileById = async (doctorId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // First get the profile
-      const profileData = await doctorProfileService.getProfileByDoctorId(doctorId);
-      console.log("Profile data loaded by ID:", profileData);
-      
-      if (!profileData) {
-        setError('Perfil não encontrado.');
-        return;
-      }
-      
-      setProfile(profileData);
-      
-      // Then get the links
-      const linksData = await doctorProfileService.getLinksByDoctorId(doctorId);
-      console.log("Links data loaded:", linksData);
-      setLinks(linksData || []);
-    } catch (error) {
-      console.error('Erro ao carregar perfil por ID:', error);
-      setError('Erro ao carregar perfil. Tente novamente mais tarde.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadProfileBySlug = async (profileSlug: string) => {
+  const loadProfile = async (profileSlug: string) => {
     try {
       setLoading(true);
       setError(null);
       const data = await doctorProfileService.getProfileBySlug(profileSlug);
-      console.log("Profile data loaded by slug:", data);
+      console.log("Profile data loaded:", data);
       setProfile(data);
       setLinks(data?.doctor_links || []);
     } catch (error) {
-      console.error('Erro ao carregar perfil por slug:', error);
+      console.error('Erro ao carregar perfil:', error);
       setError('Perfil não encontrado. Verifique o link e tente novamente.');
     } finally {
       setLoading(false);

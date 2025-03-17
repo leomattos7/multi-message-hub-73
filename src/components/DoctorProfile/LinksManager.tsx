@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { doctorProfileService } from '@/integrations/supabase/client';
@@ -46,23 +47,12 @@ export const LinksManager: React.FC<LinksManagerProps> = ({ doctorId }) => {
 
   useEffect(() => {
     if (doctorId) {
-      console.log("LinksManager received doctorId:", doctorId);
       loadLinks();
-    } else {
-      console.error("No doctorId provided to LinksManager");
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao carregar links',
-        description: 'ID do médico não fornecido.',
-      });
     }
   }, [doctorId]);
 
   const loadLinks = async () => {
-    if (!doctorId) {
-      console.error("Cannot load links: No doctorId provided");
-      return;
-    }
+    if (!doctorId) return;
     
     try {
       setLoading(true);
@@ -110,15 +100,6 @@ export const LinksManager: React.FC<LinksManagerProps> = ({ doctorId }) => {
         variant: 'destructive',
         title: 'Campos obrigatórios',
         description: 'Preencha o título e a URL do link.',
-      });
-      return;
-    }
-
-    if (!doctorId) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao adicionar link',
-        description: 'ID do médico não fornecido.',
       });
       return;
     }
