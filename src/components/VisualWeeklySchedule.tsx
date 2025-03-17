@@ -59,14 +59,17 @@ export function VisualWeeklySchedule({
   
   // Generate time slots
   const timeSlots = generateTimeSlots();
+
+  // Find availability entry for a given day and time
+  const findAvailabilityEntry = (dayOfWeek: number, timeSlot: string): Availability | undefined => {
+    return weeklyAvailability.find(
+      avail => avail.day_of_week === dayOfWeek && avail.start_time === timeSlot
+    );
+  };
   
   // Check if a time slot is available or blocked for a specific day
   const getTimeSlotStatus = (dayOfWeek: number, timeSlot: string): 'available' | 'blocked' | 'undefined' => {
-    const slot = weeklyAvailability.find(
-      avail => 
-        avail.day_of_week === dayOfWeek && 
-        avail.start_time === timeSlot
-    );
+    const slot = findAvailabilityEntry(dayOfWeek, timeSlot);
     
     if (!slot) return 'undefined';
     return slot.is_available ? 'available' : 'blocked';
@@ -74,56 +77,47 @@ export function VisualWeeklySchedule({
   
   // Handle cell click to toggle status
   const handleCellClick = (dayOfWeek: number, timeSlot: string) => {
+    // First, get the current availability state for this cell
     const currentStatus = getTimeSlotStatus(dayOfWeek, timeSlot);
+    
+    // Create a copy of the current availability array
     let updatedAvailability = [...weeklyAvailability];
     
-    // Find existing entry for this time slot if it exists
-    const existingEntryIndex = updatedAvailability.findIndex(
-      avail => 
-        avail.day_of_week === dayOfWeek && 
-        avail.start_time === timeSlot
-    );
+    // Find the existing entry for this cell if it exists
+    const existingEntry = findAvailabilityEntry(dayOfWeek, timeSlot);
+    const existingEntryIndex = existingEntry ? 
+      updatedAvailability.findIndex(a => a.id === existingEntry.id) : -1;
     
-    // Toggle status logic based on current status
-    let newStatus: boolean;
-    
-    if (currentStatus === 'available') {
-      // If currently available, make it blocked
-      newStatus = false;
-    } else if (currentStatus === 'blocked') {
-      // If currently blocked, make it available
-      newStatus = true;
-    } else {
-      // If undefined (no entry yet), make it available by default
-      newStatus = true;
-    }
+    // Determine the new status based on the current status
+    // If current status is available -> make it blocked
+    // If current status is blocked or undefined -> make it available
+    const newIsAvailable = currentStatus === 'available' ? false : true;
     
     if (existingEntryIndex >= 0) {
       // Update existing entry
       updatedAvailability[existingEntryIndex] = {
         ...updatedAvailability[existingEntryIndex],
-        is_available: newStatus
+        is_available: newIsAvailable
       };
     } else {
-      // Add new entry
-      const newAvailability: Availability = {
+      // Create new entry
+      const newEntry: Availability = {
         doctor_id: doctorId,
         day_of_week: dayOfWeek,
         start_time: timeSlot,
         end_time: timeSlot.replace("00", "59"), // End at XX:59
-        is_available: newStatus,
+        is_available: newIsAvailable,
       };
       
-      updatedAvailability = [...updatedAvailability, newAvailability];
+      updatedAvailability.push(newEntry);
     }
     
-    // Apply the changes
+    // Apply changes and show notification
     onAvailabilityChange(updatedAvailability);
     
-    // Show toast notification
     toast.success(
-      newStatus 
-        ? `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} disponibilizado`
+      newIsAvailable 
+        ? `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} disponibilizado` 
         : `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} bloqueado`
     );
   };
@@ -165,8 +159,8 @@ export function VisualWeeklySchedule({
                           <div 
                             className={cn(
                               "border-t border-gray-100 cursor-pointer transition-colors h-12 flex items-center justify-center",
-                              status === 'blocked' ? "bg-red-500" : "",
-                              status === 'available' ? "bg-green-500" : "",
+                              status === 'blocked' ? "bg-red-600" : "",
+                              status === 'available' ? "bg-green-600" : "",
                               status === 'undefined' ? "bg-white" : "",
                               day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-opacity-80" : "",
                               hoveredCell === cellId ? "opacity-80" : "",
