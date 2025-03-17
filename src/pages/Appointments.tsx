@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -208,7 +207,7 @@ export default function Appointments() {
                 Selecione uma data para ver os horários disponíveis
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex justify-center">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -218,7 +217,7 @@ export default function Appointments() {
                   date.getDay() === 0 || date.getDay() === 6 // No weekends
                 }
                 initialFocus
-                className="mx-auto border-none"
+                className="mx-auto border-none w-full"
               />
             </CardContent>
             <CardHeader className="pb-2 pt-0">
