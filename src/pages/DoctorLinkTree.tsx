@@ -38,6 +38,8 @@ const DoctorLinkTree: React.FC = () => {
     );
   }
 
+  console.log('User in DoctorLinkTree:', user);
+
   return <ProfileManager />;
 };
 
