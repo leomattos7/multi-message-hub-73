@@ -11,6 +11,7 @@ import {
   User,
   Briefcase,
   Calendar,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,11 @@ const sidebarItems = [
     name: "Funcionários",
     href: "/funcionarios",
     icon: <Briefcase />,
+  },
+  {
+    name: "Minisite Pessoal",
+    href: "/linktree",
+    icon: <Link2 />,
   },
 ];
 

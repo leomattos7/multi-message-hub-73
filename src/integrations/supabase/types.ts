@@ -206,9 +206,13 @@ export type Database = {
       }
       doctor_profiles: {
         Row: {
+          address: string | null
           bio: string | null
           created_at: string
+          email: string | null
           id: string
+          name: string | null
+          phone: string | null
           profile_image_url: string | null
           public_url_slug: string
           specialty: string | null
@@ -216,9 +220,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           bio?: string | null
           created_at?: string
+          email?: string | null
           id: string
+          name?: string | null
+          phone?: string | null
           profile_image_url?: string | null
           public_url_slug: string
           specialty?: string | null
@@ -226,9 +234,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           bio?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          name?: string | null
+          phone?: string | null
           profile_image_url?: string | null
           public_url_slug?: string
           specialty?: string | null

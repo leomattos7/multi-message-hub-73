@@ -102,7 +102,7 @@ const App = () => (
           } />
           
           <Route path="/linktree" element={
-            <AuthGuard requiredRole="doctor">
+            <AuthGuard>
               <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">
