@@ -493,12 +493,12 @@ export default function SecretaryDashboard() {
                 <CardHeader className="pb-0 text-center">
                   <CardTitle className="text-xl mb-4">Perfil do Médico</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
                     <DialogTrigger asChild>
                       <Button 
                         variant="gray" 
-                        className="w-full justify-center gap-2 items-center mb-3"
+                        className="w-full justify-center gap-2 items-center"
                         size="full"
                       >
                         <Edit className="h-4 w-4" />
@@ -612,7 +612,7 @@ export default function SecretaryDashboard() {
                   
                   <Button 
                     variant="gray" 
-                    className="w-full justify-center gap-2 items-center mb-3"
+                    className="w-full justify-center gap-2 items-center"
                     size="full"
                     onClick={handleNavigateToScheduleManagement}
                   >
