@@ -54,9 +54,23 @@ export function VisualWeeklySchedule({
     setAvailability(weeklyAvailability);
   }, [weeklyAvailability]);
 
+  // Check if a time slot with the same day and start time already exists
+  const checkDuplicateTimeSlot = (day: number, start: string): boolean => {
+    return availability.some(
+      slot => slot.day_of_week === day && 
+              slot.start_time === start
+    );
+  };
+
   const handleAddAvailability = async () => {
     if (startTime >= endTime) {
       toast.error("O horário final deve ser após o horário inicial");
+      return;
+    }
+    
+    // Check for duplicate time slot
+    if (checkDuplicateTimeSlot(selectedDay, startTime)) {
+      toast.error("Já existe um horário configurado para este dia e hora inicial");
       return;
     }
     
@@ -92,7 +106,13 @@ export function VisualWeeklySchedule({
       
       if (error) {
         console.error("Error adding availability:", error);
-        toast.error("Erro ao adicionar disponibilidade");
+        
+        // Provide more specific error messages based on error code
+        if (error.code === "23505") {
+          toast.error("Este horário já está cadastrado para este dia");
+        } else {
+          toast.error("Erro ao adicionar disponibilidade: " + error.message);
+        }
         return;
       }
       
