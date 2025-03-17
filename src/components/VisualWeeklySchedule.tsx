@@ -159,9 +159,9 @@ export function VisualWeeklySchedule({
                         <TooltipTrigger asChild>
                           <div 
                             className={cn(
-                              "border-t border-gray-100 cursor-pointer transition-colors",
-                              status === 'blocked' ? "bg-red-100" : "",
-                              status === 'available' ? "bg-green-100" : "",
+                              "border-t border-gray-100 cursor-pointer transition-colors h-12 flex items-center justify-center",
+                              status === 'blocked' ? "bg-red-500" : "",
+                              status === 'available' ? "bg-green-500" : "",
                               status === 'undefined' ? "bg-white" : "",
                               day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-opacity-80" : "",
                               hoveredCell === cellId ? "opacity-80" : "",
@@ -170,10 +170,8 @@ export function VisualWeeklySchedule({
                             onMouseEnter={() => setHoveredCell(cellId)}
                             onMouseLeave={() => setHoveredCell(null)}
                           >
-                            <div className="h-12 flex items-center justify-center">
-                              {status === 'blocked' && <Lock className="h-4 w-4 text-red-500" />}
-                              {status === 'available' && <Check className="h-4 w-4 text-green-500" />}
-                            </div>
+                            {status === 'blocked' && <Lock className="h-4 w-4 text-white" />}
+                            {status === 'available' && <Check className="h-4 w-4 text-white" />}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
