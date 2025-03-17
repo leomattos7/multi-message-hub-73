@@ -33,13 +33,19 @@ const APPOINTMENT_TYPES = [
 // Define more specific status type
 type AppointmentStatus = "confirmado" | "aguardando" | "cancelado";
 
+// Payment methods
+const PAYMENT_METHODS = [
+  { id: "insurance", name: "Plano de Saúde" },
+  { id: "private", name: "Particular" }
+];
+
 // Mock data for appointments with corrected types
 const MOCK_APPOINTMENTS = [
-  { id: 1, name: "João Silva", time: "09:00", type: "routine", status: "confirmado" as AppointmentStatus, notes: "" },
-  { id: 2, name: "Maria Oliveira", time: "10:30", type: "followup", status: "confirmado" as AppointmentStatus, notes: "" },
-  { id: 3, name: "Pedro Santos", time: "13:00", type: "emergency", status: "aguardando" as AppointmentStatus, notes: "" },
-  { id: 4, name: "Ana Pereira", time: "14:30", type: "exam", status: "confirmado" as AppointmentStatus, notes: "" },
-  { id: 5, name: "Carlos Ferreira", time: "16:00", type: "routine", status: "cancelado" as AppointmentStatus, notes: "" }
+  { id: 1, name: "João Silva", time: "09:00", type: "routine", status: "confirmado" as AppointmentStatus, notes: "", paymentMethod: "insurance" },
+  { id: 2, name: "Maria Oliveira", time: "10:30", type: "followup", status: "confirmado" as AppointmentStatus, notes: "", paymentMethod: "private" },
+  { id: 3, name: "Pedro Santos", time: "13:00", type: "emergency", status: "aguardando" as AppointmentStatus, notes: "", paymentMethod: "insurance" },
+  { id: 4, name: "Ana Pereira", time: "14:30", type: "exam", status: "confirmado" as AppointmentStatus, notes: "", paymentMethod: "insurance" },
+  { id: 5, name: "Carlos Ferreira", time: "16:00", type: "routine", status: "cancelado" as AppointmentStatus, notes: "", paymentMethod: "private" }
 ];
 
 // Appointment schema
@@ -49,6 +55,7 @@ const appointmentSchema = z.object({
   time: z.string().min(5, { message: "Horário é obrigatório" }),
   type: z.string().min(1, { message: "Tipo de consulta é obrigatório" }),
   status: z.enum(["confirmado", "aguardando", "cancelado"]),
+  paymentMethod: z.string().min(1, { message: "Forma de pagamento é obrigatória" }),
   notes: z.string().optional(),
 });
 
@@ -103,6 +110,7 @@ export default function SecretaryDashboard() {
       type: "",
       status: "aguardando",
       notes: "",
+      paymentMethod: "insurance"
     }
   });
 
@@ -127,6 +135,7 @@ export default function SecretaryDashboard() {
             type,
             status,
             notes,
+            payment_method,
             patients(name)
           `)
           .eq('date', formattedDate);
@@ -144,7 +153,8 @@ export default function SecretaryDashboard() {
             time: apt.time.substring(0, 5), // Format time from "HH:MM:SS" to "HH:MM"
             type: apt.type,
             status: apt.status as AppointmentStatus, // Explicitly type as our enum
-            notes: apt.notes || ""
+            notes: apt.notes || "",
+            paymentMethod: apt.payment_method || "insurance" // Default to insurance if missing
           }));
           setAppointments(formattedAppointments);
         } else {
@@ -304,6 +314,12 @@ export default function SecretaryDashboard() {
     return type ? type.name : typeId;
   };
 
+  // Get payment method label
+  const getPaymentMethodLabel = (methodId: string) => {
+    const method = PAYMENT_METHODS.find(m => m.id === methodId);
+    return method ? method.name : methodId;
+  };
+
   // Get statistics for appointments
   const getStatistics = () => {
     const total = appointments.length;
@@ -360,6 +376,8 @@ export default function SecretaryDashboard() {
                   </span>
                   <span>•</span>
                   <span>{getAppointmentTypeLabel(appointment.type)}</span>
+                  <span>•</span>
+                  <span>{getPaymentMethodLabel(appointment.paymentMethod)}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -727,6 +745,35 @@ export default function SecretaryDashboard() {
                           <SelectItem value="confirmado">Confirmado</SelectItem>
                           <SelectItem value="aguardando">Aguardando</SelectItem>
                           <SelectItem value="cancelado">Cancelado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={appointmentForm.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Forma de Pagamento</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a forma de pagamento" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PAYMENT_METHODS.map((method) => (
+                            <SelectItem key={method.id} value={method.id}>
+                              {method.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

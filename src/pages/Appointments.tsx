@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 // Available times for appointments
 const AVAILABLE_TIMES = [
@@ -36,6 +37,12 @@ const APPOINTMENT_TYPES = [
   { id: "exam", name: "Resultado de Exame" }
 ];
 
+// Payment methods
+const PAYMENT_METHODS = [
+  { id: "insurance", name: "Plano de Saúde" },
+  { id: "private", name: "Particular" }
+];
+
 // Define form schema with zod
 const formSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
@@ -44,6 +51,7 @@ const formSchema = z.object({
   date: z.date({ required_error: "Selecione uma data para a consulta" }),
   time: z.string({ required_error: "Selecione um horário" }),
   type: z.string({ required_error: "Selecione o tipo de atendimento" }),
+  paymentMethod: z.string({ required_error: "Selecione o método de pagamento" }),
   notes: z.string().optional(),
 });
 
@@ -86,6 +94,7 @@ export default function Appointments() {
       name: "",
       email: "",
       phone: "",
+      paymentMethod: "",
       notes: "",
     },
   });
@@ -120,20 +129,46 @@ export default function Appointments() {
   };
 
   // Function to handle form submission
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     // Here you would normally send this data to your backend
     console.log("Appointment data:", data);
     
-    // Show success message
-    toast.success("Consulta agendada com sucesso!", {
-      description: `${format(data.date, "dd/MM/yyyy")} às ${data.time}`,
-    });
-    
-    // Reset form and go back to calendar
-    form.reset();
-    setSelectedDate(undefined);
-    setSelectedTime(undefined);
-    setStep("calendar");
+    try {
+      // Try to insert into Supabase
+      const { error } = await supabase
+        .from('appointments')
+        .insert({
+          date: format(data.date, "yyyy-MM-dd"),
+          time: data.time,
+          type: data.type,
+          status: "aguardando",
+          notes: data.notes,
+          payment_method: data.paymentMethod, // Add payment method to appointment
+          // In a real application, we would create or look up the patient first
+          patient_id: "00000000-0000-0000-0000-000000000000" // Placeholder patient ID
+        });
+        
+      if (error) {
+        console.error("Error saving appointment:", error);
+        toast.error("Erro ao agendar consulta");
+        return;
+      }
+      
+      // Show success message
+      toast.success("Consulta agendada com sucesso!", {
+        description: `${format(data.date, "dd/MM/yyyy")} às ${data.time}`,
+      });
+      
+      // Reset form and go back to calendar
+      form.reset();
+      setSelectedDate(undefined);
+      setSelectedTime(undefined);
+      setStep("calendar");
+      
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erro ao agendar consulta");
+    }
   };
 
   // Function to format the weekday name
@@ -370,6 +405,31 @@ export default function Appointments() {
                                 {APPOINTMENT_TYPES.map((type) => (
                                   <SelectItem key={type.id} value={type.id}>
                                     {type.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Forma de pagamento</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecionar forma de pagamento" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {PAYMENT_METHODS.map((method) => (
+                                  <SelectItem key={method.id} value={method.id}>
+                                    {method.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
