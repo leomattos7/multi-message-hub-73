@@ -65,56 +65,10 @@ interface Patient {
   lastAppointmentDate: Date | null;
 }
 
-const mockPatients: Patient[] = [
-  {
-    id: "1",
-    name: "Maria Silva",
-    email: "maria.silva@email.com",
-    phone: "(11) 98765-4321",
-    address: "Av. Paulista, 1000, São Paulo - SP",
-    notes: "Paciente com histórico de hipertensão",
-    lastMessageDate: new Date(2023, 9, 15),
-    lastAppointmentDate: new Date(2023, 11, 10),
-  },
-  {
-    id: "2",
-    name: "João Oliveira",
-    email: "joao.oliveira@email.com",
-    phone: "(11) 91234-5678",
-    address: "Rua Augusta, 500, São Paulo - SP",
-    notes: "Preferência por consultas matutinas",
-    lastMessageDate: new Date(2023, 8, 28),
-    lastAppointmentDate: new Date(2023, 10, 5),
-  },
-  {
-    id: "3",
-    name: "Ana Rodrigues",
-    email: "ana.rodrigues@email.com",
-    phone: "(11) 97777-8888",
-    lastMessageDate: new Date(2023, 7, 10),
-    lastAppointmentDate: null,
-  },
-  {
-    id: "4",
-    name: "Pedro Santos",
-    email: "pedro.santos@email.com",
-    phone: "(11) 95555-6666",
-    lastMessageDate: new Date(2023, 6, 20),
-    lastAppointmentDate: new Date(2023, 11, 15),
-  },
-  {
-    id: "5",
-    name: "Lucia Ferreira",
-    email: "lucia.ferreira@email.com",
-    phone: "(11) 93333-4444",
-    lastMessageDate: null,
-    lastAppointmentDate: new Date(2023, 10, 22),
-  }
-];
-
 export default function PatientCRM() {
   const isMobile = useIsMobile();
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
@@ -153,82 +107,87 @@ export default function PatientCRM() {
   const isDoctor = user?.role === "doctor";
   
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const { data: appointments, error: appointmentsError } = await supabase
-          .from('appointments')
-          .select('patient_id, date')
-          .order('date', { ascending: false });
-
-        const { data: messages, error: messagesError } = await supabase
-          .from('messages')
-          .select('conversation_id, timestamp')
-          .order('timestamp', { ascending: false });
-
-        const { data: conversations, error: conversationsError } = await supabase
-          .from('conversations')
-          .select('id, patient_id');
-
-        const { data: patientsData, error: patientsError } = await supabase
-          .from('patients')
-          .select('id, name, email, phone, address, notes');
-
-        if (patientsError || appointmentsError || messagesError || conversationsError) {
-          console.error("Error fetching data:", { patientsError, appointmentsError, messagesError, conversationsError });
-          setPatients(mockPatients);
-          return;
-        }
-
-        if (patientsData) {
-          const patientAppointments = new Map();
-          if (appointments) {
-            appointments.forEach(appointment => {
-              if (!patientAppointments.has(appointment.patient_id) || 
-                  new Date(appointment.date) > new Date(patientAppointments.get(appointment.patient_id))) {
-                patientAppointments.set(appointment.patient_id, appointment.date);
-              }
-            });
-          }
-
-          const patientMessages = new Map();
-          const conversationToPatient = new Map();
-          if (conversations) {
-            conversations.forEach(conversation => {
-              conversationToPatient.set(conversation.id, conversation.patient_id);
-            });
-          }
-
-          if (messages) {
-            messages.forEach(message => {
-              const patientId = conversationToPatient.get(message.conversation_id);
-              if (patientId && (!patientMessages.has(patientId) || 
-                  new Date(message.timestamp) > new Date(patientMessages.get(patientId)))) {
-                patientMessages.set(patientId, message.timestamp);
-              }
-            });
-          }
-
-          const formattedPatients = patientsData.map(patient => ({
-            id: patient.id,
-            name: patient.name,
-            email: patient.email ?? "",
-            phone: patient.phone ?? "",
-            address: patient.address ?? "",
-            notes: patient.notes ?? "",
-            lastMessageDate: patientMessages.has(patient.id) ? new Date(patientMessages.get(patient.id)) : null,
-            lastAppointmentDate: patientAppointments.has(patient.id) ? new Date(patientAppointments.get(patient.id)) : null,
-          }));
-
-          setPatients(formattedPatients.length > 0 ? formattedPatients : mockPatients);
-        }
-      } catch (error) {
-        console.error("Error fetching patients:", error);
-        setPatients(mockPatients);
-      }
-    };
-
     fetchPatients();
   }, []);
+  
+  const fetchPatients = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data: appointments, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('patient_id, date')
+        .order('date', { ascending: false });
+
+      const { data: messages, error: messagesError } = await supabase
+        .from('messages')
+        .select('conversation_id, timestamp')
+        .order('timestamp', { ascending: false });
+
+      const { data: conversations, error: conversationsError } = await supabase
+        .from('conversations')
+        .select('id, patient_id');
+
+      const { data: patientsData, error: patientsError } = await supabase
+        .from('patients')
+        .select('id, name, email, phone, address, notes, created_at, updated_at');
+
+      if (patientsError) {
+        console.error("Error fetching patients:", patientsError);
+        toast.error("Erro ao carregar pacientes");
+        setIsLoading(false);
+        return;
+      }
+
+      if (patientsData) {
+        const patientAppointments = new Map();
+        if (appointments) {
+          appointments.forEach(appointment => {
+            if (!patientAppointments.has(appointment.patient_id) || 
+                new Date(appointment.date) > new Date(patientAppointments.get(appointment.patient_id))) {
+              patientAppointments.set(appointment.patient_id, appointment.date);
+            }
+          });
+        }
+
+        const patientMessages = new Map();
+        const conversationToPatient = new Map();
+        if (conversations) {
+          conversations.forEach(conversation => {
+            conversationToPatient.set(conversation.id, conversation.patient_id);
+          });
+        }
+
+        if (messages) {
+          messages.forEach(message => {
+            const patientId = conversationToPatient.get(message.conversation_id);
+            if (patientId && (!patientMessages.has(patientId) || 
+                new Date(message.timestamp) > new Date(patientMessages.get(patientId)))) {
+              patientMessages.set(patientId, message.timestamp);
+            }
+          });
+        }
+
+        const formattedPatients = patientsData.map(patient => ({
+          id: patient.id,
+          name: patient.name,
+          email: patient.email ?? "",
+          phone: patient.phone ?? "",
+          address: patient.address ?? "",
+          notes: patient.notes ?? "",
+          lastMessageDate: patientMessages.has(patient.id) ? new Date(patientMessages.get(patient.id)) : null,
+          lastAppointmentDate: patientAppointments.has(patient.id) ? new Date(patientAppointments.get(patient.id)) : null,
+        }));
+
+        setPatients(formattedPatients);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      toast.error("Erro ao carregar pacientes");
+      setIsLoading(false);
+    }
+  };
   
   const applyFilters = (patientsList: Patient[]): Patient[] => {
     let filtered = patientsList;
@@ -329,47 +288,40 @@ export default function PatientCRM() {
     }
 
     try {
-      let newPatientId = "";
-      
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('patients')
-          .insert({
-            name: newPatient.name,
-            email: newPatient.email || null,
-            phone: newPatient.phone || null,
-            address: newPatient.address || null,
-            notes: newPatient.notes || null
-          })
-          .select();
-          
-        if (error) {
-          console.error("Error inserting patient in Supabase:", error);
-          throw error;
-        }
+      const { data, error } = await supabase
+        .from('patients')
+        .insert({
+          name: newPatient.name,
+          email: newPatient.email || null,
+          phone: newPatient.phone || null,
+          address: newPatient.address || null,
+          notes: newPatient.notes || null
+        })
+        .select();
         
-        if (data && data.length > 0) {
-          newPatientId = data[0].id;
-        }
-      } else {
-        newPatientId = `${patients.length + 1}`;
+      if (error) {
+        console.error("Error inserting patient in Supabase:", error);
+        toast.error("Erro ao adicionar paciente. Por favor, tente novamente.");
+        return;
       }
+      
+      if (data && data.length > 0) {
+        const newPatientObj: Patient = {
+          id: data[0].id,
+          name: data[0].name,
+          email: data[0].email || "",
+          phone: data[0].phone || "",
+          address: data[0].address || "",
+          notes: data[0].notes || "",
+          lastMessageDate: null,
+          lastAppointmentDate: null,
+        };
 
-      const newPatientObj: Patient = {
-        id: newPatientId,
-        name: newPatient.name,
-        email: newPatient.email,
-        phone: newPatient.phone,
-        address: newPatient.address,
-        notes: newPatient.notes,
-        lastMessageDate: null,
-        lastAppointmentDate: null,
-      };
-
-      setPatients([...patients, newPatientObj]);
-      setNewPatient({ name: "", email: "", phone: "", address: "", notes: "" });
-      setIsAddPatientOpen(false);
-      toast.success("Paciente adicionado com sucesso!");
+        setPatients([...patients, newPatientObj]);
+        setNewPatient({ name: "", email: "", phone: "", address: "", notes: "" });
+        setIsAddPatientOpen(false);
+        toast.success("Paciente adicionado com sucesso!");
+      }
     } catch (error) {
       console.error("Error adding patient:", error);
       toast.error("Erro ao adicionar paciente. Por favor, tente novamente.");
@@ -396,22 +348,21 @@ export default function PatientCRM() {
     }
 
     try {
-      if (supabase) {
-        const { error } = await supabase
-          .from('patients')
-          .update({
-            name: editingPatient.name,
-            email: editingPatient.email || null,
-            phone: editingPatient.phone || null,
-            address: editingPatient.address || null,
-            notes: editingPatient.notes || null
-          })
-          .eq('id', editingPatient.id);
-          
-        if (error) {
-          console.error("Error updating patient in Supabase:", error);
-          throw error;
-        }
+      const { error } = await supabase
+        .from('patients')
+        .update({
+          name: editingPatient.name,
+          email: editingPatient.email || null,
+          phone: editingPatient.phone || null,
+          address: editingPatient.address || null,
+          notes: editingPatient.notes || null
+        })
+        .eq('id', editingPatient.id);
+        
+      if (error) {
+        console.error("Error updating patient in Supabase:", error);
+        toast.error("Erro ao atualizar contato. Por favor, tente novamente.");
+        return;
       }
       
       const updatedPatients = patients.map(patient => {
@@ -459,55 +410,59 @@ export default function PatientCRM() {
     if (!patientToDelete) return;
     
     try {
-      if (supabase) {
-        const { data: conversations, error: conversationsError } = await supabase
-          .from('conversations')
-          .select('id')
-          .eq('patient_id', patientToDelete.id);
-          
-        if (conversationsError) {
-          console.error("Error fetching conversations:", conversationsError);
-        } else if (conversations && conversations.length > 0) {
-          for (const conversation of conversations) {
-            const { error: deleteMessagesError } = await supabase
-              .from('messages')
-              .delete()
-              .eq('conversation_id', conversation.id);
-              
-            if (deleteMessagesError) {
-              console.error("Error deleting messages:", deleteMessagesError);
-            }
-          }
-          
-          const { error: deleteConversationsError } = await supabase
-            .from('conversations')
+      const { data: conversations, error: conversationsError } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('patient_id', patientToDelete.id);
+        
+      if (conversationsError) {
+        console.error("Error fetching conversations:", conversationsError);
+      } else if (conversations && conversations.length > 0) {
+        for (const conversation of conversations) {
+          const { error: deleteMessagesError } = await supabase
+            .from('messages')
             .delete()
-            .eq('patient_id', patientToDelete.id);
+            .eq('conversation_id', conversation.id);
             
-          if (deleteConversationsError) {
-            console.error("Error deleting conversations:", deleteConversationsError);
+          if (deleteMessagesError) {
+            console.error("Error deleting messages:", deleteMessagesError);
+            toast.error("Erro ao excluir mensagens relacionadas.");
+            return;
           }
         }
         
-        const { error: deleteAppointmentsError } = await supabase
-          .from('appointments')
+        const { error: deleteConversationsError } = await supabase
+          .from('conversations')
           .delete()
           .eq('patient_id', patientToDelete.id);
           
-        if (deleteAppointmentsError) {
-          console.error("Error deleting appointments:", deleteAppointmentsError);
-        }
-        
-        const { error: deletePatientError } = await supabase
-          .from('patients')
-          .delete()
-          .eq('id', patientToDelete.id);
-          
-        if (deletePatientError) {
-          console.error("Error deleting patient:", deletePatientError);
-          toast.error("Erro ao excluir contato. Tente novamente.");
+        if (deleteConversationsError) {
+          console.error("Error deleting conversations:", deleteConversationsError);
+          toast.error("Erro ao excluir conversas relacionadas.");
           return;
         }
+      }
+      
+      const { error: deleteAppointmentsError } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('patient_id', patientToDelete.id);
+        
+      if (deleteAppointmentsError) {
+        console.error("Error deleting appointments:", deleteAppointmentsError);
+        toast.error("Erro ao excluir consultas relacionadas.");
+        return;
+      }
+      
+      const { error: deletePatientError } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', patientToDelete.id);
+        
+      if (deletePatientError) {
+        console.error("Error deleting patient:", deletePatientError);
+        toast.error("Erro ao excluir contato. Tente novamente.");
+        return;
       }
       
       const updatedPatients = patients.filter(p => p.id !== patientToDelete.id);
@@ -581,7 +536,11 @@ export default function PatientCRM() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-        {selectedPatient ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          </div>
+        ) : selectedPatient ? (
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex justify-between mb-4">
               <h2 className="text-xl font-semibold">{selectedPatient.name}</h2>
