@@ -110,6 +110,14 @@ export function ConversationList({
     addToPatientsMutation.mutate(conversation);
   };
 
+  // Function to safely cast channel string to ChannelType
+  const getChannelType = (channelString: string): ChannelType => {
+    const validChannels: ChannelType[] = ['whatsapp', 'instagram', 'facebook', 'email'];
+    return validChannels.includes(channelString as ChannelType) 
+      ? channelString as ChannelType 
+      : 'whatsapp'; // Default fallback
+  };
+
   // Filter conversations based on search, channel filter, and active tab
   const filteredConversations = conversations.filter(conversation => {
     // First filter by tab (archived status)
@@ -223,6 +231,9 @@ export function ConversationList({
           ) : (
             filteredConversations.map((conversation) => {
               const isSelected = conversation.id === selectedConversationId;
+              // Type assertion to convert string to ChannelType
+              const channelType = getChannelType(conversation.channel);
+              
               return (
                 <div
                   key={conversation.id}
@@ -245,7 +256,7 @@ export function ConversationList({
                             {conversation.patient?.name || "Unknown"}
                           </h3>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <ChannelBadge channel={conversation.channel} size="sm" />
+                            <ChannelBadge channel={channelType} size="sm" />
                             <span className="text-xs text-muted-foreground">
                               {formatLastActivity(conversation.last_activity)}
                             </span>
@@ -313,6 +324,9 @@ export function ConversationList({
           ) : (
             filteredConversations.map((conversation) => {
               const isSelected = conversation.id === selectedConversationId;
+              // Type assertion to convert string to ChannelType
+              const channelType = getChannelType(conversation.channel);
+              
               return (
                 <div
                   key={conversation.id}
@@ -335,7 +349,7 @@ export function ConversationList({
                             {conversation.patient?.name || "Unknown"}
                           </h3>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <ChannelBadge channel={conversation.channel} size="sm" />
+                            <ChannelBadge channel={channelType} size="sm" />
                             <span className="text-xs text-muted-foreground">
                               {formatLastActivity(conversation.last_activity)}
                             </span>
