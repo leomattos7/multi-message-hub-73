@@ -29,13 +29,16 @@ const APPOINTMENT_TYPES = [
   { id: "exam", name: "Resultado de Exame" }
 ];
 
-// Mock data for appointments
+// Define more specific status type
+type AppointmentStatus = "confirmado" | "aguardando" | "cancelado";
+
+// Mock data for appointments with corrected types
 const MOCK_APPOINTMENTS = [
-  { id: 1, name: "João Silva", time: "09:00", type: "Consulta de Rotina", status: "confirmado" },
-  { id: 2, name: "Maria Oliveira", time: "10:30", type: "Retorno", status: "confirmado" },
-  { id: 3, name: "Pedro Santos", time: "13:00", type: "Urgência", status: "aguardando" },
-  { id: 4, name: "Ana Pereira", time: "14:30", type: "Resultado de Exame", status: "confirmado" },
-  { id: 5, name: "Carlos Ferreira", time: "16:00", type: "Consulta de Rotina", status: "cancelado" }
+  { id: 1, name: "João Silva", time: "09:00", type: "routine", status: "confirmado" as AppointmentStatus, notes: "" },
+  { id: 2, name: "Maria Oliveira", time: "10:30", type: "followup", status: "confirmado" as AppointmentStatus, notes: "" },
+  { id: 3, name: "Pedro Santos", time: "13:00", type: "emergency", status: "aguardando" as AppointmentStatus, notes: "" },
+  { id: 4, name: "Ana Pereira", time: "14:30", type: "exam", status: "confirmado" as AppointmentStatus, notes: "" },
+  { id: 5, name: "Carlos Ferreira", time: "16:00", type: "routine", status: "cancelado" as AppointmentStatus, notes: "" }
 ];
 
 // Appointment schema
@@ -135,12 +138,12 @@ export default function SecretaryDashboard() {
         if (data && data.length > 0) {
           // Transform data to match our component format
           const formattedAppointments = data.map(apt => ({
-            id: apt.id,
+            id: Number(apt.id), // Convert to number to match our schema
             name: apt.patients?.name || 'Unknown',
             time: apt.time.substring(0, 5), // Format time from "HH:MM:SS" to "HH:MM"
             type: apt.type,
-            status: apt.status,
-            notes: apt.notes
+            status: apt.status as AppointmentStatus, // Explicitly type as our enum
+            notes: apt.notes || ""
           }));
           setAppointments(formattedAppointments);
         } else {
@@ -235,7 +238,7 @@ export default function SecretaryDashboard() {
   };
 
   // Get status badge class
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: AppointmentStatus) => {
     switch (status) {
       case "confirmado":
         return (
