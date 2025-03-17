@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format, addDays, startOfWeek, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, isToday, isSameMonth, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Appointment Dialog Component
 const AppointmentDialog = ({ date, time, isOpen, onClose }: { date: Date, time: string, isOpen: boolean, onClose: () => void }) => {
