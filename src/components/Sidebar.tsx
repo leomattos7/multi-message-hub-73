@@ -6,7 +6,7 @@ import {
   UserRound,
   MessageSquare,
   Users,
-  Home,
+  Inbox,
   Menu,
   X,
   Calendar,
@@ -19,9 +19,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 // Default navigation items
 const sidebarItems = [
   {
-    name: "Home",
+    name: "Inbox",
     href: "/",
-    icon: <Home />,
+    icon: <Inbox />,
   },
   {
     name: "Secretária",
