@@ -475,7 +475,7 @@ export default function SecretaryDashboard() {
           <h1 className="text-2xl font-bold text-gray-800 mb-8">Painel da Secretária</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left sidebar - Only edit doctor profile button */}
+            {/* Left sidebar - Unified card with doctor profile and navigation */}
             <div className="lg:col-span-3 space-y-6">
               <Card>
                 <CardHeader className="pb-4">
@@ -594,21 +594,15 @@ export default function SecretaryDashboard() {
                     </Dialog>
                   </div>
                 </CardHeader>
-              </Card>
-              
-              {/* Additional section for navigation options */}
-              <Card>
-                <CardContent className="p-6">
-                  <nav className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start" onClick={() => navigate("/appointments")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Agendar Nova Consulta
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" onClick={() => navigate("/patientCRM")}>
-                      <User className="mr-2 h-4 w-4" />
-                      Gerenciar Pacientes
-                    </Button>
-                  </nav>
+                <CardContent className="pt-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start mb-4" 
+                    onClick={() => navigate("/appointments")}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    Agendar Nova Consulta
+                  </Button>
                 </CardContent>
               </Card>
             </div>
