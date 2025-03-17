@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, subDays, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -481,9 +482,8 @@ export default function SecretaryDashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="container max-w-6xl mx-auto py-8 px-4">
+        <div className="container mx-auto py-8 px-4 max-w-full">
           <h1 className="text-2xl font-bold text-gray-800 mb-8">Painel da Secretária</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
