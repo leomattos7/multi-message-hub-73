@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, addDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,7 +15,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Sidebar } from "@/components/Sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -304,160 +302,155 @@ export default function ScheduleManagement() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="container max-w-6xl mx-auto py-8 px-4">
-          <h1 className="text-2xl font-bold text-gray-800 mb-8">Gerenciamento de Agenda</h1>
+    <div className="container max-w-full mx-auto py-8 px-4">
+      <h1 className="text-2xl font-bold text-gray-800 mb-8">Gerenciamento de Agenda</h1>
 
-          <Tabs defaultValue="weekly" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="weekly">Horários Semanais</TabsTrigger>
-              <TabsTrigger value="special">Eventos Especiais</TabsTrigger>
-            </TabsList>
+      <Tabs defaultValue="weekly" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="weekly">Horários Semanais</TabsTrigger>
+          <TabsTrigger value="special">Eventos Especiais</TabsTrigger>
+        </TabsList>
 
-            {/* Weekly Schedule Tab */}
-            <TabsContent value="weekly">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Horários Semanais</CardTitle>
-                    <CardDescription>
-                      Configure os horários regulares disponíveis para consultas
-                    </CardDescription>
-                  </div>
-                  <Button onClick={() => setIsAddAvailabilityDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Adicionar Horário
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  {weeklyAvailability.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium">Sem horários configurados</h3>
-                      <p className="mt-2">
-                        Adicione horários para que os pacientes possam agendar consultas
-                      </p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Dia da Semana</TableHead>
-                          <TableHead>Horário Início</TableHead>
-                          <TableHead>Horário Fim</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {weeklyAvailability.map((avail) => (
-                          <TableRow key={avail.id}>
-                            <TableCell className="font-medium">
-                              {getDayName(avail.day_of_week)}
-                            </TableCell>
-                            <TableCell>{avail.start_time}</TableCell>
-                            <TableCell>{avail.end_time}</TableCell>
-                            <TableCell>
-                              {avail.is_available ? (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                  Disponível
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                                  Indisponível
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button 
-                                variant="outline" 
-                                size="icon"
-                                onClick={() => avail.id && handleDeleteAvailability(avail.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+        {/* Weekly Schedule Tab */}
+        <TabsContent value="weekly">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Horários Semanais</CardTitle>
+                <CardDescription>
+                  Configure os horários regulares disponíveis para consultas
+                </CardDescription>
+              </div>
+              <Button onClick={() => setIsAddAvailabilityDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Horário
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {weeklyAvailability.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium">Sem horários configurados</h3>
+                  <p className="mt-2">
+                    Adicione horários para que os pacientes possam agendar consultas
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Dia da Semana</TableHead>
+                      <TableHead>Horário Início</TableHead>
+                      <TableHead>Horário Fim</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {weeklyAvailability.map((avail) => (
+                      <TableRow key={avail.id}>
+                        <TableCell className="font-medium">
+                          {getDayName(avail.day_of_week)}
+                        </TableCell>
+                        <TableCell>{avail.start_time}</TableCell>
+                        <TableCell>{avail.end_time}</TableCell>
+                        <TableCell>
+                          {avail.is_available ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              Disponível
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                              Indisponível
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => avail.id && handleDeleteAvailability(avail.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* Special Events Tab */}
-            <TabsContent value="special">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Eventos Especiais</CardTitle>
-                    <CardDescription>
-                      Adicione bloqueios ou eventos específicos no calendário
-                    </CardDescription>
-                  </div>
-                  <Button onClick={() => setIsAddEventDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Adicionar Evento
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  {specialEvents.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium">Sem eventos especiais</h3>
-                      <p className="mt-2">
-                        Adicione bloqueios ou eventos para datas específicas
-                      </p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Evento</TableHead>
-                          <TableHead>Data</TableHead>
-                          <TableHead>Horário</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {specialEvents.map((event) => (
-                          <TableRow key={event.id}>
-                            <TableCell className="font-medium">
-                              {event.title}
-                            </TableCell>
-                            <TableCell>
-                              {format(parseISO(event.date), "dd/MM/yyyy")}
-                            </TableCell>
-                            <TableCell>
-                              {event.start_time} - {event.end_time}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                {getEventTypeName(event.event_type)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button 
-                                variant="outline" 
-                                size="icon"
-                                onClick={() => event.id && handleDeleteEvent(event.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+        {/* Special Events Tab */}
+        <TabsContent value="special">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Eventos Especiais</CardTitle>
+                <CardDescription>
+                  Adicione bloqueios ou eventos específicos no calendário
+                </CardDescription>
+              </div>
+              <Button onClick={() => setIsAddEventDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Evento
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {specialEvents.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium">Sem eventos especiais</h3>
+                  <p className="mt-2">
+                    Adicione bloqueios ou eventos para datas específicas
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Evento</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Horário</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {specialEvents.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell className="font-medium">
+                          {event.title}
+                        </TableCell>
+                        <TableCell>
+                          {format(parseISO(event.date), "dd/MM/yyyy")}
+                        </TableCell>
+                        <TableCell>
+                          {event.start_time} - {event.end_time}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            {getEventTypeName(event.event_type)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => event.id && handleDeleteEvent(event.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog for adding new weekly availability */}
       <Dialog open={isAddAvailabilityDialogOpen} onOpenChange={setIsAddAvailabilityDialogOpen}>
