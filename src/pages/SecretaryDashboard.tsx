@@ -2,6 +2,7 @@ import { useState } from "react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, addMonths, addWeeks, subMonths, subWeeks, subDays, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Edit, User, MapPin, Phone, Mail, CheckCircle, XCircle, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
