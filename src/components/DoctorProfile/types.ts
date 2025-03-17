@@ -8,10 +8,10 @@ export interface DoctorProfile {
   theme: string;
   created_at: string;
   updated_at: string;
-  name?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  address?: string | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
 }
 
 export interface DoctorLink {
