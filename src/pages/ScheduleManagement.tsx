@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, addDays, parseISO, isSameDay, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
+import { VisualWeeklySchedule } from "@/components/VisualWeeklySchedule";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -97,7 +99,7 @@ const eventFormSchema = z.object({
 
 export default function ScheduleManagement() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<string>("weekly");
+  const [activeTab, setActiveTab] = useState<string>("visual");
   const [weeklyAvailability, setWeeklyAvailability] = useState<Availability[]>([]);
   const [specialEvents, setSpecialEvents] = useState<CalendarEvent[]>([]);
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
@@ -280,6 +282,73 @@ export default function ScheduleManagement() {
     }
   };
 
+  // Handle updating weekly availability from visual component
+  const handleAvailabilityChange = async (updatedAvailability: Availability[]) => {
+    try {
+      // Find the new or removed availability by comparing with the current state
+      const newAvailability = updatedAvailability.find(
+        newAvail => !newAvail.id && !weeklyAvailability.some(
+          oldAvail => 
+            oldAvail.day_of_week === newAvail.day_of_week && 
+            oldAvail.start_time === newAvail.start_time
+        )
+      );
+      
+      const removedAvailabilityId = weeklyAvailability.find(
+        oldAvail => !updatedAvailability.some(
+          newAvail => 
+            (newAvail.id && newAvail.id === oldAvail.id) || 
+            (newAvail.day_of_week === oldAvail.day_of_week && 
+             newAvail.start_time === oldAvail.start_time)
+        )
+      )?.id;
+      
+      // Process the change
+      if (newAvailability) {
+        // Insert the new availability
+        const { data, error } = await supabase
+          .from("doctor_availability")
+          .insert(newAvailability)
+          .select();
+          
+        if (error) {
+          console.error("Error updating availability:", error);
+          toast.error("Erro ao atualizar disponibilidade");
+          return;
+        }
+        
+        if (data) {
+          // Update the ID in our state
+          const finalUpdatedAvailability = updatedAvailability.map(
+            avail => avail === newAvailability ? data[0] : avail
+          );
+          
+          setWeeklyAvailability(finalUpdatedAvailability);
+        }
+      } else if (removedAvailabilityId) {
+        // Delete the removed availability
+        const { error } = await supabase
+          .from("doctor_availability")
+          .delete()
+          .eq("id", removedAvailabilityId);
+          
+        if (error) {
+          console.error("Error deleting availability:", error);
+          toast.error("Erro ao remover disponibilidade");
+          return;
+        }
+        
+        setWeeklyAvailability(updatedAvailability);
+      } else {
+        // Just update the state
+        setWeeklyAvailability(updatedAvailability);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erro ao atualizar disponibilidade");
+    }
+  };
+
   // Handle quick block/unblock of multiple days
   const handleQuickBlockUnblock = async () => {
     try {
@@ -395,11 +464,31 @@ export default function ScheduleManagement() {
     <div className="container max-w-full mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold text-gray-800 mb-8">Gerenciamento de Agenda</h1>
 
-      <Tabs defaultValue="weekly" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="visual" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
-          <TabsTrigger value="weekly">Horários Semanais</TabsTrigger>
+          <TabsTrigger value="visual">Visual Semanal</TabsTrigger>
+          <TabsTrigger value="weekly">Horários Detalhados</TabsTrigger>
           <TabsTrigger value="special">Eventos Especiais</TabsTrigger>
         </TabsList>
+
+        {/* Visual Weekly Schedule Tab */}
+        <TabsContent value="visual">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gerenciamento Visual da Agenda</CardTitle>
+              <CardDescription>
+                Clique nos horários para bloquear ou desbloquear a agenda
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VisualWeeklySchedule 
+                doctorId={doctorId}
+                weeklyAvailability={weeklyAvailability}
+                onAvailabilityChange={handleAvailabilityChange}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Weekly Schedule Tab */}
         <TabsContent value="weekly">
