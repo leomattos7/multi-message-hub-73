@@ -19,6 +19,7 @@ import EmployeeManagement from "./pages/EmployeeManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
 import DoctorLinkTree from "./pages/DoctorLinkTree";
 import PublicDoctorProfile from "./pages/PublicDoctorProfile";
+import DoctorProfilePreview from "./pages/DoctorProfilePreview";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/login" element={<SignIn />} />
           <Route path="/cadastro" element={<SignUp />} />
           <Route path="/d/:slug" element={<PublicDoctorProfile />} />
+          <Route path="/d/preview-:id" element={<DoctorProfilePreview />} />
           
           {/* Protected routes with sidebar */}
           <Route path="/" element={
