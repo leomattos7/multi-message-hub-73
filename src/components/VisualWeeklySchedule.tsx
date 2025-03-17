@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { format, parseISO, isSameDay, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -20,6 +21,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 type Availability = {
   id?: string;
@@ -56,12 +58,13 @@ export function VisualWeeklySchedule({
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [startTime, setStartTime] = useState<string>("08:00");
   const [endTime, setEndTime] = useState<string>("17:00");
+  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
     setAvailability(weeklyAvailability);
   }, [weeklyAvailability]);
 
-  const handleAddAvailability = () => {
+  const handleAddAvailability = async () => {
     if (startTime >= endTime) {
       toast.error("O horário final deve ser após o horário inicial");
       return;
@@ -80,37 +83,82 @@ export function VisualWeeklySchedule({
       return;
     }
     
-    const newSlot: Availability = {
-      doctor_id: doctorId,
-      day_of_week: selectedDay,
-      start_time: startTime,
-      end_time: endTime,
-      is_available: true
-    };
+    setIsLoading(true);
     
-    const updatedAvailability = [...availability, newSlot];
-    setAvailability(updatedAvailability);
-    onAvailabilityChange(updatedAvailability);
-    
-    toast.success("Disponibilidade adicionada com sucesso");
+    try {
+      // Create new slot in the database
+      const newSlot: Availability = {
+        doctor_id: doctorId,
+        day_of_week: selectedDay,
+        start_time: startTime,
+        end_time: endTime,
+        is_available: true
+      };
+      
+      const { data, error } = await supabase
+        .from('doctor_availability')
+        .insert(newSlot)
+        .select();
+      
+      if (error) {
+        console.error("Error adding availability:", error);
+        toast.error("Erro ao adicionar disponibilidade");
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Update state with the inserted record (now with an ID)
+        const updatedAvailability = [...availability, data[0]];
+        setAvailability(updatedAvailability);
+        onAvailabilityChange(updatedAvailability);
+        
+        toast.success("Disponibilidade adicionada com sucesso");
+      }
+    } catch (error) {
+      console.error("Error adding availability:", error);
+      toast.error("Erro ao adicionar disponibilidade");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRemoveAvailability = (index: number) => {
-    const updatedAvailability = [...availability];
-    const removedItem = updatedAvailability[index];
+  const handleRemoveAvailability = async (index: number) => {
+    setIsLoading(true);
     
-    if (removedItem.id) {
-      updatedAvailability[index] = {
-        ...removedItem,
-        is_available: false
-      };
-    } else {
-      updatedAvailability.splice(index, 1);
+    try {
+      const removedItem = availability[index];
+      let updatedAvailability: Availability[];
+      
+      if (removedItem.id) {
+        // For items with an ID, remove from the database
+        const { error } = await supabase
+          .from('doctor_availability')
+          .delete()
+          .eq('id', removedItem.id);
+        
+        if (error) {
+          console.error("Error removing availability:", error);
+          toast.error("Erro ao remover disponibilidade");
+          return;
+        }
+        
+        // Remove from state
+        updatedAvailability = availability.filter((_, i) => i !== index);
+      } else {
+        // For items without an ID (not yet saved), just remove locally
+        updatedAvailability = [...availability];
+        updatedAvailability.splice(index, 1);
+      }
+      
+      setAvailability(updatedAvailability);
+      onAvailabilityChange(updatedAvailability);
+      toast.success("Disponibilidade removida");
+    } catch (error) {
+      console.error("Error removing availability:", error);
+      toast.error("Erro ao remover disponibilidade");
+    } finally {
+      setIsLoading(false);
     }
-    
-    setAvailability(updatedAvailability);
-    onAvailabilityChange(updatedAvailability);
-    toast.success("Disponibilidade removida");
   };
 
   const availableSlots = availability.filter(slot => slot.is_available);
@@ -228,8 +276,12 @@ export function VisualWeeklySchedule({
                       </Select>
                     </div>
                     
-                    <Button onClick={handleAddAvailability} className="w-full">
-                      Adicionar disponibilidade
+                    <Button 
+                      onClick={handleAddAvailability} 
+                      className="w-full"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Adicionando...' : 'Adicionar disponibilidade'}
                     </Button>
                   </div>
                 </div>
@@ -266,8 +318,9 @@ export function VisualWeeklySchedule({
                                     size="sm" 
                                     onClick={() => handleRemoveAvailability(availability.indexOf(slot))}
                                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    disabled={isLoading}
                                   >
-                                    Remover
+                                    {isLoading ? 'Removendo...' : 'Remover'}
                                   </Button>
                                 </div>
                               ))}
