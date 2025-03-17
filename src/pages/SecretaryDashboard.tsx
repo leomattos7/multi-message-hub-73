@@ -59,13 +59,15 @@ const MOCK_APPOINTMENTS = [
 ];
 
 const appointmentSchema = z.object({
-  id: z.number().optional(),
+  id: z.string().optional(),
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   time: z.string().min(5, { message: "Horário é obrigatório" }),
   type: z.string().min(1, { message: "Tipo de consulta é obrigatório" }),
   status: z.enum(["confirmado", "aguardando", "cancelado"]),
   paymentMethod: z.string().min(1, { message: "Forma de pagamento é obrigatória" }),
   notes: z.string().optional(),
+  date: z.string().optional(),
+  patient_id: z.string().optional()
 });
 
 type Appointment = z.infer<typeof appointmentSchema>;
@@ -179,7 +181,7 @@ export default function SecretaryDashboard() {
 
         if (data && data.length > 0) {
           const formattedAppointments = data.map((apt: AppointmentFromDB) => ({
-            id: Number(apt.id),
+            id: apt.id,
             name: apt.patients?.name || 'Paciente sem nome',
             time: apt.time.substring(0, 5),
             type: apt.type,
@@ -317,7 +319,7 @@ export default function SecretaryDashboard() {
     }
   };
 
-  const handleDeleteAppointment = async (appointmentId: number) => {
+  const handleDeleteAppointment = async (appointmentId: string) => {
     if (!confirm("Tem certeza que deseja cancelar este agendamento?")) {
       return;
     }
