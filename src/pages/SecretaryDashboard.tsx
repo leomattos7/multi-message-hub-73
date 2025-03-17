@@ -467,6 +467,12 @@ export default function SecretaryDashboard() {
     );
   };
 
+  // Function to handle navigation to calendar view
+  const handleNavigateToCalendar = () => {
+    navigate("/calendar");
+    toast.info("Navegando para a tela de calendário");
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -478,15 +484,16 @@ export default function SecretaryDashboard() {
             {/* Left sidebar - Unified card with doctor profile and navigation */}
             <div className="lg:col-span-3 space-y-6">
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl text-center mb-4">Perfil do Médico</CardTitle>
+                <CardHeader className="pb-0 text-center">
+                  <CardTitle className="text-xl mb-4">Perfil do Médico</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
                     <DialogTrigger asChild>
                       <Button 
                         variant="outline" 
-                        className="w-full justify-center gap-2 items-center"
+                        className="w-full justify-center gap-2 items-center mb-3"
+                        size="full"
                       >
                         <Edit className="h-4 w-4" />
                         Editar Perfil
@@ -598,9 +605,10 @@ export default function SecretaryDashboard() {
                   </Dialog>
                   
                   <Button 
-                    variant="outline" 
-                    className="w-full justify-center gap-2 items-center" 
-                    onClick={() => navigate("/appointments")}
+                    variant="calendar" 
+                    className="w-full justify-center gap-2 items-center"
+                    size="full"
+                    onClick={handleNavigateToCalendar}
                   >
                     <CalendarIcon className="h-4 w-4" />
                     Agendar Nova Consulta
