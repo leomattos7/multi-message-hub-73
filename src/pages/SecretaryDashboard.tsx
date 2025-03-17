@@ -497,7 +497,7 @@ export default function SecretaryDashboard() {
                   <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
                     <DialogTrigger asChild>
                       <Button 
-                        variant="outline" 
+                        variant="gray" 
                         className="w-full justify-center gap-2 items-center mb-3"
                         size="full"
                       >
@@ -611,7 +611,7 @@ export default function SecretaryDashboard() {
                   </Dialog>
                   
                   <Button 
-                    variant="outline" 
+                    variant="gray" 
                     className="w-full justify-center gap-2 items-center mb-3"
                     size="full"
                     onClick={handleNavigateToScheduleManagement}
@@ -621,7 +621,7 @@ export default function SecretaryDashboard() {
                   </Button>
                   
                   <Button 
-                    variant="calendar" 
+                    variant="gray" 
                     className="w-full justify-center gap-2 items-center"
                     size="full"
                     onClick={handleNavigateToCalendar}

@@ -21,6 +21,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         calendar: "bg-blue-500 text-white hover:bg-blue-600",
         schedule: "bg-emerald-500 text-white hover:bg-emerald-600",
+        gray: "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200",
       },
       size: {
         default: "h-10 px-4 py-2",
