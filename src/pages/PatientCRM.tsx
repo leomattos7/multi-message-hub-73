@@ -50,6 +50,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthGuard";
 import { supabase } from "@/integrations/supabase/client";
+import { ContactFilters, PatientFilters } from "@/components/ContactFilters";
 
 interface Patient {
   id: string;
@@ -122,6 +123,16 @@ export default function PatientCRM() {
     name: "",
     email: "",
     phone: "",
+  });
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [patientFilters, setPatientFilters] = useState<PatientFilters>({
+    name: "",
+    email: "",
+    phone: "",
+    hasAppointment: null,
+    hasMessages: null,
+    sortBy: "name",
+    sortOrder: "asc"
   });
   
   const { user } = useAuth();
@@ -196,11 +207,85 @@ export default function PatientCRM() {
     fetchPatients();
   }, []);
   
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
-  );
+  const applyFilters = (patientsList: Patient[]): Patient[] => {
+    let filtered = patientsList;
+    
+    if (searchTerm) {
+      filtered = filtered.filter(patient => 
+        patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.phone.includes(searchTerm)
+      );
+    }
+    
+    if (patientFilters.name) {
+      filtered = filtered.filter(patient => 
+        patient.name.toLowerCase().includes(patientFilters.name.toLowerCase())
+      );
+    }
+    
+    if (patientFilters.email) {
+      filtered = filtered.filter(patient => 
+        patient.email.toLowerCase().includes(patientFilters.email.toLowerCase())
+      );
+    }
+    
+    if (patientFilters.phone) {
+      filtered = filtered.filter(patient => 
+        patient.phone.includes(patientFilters.phone)
+      );
+    }
+    
+    if (patientFilters.hasAppointment !== null) {
+      filtered = filtered.filter(patient => 
+        patientFilters.hasAppointment ? patient.lastAppointmentDate !== null : patient.lastAppointmentDate === null
+      );
+    }
+    
+    if (patientFilters.hasMessages !== null) {
+      filtered = filtered.filter(patient => 
+        patientFilters.hasMessages ? patient.lastMessageDate !== null : patient.lastMessageDate === null
+      );
+    }
+    
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (patientFilters.sortBy) {
+        case "name":
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case "lastAppointment":
+          if (a.lastAppointmentDate === null && b.lastAppointmentDate === null) {
+            comparison = 0;
+          } else if (a.lastAppointmentDate === null) {
+            comparison = -1;
+          } else if (b.lastAppointmentDate === null) {
+            comparison = 1;
+          } else {
+            comparison = a.lastAppointmentDate.getTime() - b.lastAppointmentDate.getTime();
+          }
+          break;
+        case "lastMessage":
+          if (a.lastMessageDate === null && b.lastMessageDate === null) {
+            comparison = 0;
+          } else if (a.lastMessageDate === null) {
+            comparison = -1;
+          } else if (b.lastMessageDate === null) {
+            comparison = 1;
+          } else {
+            comparison = a.lastMessageDate.getTime() - b.lastMessageDate.getTime();
+          }
+          break;
+      }
+      
+      return patientFilters.sortOrder === "asc" ? comparison : -comparison;
+    });
+    
+    return filtered;
+  };
+
+  const filteredPatients = applyFilters(patients);
 
   const handleAddPatient = () => {
     if (!newPatient.name || !newPatient.email || !newPatient.phone) {
@@ -369,6 +454,18 @@ export default function PatientCRM() {
     return format(date, "dd/MM/yyyy", { locale: ptBR });
   };
 
+  const handleResetFilters = () => {
+    setPatientFilters({
+      name: "",
+      email: "",
+      phone: "",
+      hasAppointment: null,
+      hasMessages: null,
+      sortBy: "name",
+      sortOrder: "asc"
+    });
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -394,9 +491,14 @@ export default function PatientCRM() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => setIsFilterDialogOpen(true)}
+            >
               <Filter className="h-4 w-4 mr-2" />
-              Filtros
+              Filtros {Object.values(patientFilters).some(value => 
+                value !== "" && value !== null && value !== "name" && value !== "asc") && 
+                <span className="ml-1 bg-blue-500 text-white rounded-full w-2 h-2" />}
             </Button>
           </div>
         </div>
@@ -647,6 +749,15 @@ export default function PatientCRM() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ContactFilters 
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        filters={patientFilters}
+        onFiltersChange={setPatientFilters}
+        onApplyFilters={() => setIsFilterDialogOpen(false)}
+        onResetFilters={handleResetFilters}
+      />
     </div>
   );
 }
