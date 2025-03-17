@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format, addDays, startOfWeek, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, isToday, isSameMonth, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -8,11 +9,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Appointment Dialog Component
-const AppointmentDialog = ({ date, time, isOpen, onClose }: { date: Date, time: string, isOpen: boolean, onClose: () => void }) => {
+const AppointmentDialog = ({ date, time, onClose }: { date: Date, time: string, onClose: () => void }) => {
+  const [patientName, setPatientName] = useState("");
+  
+  const handleSubmit = () => {
+    if (!patientName.trim()) {
+      toast.error("Por favor, informe o nome do paciente");
+      return;
+    }
+    
+    toast.success(`Consulta agendada para ${format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} às ${time}`);
+    onClose();
+  };
+
   return (
-    <DialogContent className="sm:max-w-[425px]">
+    <>
       <DialogHeader>
         <DialogTitle>Agendar Consulta</DialogTitle>
       </DialogHeader>
@@ -25,13 +39,23 @@ const AppointmentDialog = ({ date, time, isOpen, onClose }: { date: Date, time: 
           <p className="font-medium mb-1">Horário:</p>
           <p>{time}</p>
         </div>
-        {/* Additional form fields would go here */}
+        <div>
+          <label htmlFor="patientName" className="font-medium mb-1 block">Nome do Paciente:</label>
+          <input 
+            id="patientName"
+            type="text" 
+            value={patientName} 
+            onChange={(e) => setPatientName(e.target.value)}
+            className="w-full p-2 border rounded"
+            placeholder="Digite o nome do paciente"
+          />
+        </div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <Button variant="outline" onClick={onClose}>Cancelar</Button>
-        <Button>Salvar</Button>
+        <Button onClick={handleSubmit}>Salvar</Button>
       </div>
-    </DialogContent>
+    </>
   );
 };
 
@@ -56,6 +80,11 @@ const DailyView = ({ date }: { date: Date }) => {
     setIsDialogOpen(true);
   };
 
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedSlot(null);
+  };
+
   return (
     <div className="mt-4">
       <div className="flex justify-between items-center mb-4">
@@ -78,14 +107,18 @@ const DailyView = ({ date }: { date: Date }) => {
           </div>
         ))}
       </div>
-      {selectedSlot && isDialogOpen && (
-        <AppointmentDialog 
-          date={date} 
-          time={selectedSlot} 
-          isOpen={isDialogOpen} 
-          onClose={() => setIsDialogOpen(false)} 
-        />
-      )}
+      
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          {selectedSlot && (
+            <AppointmentDialog 
+              date={date} 
+              time={selectedSlot} 
+              onClose={handleCloseDialog} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -188,7 +221,7 @@ const MonthlyView = ({ date, onDateSelect }: { date: Date, onDateSelect: (date: 
 // Main Component
 const ScheduleManagementSecretary = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<"daily" | "weekly" | "monthly">("weekly");
+  const [currentView, setCurrentView] = useState<"daily" | "weekly" | "monthly">("daily");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
 
@@ -272,8 +305,8 @@ const ScheduleManagementSecretary = () => {
           </Tabs>
         </CardHeader>
         <CardContent>
-          <Dialog open={isAppointmentDialogOpen} onOpenChange={setIsAppointmentDialogOpen}>
-            {selectedDate && (
+          {selectedDate && isAppointmentDialogOpen && (
+            <Dialog open={isAppointmentDialogOpen} onOpenChange={setIsAppointmentDialogOpen}>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                   <DialogTitle>Agendar Consulta</DialogTitle>
@@ -287,11 +320,14 @@ const ScheduleManagementSecretary = () => {
                 </div>
                 <div className="flex justify-end gap-2 mt-4">
                   <Button variant="outline" onClick={() => setIsAppointmentDialogOpen(false)}>Cancelar</Button>
-                  <Button>Salvar</Button>
+                  <Button onClick={() => {
+                    toast.success("Consulta agendada com sucesso!");
+                    setIsAppointmentDialogOpen(false);
+                  }}>Salvar</Button>
                 </div>
               </DialogContent>
-            )}
-          </Dialog>
+            </Dialog>
+          )}
         </CardContent>
       </Card>
     </div>
