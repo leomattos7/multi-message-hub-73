@@ -31,6 +31,8 @@ import {
   FileEdit, 
   Trash2, 
   CalendarClock,
+  Save,
+  X
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
@@ -98,7 +100,14 @@ export default function PatientCRM() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+  const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [newPatient, setNewPatient] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+  const [editingPatient, setEditingPatient] = useState({
+    id: "",
     name: "",
     email: "",
     phone: "",
@@ -204,6 +213,74 @@ export default function PatientCRM() {
     toast.success("Paciente adicionado com sucesso!");
   };
 
+  const handleEditClick = (patient: Patient, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingPatient({
+      id: patient.id,
+      name: patient.name,
+      email: patient.email,
+      phone: patient.phone,
+    });
+    setIsEditPatientOpen(true);
+  };
+
+  const handleUpdatePatient = async () => {
+    if (!editingPatient.name || !editingPatient.email || !editingPatient.phone) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    try {
+      // First try to update in Supabase if connected
+      if (supabase) {
+        const { error } = await supabase
+          .from('patients')
+          .update({
+            name: editingPatient.name,
+            email: editingPatient.email,
+            phone: editingPatient.phone
+          })
+          .eq('id', editingPatient.id);
+          
+        if (error) {
+          console.error("Error updating patient in Supabase:", error);
+          // Fall back to local update if Supabase update fails
+        }
+      }
+      
+      // Update patients state locally
+      const updatedPatients = patients.map(patient => {
+        if (patient.id === editingPatient.id) {
+          return {
+            ...patient,
+            name: editingPatient.name,
+            email: editingPatient.email,
+            phone: editingPatient.phone,
+          };
+        }
+        return patient;
+      });
+      
+      setPatients(updatedPatients);
+      
+      // If patient is currently selected, update selected patient too
+      if (selectedPatient && selectedPatient.id === editingPatient.id) {
+        setSelectedPatient({
+          ...selectedPatient,
+          name: editingPatient.name,
+          email: editingPatient.email,
+          phone: editingPatient.phone,
+        });
+      }
+      
+      setIsEditPatientOpen(false);
+      toast.success("Contato atualizado com sucesso!");
+    } catch (error) {
+      console.error("Error updating patient:", error);
+      toast.error("Erro ao atualizar contato. Por favor, tente novamente.");
+    }
+  };
+
   const formatDate = (date: Date | null) => {
     if (!date) return "Não definido";
     return format(date, "dd/MM/yyyy", { locale: ptBR });
@@ -246,9 +323,23 @@ export default function PatientCRM() {
             <div className="bg-white rounded-lg shadow p-4">
               <div className="flex justify-between mb-4">
                 <h2 className="text-xl font-semibold">{selectedPatient.name}</h2>
-                <Button variant="outline" size="sm" onClick={() => setSelectedPatient(null)}>
-                  Voltar
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={(e) => handleEditClick(selectedPatient, e)}
+                  >
+                    <FileEdit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setSelectedPatient(null)}
+                  >
+                    Voltar
+                  </Button>
+                </div>
               </div>
               
               <div className="space-y-4">
@@ -320,10 +411,11 @@ export default function PatientCRM() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedPatient(patient);
-                          }}>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={(e) => handleEditClick(patient, e)}
+                          >
                             <FileEdit className="h-4 w-4" />
                           </Button>
                           {isDoctor && (
@@ -388,6 +480,59 @@ export default function PatientCRM() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddPatientOpen(false)}>Cancelar</Button>
             <Button onClick={handleAddPatient}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para editar paciente */}
+      <Dialog open={isEditPatientOpen} onOpenChange={setIsEditPatientOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Contato</DialogTitle>
+            <DialogDescription>
+              Atualize os dados do contato. Os campos marcados com * são obrigatórios.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-name">Nome completo *</Label>
+              <Input
+                id="edit-name"
+                value={editingPatient.name}
+                onChange={(e) => setEditingPatient({...editingPatient, name: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="edit-email">Email *</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editingPatient.email}
+                onChange={(e) => setEditingPatient({...editingPatient, email: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="edit-phone">Telefone *</Label>
+              <Input
+                id="edit-phone"
+                value={editingPatient.phone}
+                onChange={(e) => setEditingPatient({...editingPatient, phone: e.target.value})}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditPatientOpen(false)}>
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdatePatient}>
+              <Save className="h-4 w-4 mr-2" />
+              Salvar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
