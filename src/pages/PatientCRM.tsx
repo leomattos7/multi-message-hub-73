@@ -266,8 +266,8 @@ export default function PatientCRM() {
                   {selectedPatient.phone}
                 </div>
                 <div className="pt-2">
-                  <p className="text-sm text-gray-500">Último Contato: {formatDate(selectedPatient.lastMessageDate)}</p>
-                  <p className="text-sm text-gray-500 mt-1">Próxima Consulta: {formatDate(selectedPatient.lastAppointmentDate)}</p>
+                  <p className="text-sm text-gray-500">Última Mensagem: {formatDate(selectedPatient.lastMessageDate)}</p>
+                  <p className="text-sm text-gray-500 mt-1">Última Consulta: {formatDate(selectedPatient.lastAppointmentDate)}</p>
                 </div>
                 
                 <div className="pt-4">
@@ -287,8 +287,8 @@ export default function PatientCRM() {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Contato</TableHead>
-                  <TableHead>Último Contato</TableHead>
-                  <TableHead>Próx. Contato</TableHead>
+                  <TableHead>Última Mensagem</TableHead>
+                  <TableHead>Última Consulta</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
