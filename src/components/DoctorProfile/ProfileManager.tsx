@@ -135,6 +135,7 @@ export const ProfileManager: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Erro ao salvar perfil:', error);
+      sonnerToast.error(`Erro ao salvar: ${error.message || "Ocorreu um erro ao salvar o perfil."}`);
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
@@ -372,7 +373,7 @@ export const ProfileManager: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="links" className="space-y-4 pt-4">
-            {profile && <LinksManager doctorId={profile.id} />}
+            {profile && <LinksManager doctorId={user.id} />}
           </TabsContent>
         </Tabs>
       </div>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProfileManager } from '@/components/DoctorProfile/ProfileManager';
 import { useAuth } from '@/components/AuthGuard';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,7 +10,7 @@ const DoctorLinkTree: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   // Simulate loading for smooth UX
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
