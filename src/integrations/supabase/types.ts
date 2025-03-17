@@ -235,15 +235,7 @@ export type Database = {
           theme?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "doctor_profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       employees: {
         Row: {

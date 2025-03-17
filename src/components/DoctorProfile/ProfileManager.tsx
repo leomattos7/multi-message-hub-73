@@ -52,7 +52,9 @@ export const ProfileManager: React.FC = () => {
     
     try {
       setLoading(true);
+      console.log("Loading profile for user ID:", user.id);
       const profileData = await doctorProfileService.getProfileByDoctorId(user.id);
+      console.log("Profile data received:", profileData);
       setProfile(profileData);
       
       if (profileData) {
@@ -86,14 +88,30 @@ export const ProfileManager: React.FC = () => {
     try {
       setSaving(true);
       
+      // Required validation
+      if (!formData.public_url_slug) {
+        toast({
+          variant: "destructive",
+          title: "Campo obrigatório",
+          description: "O nome da URL é obrigatório para criar seu perfil.",
+        });
+        setSaving(false);
+        return;
+      }
+      
       if (!hasProfile) {
         // Create new profile
+        console.log("Creating new profile with user ID:", user.id);
         const newProfile = await doctorProfileService.createProfile(user.id, formData);
+        console.log("New profile created:", newProfile);
         setProfile(newProfile);
         toast({
           title: "Perfil criado com sucesso!",
           description: "Agora você pode adicionar links para compartilhar com seus pacientes.",
         });
+        
+        // Automatically switch to links tab if profile was just created
+        setActiveTab('links');
       } else {
         // Update existing profile
         const updatedProfile = await doctorProfileService.updateProfile(user.id, formData);
@@ -131,10 +149,10 @@ export const ProfileManager: React.FC = () => {
     );
   }
 
-  if (!user || user.role !== 'doctor') {
+  if (!user) {
     return (
       <div className="text-center p-6">
-        <p className="text-muted-foreground">Apenas médicos podem criar páginas de perfil.</p>
+        <p className="text-muted-foreground">Você precisa estar logado para acessar esta página.</p>
       </div>
     );
   }

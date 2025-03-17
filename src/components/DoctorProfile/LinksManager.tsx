@@ -13,6 +13,7 @@ import { DoctorLink } from './types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Check, ExternalLink, Grip, Loader2, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface LinksManagerProps {
   doctorId: string;
@@ -45,13 +46,19 @@ export const LinksManager: React.FC<LinksManagerProps> = ({ doctorId }) => {
   });
 
   useEffect(() => {
-    loadLinks();
+    if (doctorId) {
+      loadLinks();
+    }
   }, [doctorId]);
 
   const loadLinks = async () => {
+    if (!doctorId) return;
+    
     try {
       setLoading(true);
+      console.log("Loading links for doctor ID:", doctorId);
       const linksData = await doctorProfileService.getLinksByDoctorId(doctorId);
+      console.log("Links data loaded:", linksData);
       setLinks(linksData);
     } catch (error) {
       console.error('Erro ao carregar links:', error);
@@ -106,6 +113,8 @@ export const LinksManager: React.FC<LinksManagerProps> = ({ doctorId }) => {
         url = 'https://' + url;
       }
 
+      console.log("Creating link with doctor ID:", doctorId);
+      
       await doctorProfileService.createLink({
         doctor_id: doctorId,
         title: formData.title,
