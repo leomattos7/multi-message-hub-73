@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, addDays, parseISO, isSameDay, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -395,27 +394,6 @@ export default function ScheduleManagement() {
   return (
     <div className="container max-w-full mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold text-gray-800 mb-8">Gerenciamento de Agenda</h1>
-
-      <div className="flex justify-between mb-6">
-        <Button 
-          variant="block" 
-          onClick={() => {
-            setBlockType('block');
-            setIsQuickBlockDialogOpen(true);
-          }}
-        >
-          <Ban className="h-4 w-4 mr-2" /> Bloquear Horários
-        </Button>
-        <Button 
-          variant="available" 
-          onClick={() => {
-            setBlockType('unblock');
-            setIsQuickBlockDialogOpen(true);
-          }}
-        >
-          <Check className="h-4 w-4 mr-2" /> Desbloquear Horários
-        </Button>
-      </div>
 
       <Tabs defaultValue="weekly" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
