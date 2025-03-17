@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, addMonths, addWeeks, subMonths, subWeeks, subDays, isSameDay } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, subDays, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Edit, User, MapPin, Phone, Mail, CheckCircle, XCircle, Clock } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight, Edit, User, MapPin, Phone, Mail, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Calendar } from "@/components/ui/calendar";
 import { Sidebar } from "@/components/Sidebar";
 
 // Mock data for appointments
@@ -54,7 +53,7 @@ const initialDoctorProfile: DoctorProfile = {
 export default function SecretaryDashboard() {
   const navigate = useNavigate();
   const [date, setDate] = useState<Date>(new Date());
-  const [view, setView] = useState<"day" | "week" | "month">("day");
+  const [view, setView] = useState<"day" | "week">("day");
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile>(initialDoctorProfile);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
@@ -68,13 +67,11 @@ export default function SecretaryDashboard() {
   const navigatePrevious = () => {
     if (view === "day") setDate(subDays(date, 1));
     else if (view === "week") setDate(subWeeks(date, 1));
-    else if (view === "month") setDate(subMonths(date, 1));
   };
 
   const navigateNext = () => {
     if (view === "day") setDate(addDays(date, 1));
     else if (view === "week") setDate(addWeeks(date, 1));
-    else if (view === "month") setDate(addMonths(date, 1));
   };
 
   const navigateToday = () => {
@@ -89,8 +86,6 @@ export default function SecretaryDashboard() {
       const start = startOfWeek(date, { weekStartsOn: 0 });
       const end = endOfWeek(date, { weekStartsOn: 0 });
       return `${format(start, "dd/MM", { locale: ptBR })} - ${format(end, "dd/MM/yyyy", { locale: ptBR })}`;
-    } else if (view === "month") {
-      return format(date, "MMMM 'de' yyyy", { locale: ptBR });
     }
     return "";
   };
@@ -197,25 +192,6 @@ export default function SecretaryDashboard() {
             </div>
           </div>
         ))}
-      </div>
-    );
-  };
-
-  // Render the appointments for month view
-  const renderMonthView = () => {
-    return (
-      <div className="h-[600px]">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={(newDate) => newDate && setDate(newDate)}
-          className="rounded-md border h-full"
-          classNames={{
-            cell: "h-14 w-14 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-            day: "h-12 w-12 p-0 font-normal",
-            day_selected: "bg-blue-500 text-white hover:bg-blue-500 hover:text-white focus:bg-blue-500 focus:text-white rounded-full",
-          }}
-        />
       </div>
     );
   };
@@ -432,11 +408,10 @@ export default function SecretaryDashboard() {
                 </CardHeader>
                 
                 <CardContent>
-                  <Tabs defaultValue="day" value={view} onValueChange={(v) => setView(v as "day" | "week" | "month")}>
+                  <Tabs defaultValue="day" value={view} onValueChange={(v) => setView(v as "day" | "week")}>
                     <TabsList className="mb-4">
                       <TabsTrigger value="day">Dia</TabsTrigger>
                       <TabsTrigger value="week">Semana</TabsTrigger>
-                      <TabsTrigger value="month">Mês</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="day" className="mt-0">
@@ -445,10 +420,6 @@ export default function SecretaryDashboard() {
                     
                     <TabsContent value="week" className="mt-0">
                       {renderWeekView()}
-                    </TabsContent>
-                    
-                    <TabsContent value="month" className="mt-0">
-                      {renderMonthView()}
                     </TabsContent>
                   </Tabs>
                 </CardContent>
