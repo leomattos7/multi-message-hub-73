@@ -614,11 +614,6 @@ export default function SecretaryDashboard() {
     toast.info("Navegando para a tela de agendamentos");
   };
 
-  const handleNavigateToScheduleManagement = () => {
-    navigate("/agenda");
-    toast.info("Navegando para a tela de gerenciamento de agenda");
-  };
-
   return (
     <div className="flex h-screen overflow-hidden">
       <div className="flex-1 overflow-auto">
@@ -747,16 +742,6 @@ export default function SecretaryDashboard() {
                       </Form>
                     </DialogContent>
                   </Dialog>
-                  
-                  <Button 
-                    variant="gray" 
-                    className="w-full justify-center gap-2 items-center"
-                    size="full"
-                    onClick={handleNavigateToScheduleManagement}
-                  >
-                    <CalendarIcon className="h-4 w-4" />
-                    Gerenciar Agenda
-                  </Button>
                   
                   <Button 
                     variant="gray" 
