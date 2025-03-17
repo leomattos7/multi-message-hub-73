@@ -24,6 +24,62 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Create example data to be added when a doctor signs up
+const createExampleData = () => {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  // Example patient for contacts and inbox
+  const examplePatient = {
+    id: "example-patient-1",
+    name: "Maria Oliveira (Exemplo)",
+    email: "maria.exemplo@email.com",
+    phone: "(11) 99999-8888",
+    avatar: "https://i.pravatar.cc/150?img=5"
+  };
+  
+  // Example appointment
+  const exampleAppointment = {
+    id: "example-appointment-1",
+    patientId: examplePatient.id,
+    patientName: examplePatient.name,
+    time: "14:30",
+    type: "consulta",
+    status: "aguardando",
+    date: tomorrow.toISOString().split('T')[0],
+    notes: "Primeira consulta - PACIENTE DE EXEMPLO"
+  };
+  
+  // Example conversation
+  const exampleConversation = {
+    id: "example-conversation-1",
+    contact: {
+      id: examplePatient.id,
+      name: examplePatient.name,
+      avatar: examplePatient.avatar,
+    },
+    channel: "whatsapp",
+    unread: 1,
+    lastActivity: new Date(),
+    messages: [
+      {
+        id: "msg-1",
+        content: "Olá, gostaria de confirmar minha consulta para amanhã às 14:30. (MENSAGEM DE EXEMPLO)",
+        timestamp: new Date(),
+        isOutgoing: false,
+        status: "delivered",
+      }
+    ]
+  };
+  
+  return {
+    patient: examplePatient,
+    appointment: exampleAppointment,
+    conversation: exampleConversation
+  };
+};
+
 export default function SignUp() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -43,23 +99,35 @@ export default function SignUp() {
     setIsLoading(true);
     
     try {
-      // Mock registration for now
-      // In a real app, this would call an API or auth service
-      console.log("Registration data:", data);
+      // Create example data for the new doctor
+      const exampleData = createExampleData();
       
-      // Simulate successful registration
-      setTimeout(() => {
-        localStorage.setItem("user", JSON.stringify({
-          id: "user-" + Math.random().toString(36).substr(2, 9),
-          email: data.email,
-          role: "doctor",
-          name: data.name,
-          phone: data.phone
-        }));
-        
-        toast.success("Conta criada com sucesso!");
-        navigate("/secretaria");
-      }, 1000);
+      // Store user in localStorage
+      const user = {
+        id: "user-" + Math.random().toString(36).substr(2, 9),
+        email: data.email,
+        role: "doctor",
+        name: data.name,
+        phone: data.phone
+      };
+      
+      localStorage.setItem("user", JSON.stringify(user));
+      
+      // Store example data in localStorage
+      const existingPatients = JSON.parse(localStorage.getItem("patients") || "[]");
+      existingPatients.push(exampleData.patient);
+      localStorage.setItem("patients", JSON.stringify(existingPatients));
+      
+      const existingAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
+      existingAppointments.push(exampleData.appointment);
+      localStorage.setItem("appointments", JSON.stringify(existingAppointments));
+      
+      const existingConversations = JSON.parse(localStorage.getItem("conversations") || "[]");
+      existingConversations.push(exampleData.conversation);
+      localStorage.setItem("conversations", JSON.stringify(existingConversations));
+      
+      toast.success("Conta criada com sucesso! Um paciente de exemplo foi adicionado para demonstração.");
+      navigate("/secretaria");
     } catch (error) {
       console.error("Registration error:", error);
       toast.error("Erro ao criar conta. Tente novamente.");

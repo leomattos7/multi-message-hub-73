@@ -30,6 +30,19 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
       const userData = JSON.parse(userStr) as User;
       setUser(userData);
       
+      // If this is the first login, initialize collections if they don't exist
+      if (!localStorage.getItem("patients")) {
+        localStorage.setItem("patients", "[]");
+      }
+      
+      if (!localStorage.getItem("appointments")) {
+        localStorage.setItem("appointments", "[]");
+      }
+      
+      if (!localStorage.getItem("conversations")) {
+        localStorage.setItem("conversations", "[]");
+      }
+      
       // If a specific role is required and the user doesn't have it, redirect
       if (requiredRole && userData.role !== requiredRole) {
         navigate("/secretaria");
