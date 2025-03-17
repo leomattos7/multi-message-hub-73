@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, subDays, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -187,7 +186,7 @@ export default function SecretaryDashboard() {
       setDate(newDate);
       const startDate = startOfWeek(newDate, { weekStartsOn: 0 });
       const endDate = endOfWeek(newDate, { weekStartsOn: 0 });
-      toast.info(`Visualizando semana de ${format(startDate, "dd/MM", { locale: ptBR })} a ${format(endDate, "dd/MM", { locale: ptBR })}`);
+      toast.info(`Visualizando semana de ${format(startDate, "dd/MM", { locale: ptBR })} a ${format(endDate, "dd/MM/yyyy", { locale: ptBR })}`);
     }
   };
 
@@ -265,6 +264,34 @@ export default function SecretaryDashboard() {
     }
   };
 
+  // Get border color class based on status
+  const getStatusBorderColor = (status: AppointmentStatus) => {
+    switch (status) {
+      case "confirmado":
+        return "border-l-emerald-500";
+      case "aguardando":
+        return "border-l-amber-500";
+      case "cancelado":
+        return "border-l-red-500";
+      default:
+        return "border-l-blue-500";
+    }
+  };
+
+  // Get background color class based on status for week view
+  const getStatusBackgroundColor = (status: AppointmentStatus) => {
+    switch (status) {
+      case "confirmado":
+        return "bg-emerald-50 border-l-2 border-emerald-500";
+      case "aguardando":
+        return "bg-amber-50 border-l-2 border-amber-500";
+      case "cancelado":
+        return "bg-red-50 border-l-2 border-red-500";
+      default:
+        return "bg-blue-50 border-l-2 border-blue-500";
+    }
+  };
+
   // Filter appointments for the current day
   const getDayAppointments = () => {
     // In a real application, filter from backend based on date
@@ -323,7 +350,7 @@ export default function SecretaryDashboard() {
     return (
       <div className="space-y-4">
         {dayAppointments.map((appointment) => (
-          <Card key={appointment.id} className="border-l-4 border-l-blue-500">
+          <Card key={appointment.id} className={`border-l-4 ${getStatusBorderColor(appointment.status)}`}>
             <CardContent className="flex justify-between items-center p-4">
               <div>
                 <h3 className="font-semibold">{appointment.name}</h3>
@@ -376,9 +403,24 @@ export default function SecretaryDashboard() {
             <div className="p-2 space-y-2 text-xs">
               {/* In a real app, filter appointments for each day */}
               {index < 5 && appointments.slice(0, 2).map((apt, i) => (
-                <div key={i} className="bg-blue-50 p-2 rounded border-l-2 border-blue-500">
+                <div 
+                  key={i} 
+                  className={`${getStatusBackgroundColor(apt.status)} p-2 rounded relative group`}
+                >
                   <div className="font-semibold">{apt.time} - {apt.name}</div>
                   <div className="text-gray-500">{getAppointmentTypeLabel(apt.type)}</div>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-5 w-5 absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditAppointment(apt);
+                    }}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
                 </div>
               ))}
             </div>
