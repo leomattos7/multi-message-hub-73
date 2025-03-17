@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChannelType, sortedConversations, filterByChannel, searchConversations } from "@/data/mockData";
+import { ChannelType, sortedConversations, filterByChannel, searchConversations, mockConversations } from "@/data/mockData";
 import { conversationService, supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -34,12 +34,14 @@ interface ConversationListProps {
   onSelectConversation: (conversation: any) => void;
   selectedConversationId?: string;
   className?: string;
+  useMockData?: boolean;
 }
 
 export function ConversationList({ 
   onSelectConversation, 
   selectedConversationId,
-  className 
+  className,
+  useMockData = false
 }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState<ChannelType | "all">("all");
@@ -47,15 +49,22 @@ export function ConversationList({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch conversations
-  const { data: conversations = [], isLoading, error } = useQuery({
-    queryKey: ['conversations'],
-    queryFn: () => conversationService.getConversations(),
-  });
+  // Use mock data if indicated, otherwise fetch from Supabase
+  const { data: conversations = [], isLoading, error } = useMockData 
+    ? { data: mockConversations, isLoading: false, error: null }
+    : useQuery({
+        queryKey: ['conversations'],
+        queryFn: () => conversationService.getConversations(),
+      });
 
-  // Archive/unarchive mutation
+  // Mock mutations for archive/unarchive when using mock data
   const archiveMutation = useMutation({
     mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
+      if (useMockData) {
+        // Just return a mock success response
+        return { success: true };
+      }
+      
       if (archive) {
         return conversationService.archiveConversation(id);
       } else {
@@ -63,7 +72,9 @@ export function ConversationList({
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      if (!useMockData) {
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      }
       toast({
         description: "Conversation updated successfully",
       });
@@ -77,9 +88,15 @@ export function ConversationList({
     }
   });
 
-  // Add to patients mutation
+  // Mock mutation for adding to patients
   const addToPatientsMutation = useMutation({
-    mutationFn: (conversation: any) => conversationService.addPatientFromConversation(conversation),
+    mutationFn: (conversation: any) => {
+      if (useMockData) {
+        // Just return a mock success response
+        return Promise.resolve({ success: true });
+      }
+      return conversationService.addPatientFromConversation(conversation);
+    },
     onSuccess: () => {
       toast({
         description: "Contact added to patients successfully",
@@ -119,24 +136,37 @@ export function ConversationList({
   };
 
   // Filter conversations based on search, channel filter, and active tab
-  const filteredConversations = conversations.filter(conversation => {
-    // First filter by tab (archived status)
-    if ((activeTab === "archived") !== (conversation.is_archived || false)) {
-      return false;
-    }
-    
-    // Then filter by channel if needed
-    if (channelFilter !== "all" && conversation.channel !== channelFilter) {
-      return false;
-    }
-    
-    // Then filter by search query if present
-    if (searchQuery && !conversation.patient?.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    
-    return true;
-  });
+  const filteredConversations = useMockData
+    ? conversations.filter(conversation => {
+        // For mock data, we'll just do simple filtering
+        if (channelFilter !== "all" && conversation.channel !== channelFilter) {
+          return false;
+        }
+        
+        if (searchQuery && !conversation.contact.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+          return false;
+        }
+        
+        return true;
+      })
+    : conversations.filter(conversation => {
+        // First filter by tab (archived status)
+        if ((activeTab === "archived") !== (conversation.is_archived || false)) {
+          return false;
+        }
+        
+        // Then filter by channel if needed
+        if (channelFilter !== "all" && conversation.channel !== channelFilter) {
+          return false;
+        }
+        
+        // Then filter by search query if present
+        if (searchQuery && !conversation.patient?.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+          return false;
+        }
+        
+        return true;
+      });
 
   const formatLastActivity = (date: string | Date) => {
     const activityDate = new Date(date);
@@ -154,7 +184,12 @@ export function ConversationList({
 
   // Get preview message from the last message in conversation
   const getPreviewMessage = (conversation: any) => {
-    // For now, using a placeholder. In a real implementation, you'd fetch the last message
+    if (useMockData && conversation.messages && conversation.messages.length > 0) {
+      // For mock data, get the last message content
+      const lastMessage = conversation.messages[conversation.messages.length - 1];
+      return lastMessage.content.substring(0, 50) + (lastMessage.content.length > 50 ? '...' : '');
+    }
+    // For real data or fallback
     return "Click to view conversation...";
   };
 
@@ -231,8 +266,13 @@ export function ConversationList({
           ) : (
             filteredConversations.map((conversation) => {
               const isSelected = conversation.id === selectedConversationId;
-              // Type assertion to convert string to ChannelType
-              const channelType = getChannelType(conversation.channel);
+              // For mock data, use conversation.channel directly
+              const channelType = useMockData ? conversation.channel : getChannelType(conversation.channel);
+              
+              // Get name and avatar from either mock or real data structure
+              const name = useMockData ? conversation.contact.name : (conversation.patient?.name || "Unknown");
+              const avatar = useMockData ? conversation.contact.avatar : conversation.patient?.avatar_url;
+              const unread = conversation.unread || 0;
               
               return (
                 <div
@@ -245,20 +285,20 @@ export function ConversationList({
                   <div className="flex items-start gap-3">
                     <div onClick={() => onSelectConversation(conversation)} className="flex-grow flex items-start gap-3">
                       <Avatar
-                        src={conversation.patient?.avatar_url}
-                        name={conversation.patient?.name || "Unknown"}
+                        src={avatar}
+                        name={name}
                         showStatus
-                        status={conversation.unread > 0 ? "online" : "offline"}
+                        status={unread > 0 ? "online" : "offline"}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                           <h3 className="font-medium truncate">
-                            {conversation.patient?.name || "Unknown"}
+                            {name}
                           </h3>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <ChannelBadge channel={channelType} size="sm" />
                             <span className="text-xs text-muted-foreground">
-                              {formatLastActivity(conversation.last_activity)}
+                              {formatLastActivity(conversation.lastActivity || conversation.last_activity)}
                             </span>
                           </div>
                         </div>
@@ -324,8 +364,12 @@ export function ConversationList({
           ) : (
             filteredConversations.map((conversation) => {
               const isSelected = conversation.id === selectedConversationId;
-              // Type assertion to convert string to ChannelType
-              const channelType = getChannelType(conversation.channel);
+              // For mock data, use conversation.channel directly
+              const channelType = useMockData ? conversation.channel : getChannelType(conversation.channel);
+              
+              // Get name and avatar from either mock or real data structure
+              const name = useMockData ? conversation.contact.name : (conversation.patient?.name || "Unknown");
+              const avatar = useMockData ? conversation.contact.avatar : conversation.patient?.avatar_url;
               
               return (
                 <div
@@ -338,20 +382,20 @@ export function ConversationList({
                   <div className="flex items-start gap-3">
                     <div onClick={() => onSelectConversation(conversation)} className="flex-grow flex items-start gap-3">
                       <Avatar
-                        src={conversation.patient?.avatar_url}
-                        name={conversation.patient?.name || "Unknown"}
+                        src={avatar}
+                        name={name}
                         showStatus
                         status="offline"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                           <h3 className="font-medium truncate">
-                            {conversation.patient?.name || "Unknown"}
+                            {name}
                           </h3>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <ChannelBadge channel={channelType} size="sm" />
                             <span className="text-xs text-muted-foreground">
-                              {formatLastActivity(conversation.last_activity)}
+                              {formatLastActivity(conversation.lastActivity || conversation.last_activity)}
                             </span>
                           </div>
                         </div>

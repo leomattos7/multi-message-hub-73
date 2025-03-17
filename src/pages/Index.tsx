@@ -4,19 +4,17 @@ import { MessageCircle, Inbox } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useQuery } from "@tanstack/react-query";
-import { conversationService } from "@/integrations/supabase/client";
+import { mockConversations } from "@/data/mockData";
 
 export default function Index() {
   const isMobile = useIsMobile();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showConversation, setShowConversation] = useState(!isMobile);
 
-  // Fetch conversations
-  const { data: conversations = [], isLoading, error } = useQuery({
-    queryKey: ['conversations'],
-    queryFn: () => conversationService.getConversations(),
-  });
+  // Use mock data instead of fetching from API
+  const conversations = mockConversations;
+  const isLoading = false;
+  const error = null;
 
   const selectedConversation = selectedConversationId 
     ? conversations.find(c => c.id === selectedConversationId) || null
@@ -54,6 +52,7 @@ export default function Index() {
               onSelectConversation={handleSelectConversation}
               selectedConversationId={selectedConversationId}
               className="flex-1"
+              useMockData={true}
             />
           </div>
         )}
@@ -64,6 +63,7 @@ export default function Index() {
               <ConversationView 
                 conversation={selectedConversation}
                 onBackClick={isMobile ? handleBackToList : undefined}
+                useMockData={true}
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">

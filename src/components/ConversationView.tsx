@@ -40,28 +40,38 @@ interface ConversationViewProps {
   conversation: any;
   onBackClick?: () => void;
   className?: string;
+  useMockData?: boolean;
 }
 
 export function ConversationView({ 
   conversation: initialConversation, 
   onBackClick,
-  className 
+  className,
+  useMockData = false
 }: ConversationViewProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
 
-  // Fetch full conversation with messages
-  const { data: conversation, isLoading, error } = useQuery({
-    queryKey: ['conversation', initialConversation.id],
-    queryFn: () => conversationService.getConversation(initialConversation.id),
-    initialData: initialConversation,
-  });
+  // For mock data, we'll use the conversation directly
+  // For real data, we'll fetch from Supabase
+  const { data: conversation, isLoading, error } = useMockData
+    ? { data: initialConversation, isLoading: false, error: null }
+    : useQuery({
+        queryKey: ['conversation', initialConversation.id],
+        queryFn: () => conversationService.getConversation(initialConversation.id),
+        initialData: initialConversation,
+      });
 
-  // Archive/unarchive mutation
+  // Mock mutations for when using mock data
   const archiveMutation = useMutation({
     mutationFn: (archive: boolean) => {
+      if (useMockData) {
+        // Just return a mock success response
+        return Promise.resolve({ success: true });
+      }
+      
       if (archive) {
         return conversationService.archiveConversation(conversation.id);
       } else {
@@ -69,8 +79,10 @@ export function ConversationView({
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversation.id] });
+      if (!useMockData) {
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        queryClient.invalidateQueries({ queryKey: ['conversation', conversation.id] });
+      }
       toast({
         description: "Conversation updated successfully",
       });
@@ -84,9 +96,15 @@ export function ConversationView({
     }
   });
 
-  // Add to patients mutation
+  // Mock mutation for adding to patients
   const addToPatientsMutation = useMutation({
-    mutationFn: () => conversationService.addPatientFromConversation(conversation),
+    mutationFn: () => {
+      if (useMockData) {
+        // Just return a mock success response
+        return Promise.resolve({ success: true });
+      }
+      return conversationService.addPatientFromConversation(conversation);
+    },
     onSuccess: () => {
       toast({
         description: "Contact added to patients successfully",
@@ -101,11 +119,37 @@ export function ConversationView({
     }
   });
 
-  // Send message mutation
+  // Mock mutation for sending messages
+  const [localMessages, setLocalMessages] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (useMockData && conversation) {
+      // Initialize local messages with the conversation messages
+      setLocalMessages(conversation.messages || []);
+    }
+  }, [useMockData, conversation]);
+
   const sendMessageMutation = useMutation({
-    mutationFn: (content: string) => conversationService.sendMessage(conversation.id, content),
+    mutationFn: (content: string) => {
+      if (useMockData) {
+        // For mock data, create a new message locally
+        const newMessage = {
+          id: `local-${Date.now()}`,
+          content,
+          timestamp: new Date(),
+          isOutgoing: true,
+          status: 'delivered', 
+        };
+        
+        setLocalMessages(prev => [...prev, newMessage]);
+        return Promise.resolve({ success: true });
+      }
+      return conversationService.sendMessage(conversation.id, content);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversation.id] });
+      if (!useMockData) {
+        queryClient.invalidateQueries({ queryKey: ['conversation', conversation.id] });
+      }
     },
     onError: (error) => {
       console.error('Error sending message:', error);
@@ -121,7 +165,7 @@ export function ConversationView({
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [conversation?.messages]);
+  }, [conversation?.messages, localMessages]);
 
   const formatMessageTime = (date: string | Date) => {
     const messageDate = new Date(date);
@@ -159,6 +203,12 @@ export function ConversationView({
   };
 
   const renderMessageStatus = (message: any) => {
+    // For mock data
+    if (useMockData && message.isOutgoing) {
+      return <span className="text-muted-foreground">{message.status}</span>;
+    }
+    
+    // For real data
     if (!message.is_outgoing) return null;
     
     switch (message.status) {
@@ -185,13 +235,23 @@ export function ConversationView({
     return <div className="flex items-center justify-center h-full">Error loading conversation</div>;
   }
 
-  const messages = conversation.messages || [];
+  // Determine which messages to display
+  const messages = useMockData 
+    ? (localMessages.length > 0 ? localMessages : conversation.messages || [])
+    : (conversation.messages || []);
+  
+  // Handle different data structures between mock and real data
   const channelLabel = {
     whatsapp: "WhatsApp",
     instagram: "Instagram",
     facebook: "Facebook",
     email: "Email",
   };
+  
+  const patientName = useMockData ? conversation.contact.name : (conversation.patient?.name || "Unknown");
+  const patientAvatar = useMockData ? conversation.contact.avatar : conversation.patient?.avatar_url;
+  const channel = useMockData ? conversation.channel : conversation.channel;
+  const isArchived = useMockData ? false : (conversation.is_archived || false);
 
   return (
     <div className={cn(
@@ -208,23 +268,23 @@ export function ConversationView({
           )}
           
           <Avatar 
-            src={conversation.patient?.avatar_url} 
-            name={conversation.patient?.name || "Unknown"}
+            src={patientAvatar} 
+            name={patientName}
             showStatus
             status="online"
           />
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center">
-              <h2 className="font-medium truncate">{conversation.patient?.name || "Unknown"}</h2>
+              <h2 className="font-medium truncate">{patientName}</h2>
               <ChannelBadge 
-                channel={conversation.channel} 
+                channel={channel} 
                 size="sm" 
                 className="ml-2 flex-shrink-0"
               />
             </div>
             <p className="text-sm text-muted-foreground truncate">
-              via {channelLabel[conversation.channel as keyof typeof channelLabel]}
+              via {channelLabel[channel as keyof typeof channelLabel]}
             </p>
           </div>
         </div>
@@ -247,24 +307,24 @@ export function ConversationView({
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Archive className="h-4 w-4 mr-2" />
-                  {conversation.is_archived ? "Unarchive" : "Archive"}
+                  {isArchived ? "Unarchive" : "Archive"}
                 </DropdownMenuItem>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    {conversation.is_archived ? "Unarchive Conversation" : "Archive Conversation"}
+                    {isArchived ? "Unarchive Conversation" : "Archive Conversation"}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {conversation.is_archived 
+                    {isArchived 
                       ? "Are you sure you want to unarchive this conversation? It will be moved back to your inbox."
                       : "Are you sure you want to archive this conversation? It will be moved to the archived tab."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleArchive(!conversation.is_archived)}>
-                    {conversation.is_archived ? "Unarchive" : "Archive"}
+                  <AlertDialogAction onClick={() => handleArchive(!isArchived)}>
+                    {isArchived ? "Unarchive" : "Archive"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -292,11 +352,11 @@ export function ConversationView({
                 
                 <div className={cn(
                   "flex flex-col",
-                  message.is_outgoing ? "items-end" : "items-start"
+                  (useMockData ? message.isOutgoing : message.is_outgoing) ? "items-end" : "items-start"
                 )}>
                   <div className={cn(
                     "max-w-[80%] p-3 rounded-lg",
-                    message.is_outgoing 
+                    (useMockData ? message.isOutgoing : message.is_outgoing) 
                       ? "bg-primary text-primary-foreground rounded-br-none" 
                       : "bg-muted rounded-bl-none"
                   )}>
@@ -319,7 +379,7 @@ export function ConversationView({
       
       <MessageInput 
         onSendMessage={handleSendMessage} 
-        channel={conversation.channel}
+        channel={channel}
         disabled={sendMessageMutation.isPending}
       />
     </div>
