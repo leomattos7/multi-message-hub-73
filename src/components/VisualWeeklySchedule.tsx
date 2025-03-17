@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Lock, Check, Calendar } from "lucide-react";
@@ -39,6 +39,13 @@ export function VisualWeeklySchedule({
   onAvailabilityChange,
 }: VisualWeeklyScheduleProps) {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
+  const [localAvailability, setLocalAvailability] = useState<Availability[]>([]);
+  
+  // Initialize local availability state with all slots available by default
+  useEffect(() => {
+    // Use the database entries but default to all available
+    setLocalAvailability(weeklyAvailability);
+  }, [weeklyAvailability]);
   
   // Generate days of the week
   const startDay = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start on Monday
@@ -55,64 +62,61 @@ export function VisualWeeklySchedule({
   // Generate time slots
   const timeSlots = generateTimeSlots();
 
-  // Find a specific availability entry
-  const findAvailabilityEntry = (dayOfWeek: number, timeSlot: string) => {
-    return weeklyAvailability.find(
-      avail => avail.day_of_week === dayOfWeek && avail.start_time === timeSlot
+  // Find a specific availability entry that indicates a blocked slot
+  const findBlockedSlot = (dayOfWeek: number, timeSlot: string) => {
+    return localAvailability.find(
+      avail => avail.day_of_week === dayOfWeek && 
+              avail.start_time === timeSlot && 
+              !avail.is_available
     );
   };
 
-  // Helper function to check if a time slot is available or blocked
-  const getSlotStatus = (dayOfWeek: number, timeSlot: string): 'available' | 'blocked' | 'undefined' => {
-    const entry = findAvailabilityEntry(dayOfWeek, timeSlot);
-    if (!entry) return 'undefined';
-    return entry.is_available ? 'available' : 'blocked';
+  // Check if a time slot is blocked (default is available/green)
+  const isSlotBlocked = (dayOfWeek: number, timeSlot: string): boolean => {
+    const entry = findBlockedSlot(dayOfWeek, timeSlot);
+    return !!entry; // If an entry exists and is not available, it's blocked
   };
   
   // Handle click on a cell to toggle availability
   const handleCellClick = (dayOfWeek: number, timeSlot: string) => {
+    // Check if it's currently blocked
+    const isCurrentlyBlocked = isSlotBlocked(dayOfWeek, timeSlot);
+    
     // Create a deep copy of the current availability
-    const updatedAvailability = [...weeklyAvailability];
+    const updatedAvailability = [...localAvailability];
     
-    // Find the existing entry if it exists
-    const existingEntry = findAvailabilityEntry(dayOfWeek, timeSlot);
-    const currentStatus = getSlotStatus(dayOfWeek, timeSlot);
+    // Find existing entry if it exists (only for blocked entries, as available is the default)
+    const existingEntry = findBlockedSlot(dayOfWeek, timeSlot);
     
-    // Determine the new availability status (toggle current status)
-    const newIsAvailable = currentStatus !== 'available';
-    
-    // If entry exists, update it; otherwise create a new one
-    if (existingEntry) {
-      const updatedEntry = {
-        ...existingEntry,
-        is_available: newIsAvailable
-      };
-      
-      // Find the index and update
-      const index = updatedAvailability.findIndex(
-        avail => avail.id === existingEntry.id
+    if (isCurrentlyBlocked && existingEntry) {
+      // If currently blocked and exists in DB, remove it from our local state
+      // This will make it available (green) by default
+      const filteredAvailability = updatedAvailability.filter(avail => 
+        !(avail.day_of_week === dayOfWeek && 
+          avail.start_time === timeSlot && 
+          !avail.is_available)
       );
       
-      if (index >= 0) {
-        updatedAvailability[index] = updatedEntry;
-      }
-    } else {
-      // Create a new entry
-      updatedAvailability.push({
+      setLocalAvailability(filteredAvailability);
+      onAvailabilityChange(filteredAvailability);
+    } else if (!isCurrentlyBlocked) {
+      // If it's currently available (green), add a blocked entry
+      const newEntry: Availability = {
         doctor_id: doctorId,
         day_of_week: dayOfWeek,
         start_time: timeSlot,
         end_time: timeSlot.replace(":00", ":59"), // End at XX:59
-        is_available: newIsAvailable
-      });
+        is_available: false // Mark as blocked
+      };
+      
+      updatedAvailability.push(newEntry);
+      setLocalAvailability(updatedAvailability);
+      onAvailabilityChange(updatedAvailability);
     }
-    
-    // Apply changes
-    onAvailabilityChange(updatedAvailability);
     
     // Show notification
     const dayName = daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName || '';
-    if (newIsAvailable) {
+    if (isCurrentlyBlocked) {
       toast.success(`Horário ${timeSlot} de ${dayName} disponibilizado`);
     } else {
       toast.success(`Horário ${timeSlot} de ${dayName} bloqueado`);
@@ -149,7 +153,7 @@ export function VisualWeeklySchedule({
                 </div>
                 
                 {daysOfWeek.map((day) => {
-                  const status = getSlotStatus(day.dayOfWeek, timeSlot);
+                  const isBlocked = isSlotBlocked(day.dayOfWeek, timeSlot);
                   const cellId = `${day.dayOfWeek}-${timeSlot}`;
                   
                   return (
@@ -159,9 +163,9 @@ export function VisualWeeklySchedule({
                           <div 
                             className={cn(
                               "border-t border-gray-100 cursor-pointer transition-colors h-12 flex items-center justify-center",
-                              status === 'blocked' ? "bg-red-500 hover:bg-red-600" : "",
-                              status === 'available' ? "bg-green-500 hover:bg-green-600" : "",
-                              status === 'undefined' ? "bg-white hover:bg-gray-100" : "",
+                              isBlocked 
+                                ? "bg-red-500 hover:bg-red-600" 
+                                : "bg-green-500 hover:bg-green-600", // Default is green (available)
                               day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-opacity-90" : "",
                               hoveredCell === cellId ? "ring-2 ring-offset-1 ring-blue-400" : "",
                             )}
@@ -169,17 +173,18 @@ export function VisualWeeklySchedule({
                             onMouseEnter={() => setHoveredCell(cellId)}
                             onMouseLeave={() => setHoveredCell(null)}
                           >
-                            {status === 'blocked' && <Lock className="h-4 w-4 text-white" />}
-                            {status === 'available' && <Check className="h-4 w-4 text-white" />}
+                            {isBlocked 
+                              ? <Lock className="h-4 w-4 text-white" /> 
+                              : <Check className="h-4 w-4 text-white" />
+                            }
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>
-                            {status === 'blocked' 
+                            {isBlocked 
                               ? `${day.fullName} ${timeSlot} - Bloqueado` 
-                              : status === 'available'
-                                ? `${day.fullName} ${timeSlot} - Disponível`
-                                : `${day.fullName} ${timeSlot} - Clique para definir`}
+                              : `${day.fullName} ${timeSlot} - Disponível`
+                            }
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -200,10 +205,6 @@ export function VisualWeeklySchedule({
         <div className="flex items-center">
           <div className="w-4 h-4 bg-red-500 rounded-sm mr-2"></div>
           <span>Bloqueado</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-4 h-4 bg-white border border-gray-200 rounded-sm mr-2"></div>
-          <span>Não definido (clique para configurar)</span>
         </div>
       </div>
     </div>
