@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { 
@@ -173,7 +172,7 @@ export default function PatientCRM() {
 
         const { data: patientsData, error: patientsError } = await supabase
           .from('patients')
-          .select('id, name, email, phone, address');
+          .select('id, name, email, phone, address, notes');
 
         if (patientsError || appointmentsError || messagesError || conversationsError) {
           console.error("Error fetching data:", { patientsError, appointmentsError, messagesError, conversationsError });
@@ -534,7 +533,9 @@ export default function PatientCRM() {
       hasAppointment: null,
       hasMessages: null,
       sortBy: "name",
-      sortOrder: "asc"
+      sortOrder: "asc",
+      address: "",
+      notes: ""
     });
   };
 
