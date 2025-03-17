@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import { Sidebar } from "@/components/Sidebar";
 import { 
   Table, 
   TableBody, 
@@ -548,188 +546,185 @@ export default function PatientCRM() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="p-4 border-b flex justify-between items-center bg-white">
-          <div>
-            <h1 className="text-xl font-semibold">Contatos</h1>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="p-4 border-b flex justify-between items-center bg-white">
+        <div>
+          <h1 className="text-xl font-semibold">Contatos</h1>
+        </div>
+        <Button onClick={() => setIsAddPatientOpen(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Novo Contato
+        </Button>
+      </div>
+
+      <div className="p-4 border-b bg-white">
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="relative flex-grow">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Input
+              placeholder="Buscar contatos por nome, email ou telefone"
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <Button onClick={() => setIsAddPatientOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Novo Contato
+          <Button 
+            variant="outline"
+            onClick={() => setIsFilterDialogOpen(true)}
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros {Object.values(patientFilters).some(value => 
+              value !== "" && value !== null && value !== "name" && value !== "asc") && 
+              <span className="ml-1 bg-blue-500 text-white rounded-full w-2 h-2" />}
           </Button>
         </div>
+      </div>
 
-        <div className="p-4 border-b bg-white">
-          <div className="flex flex-col md:flex-row gap-2">
-            <div className="relative flex-grow">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                placeholder="Buscar contatos por nome, email ou telefone"
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+        {selectedPatient ? (
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex justify-between mb-4">
+              <h2 className="text-xl font-semibold">{selectedPatient.name}</h2>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={(e) => handleEditClick(selectedPatient, e)}
+                >
+                  <FileEdit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+                {isDoctor && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => handleDeleteClick(selectedPatient, e)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedPatient(null)}
+                >
+                  Voltar
+                </Button>
+              </div>
             </div>
-            <Button 
-              variant="outline"
-              onClick={() => setIsFilterDialogOpen(true)}
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filtros {Object.values(patientFilters).some(value => 
-                value !== "" && value !== null && value !== "name" && value !== "asc") && 
-                <span className="ml-1 bg-blue-500 text-white rounded-full w-2 h-2" />}
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-          {selectedPatient ? (
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="flex justify-between mb-4">
-                <h2 className="text-xl font-semibold">{selectedPatient.name}</h2>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={(e) => handleEditClick(selectedPatient, e)}
-                  >
-                    <FileEdit className="h-4 w-4 mr-2" />
-                    Editar
-                  </Button>
-                  {isDoctor && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={(e) => handleDeleteClick(selectedPatient, e)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Excluir
-                    </Button>
-                  )}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setSelectedPatient(null)}
-                  >
-                    Voltar
-                  </Button>
-                </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center text-sm">
+                <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                {selectedPatient.email || "Não informado"}
+              </div>
+              <div className="flex items-center text-sm">
+                <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                {selectedPatient.phone || "Não informado"}
               </div>
               
-              <div className="space-y-4">
+              {selectedPatient.address && (
                 <div className="flex items-center text-sm">
-                  <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                  {selectedPatient.email || "Não informado"}
+                  <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                  {selectedPatient.address}
                 </div>
-                <div className="flex items-center text-sm">
-                  <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                  {selectedPatient.phone || "Não informado"}
-                </div>
-                
-                {selectedPatient.address && (
-                  <div className="flex items-center text-sm">
-                    <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                    {selectedPatient.address}
-                  </div>
-                )}
-                
-                {selectedPatient.notes && (
-                  <div className="pt-2 border-t">
-                    <div className="flex items-center text-sm font-medium mb-1">
-                      <Clipboard className="h-4 w-4 mr-2 text-gray-500" />
-                      Anotações
-                    </div>
-                    <p className="text-sm text-gray-700 pl-6">{selectedPatient.notes}</p>
-                  </div>
-                )}
-                
+              )}
+              
+              {selectedPatient.notes && (
                 <div className="pt-2 border-t">
-                  <p className="text-sm text-gray-500">Última Mensagem: {formatDate(selectedPatient.lastMessageDate)}</p>
-                  <p className="text-sm text-gray-500 mt-1">Última Consulta: {formatDate(selectedPatient.lastAppointmentDate)}</p>
+                  <div className="flex items-center text-sm font-medium mb-1">
+                    <Clipboard className="h-4 w-4 mr-2 text-gray-500" />
+                    Anotações
+                  </div>
+                  <p className="text-sm text-gray-700 pl-6">{selectedPatient.notes}</p>
                 </div>
-                
-                <div className="pt-4">
-                  <Button variant="outline" size="sm" asChild className="w-full justify-center">
-                    <a href="/agendamentos">
-                      <CalendarClock className="h-4 w-4 mr-2" />
-                      Ver/Criar Agendamento
-                    </a>
-                  </Button>
-                </div>
+              )}
+              
+              <div className="pt-2 border-t">
+                <p className="text-sm text-gray-500">Última Mensagem: {formatDate(selectedPatient.lastMessageDate)}</p>
+                <p className="text-sm text-gray-500 mt-1">Última Consulta: {formatDate(selectedPatient.lastAppointmentDate)}</p>
+              </div>
+              
+              <div className="pt-4">
+                <Button variant="outline" size="sm" asChild className="w-full justify-center">
+                  <a href="/agendamentos">
+                    <CalendarClock className="h-4 w-4 mr-2" />
+                    Ver/Criar Agendamento
+                  </a>
+                </Button>
               </div>
             </div>
-          ) : (
-            <Table>
-              <TableCaption>Lista de contatos cadastrados</TableCaption>
-              <TableHeader>
+          </div>
+        ) : (
+          <Table>
+            <TableCaption>Lista de contatos cadastrados</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Última Mensagem</TableHead>
+                <TableHead>Última Consulta</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPatients.length === 0 ? (
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Última Mensagem</TableHead>
-                  <TableHead>Última Consulta</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableCell colSpan={5} className="text-center py-10">
+                    <p className="text-muted-foreground">Nenhum contato encontrado</p>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPatients.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10">
-                      <p className="text-muted-foreground">Nenhum contato encontrado</p>
+              ) : (
+                filteredPatients.map(patient => (
+                  <TableRow key={patient.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedPatient(patient)}>
+                    <TableCell className="font-medium">
+                      {patient.name}
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredPatients.map(patient => (
-                    <TableRow key={patient.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedPatient(patient)}>
-                      <TableCell className="font-medium">
-                        {patient.name}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="flex items-center">
-                            <Mail className="h-3 w-3 mr-1 text-muted-foreground" />
-                            {patient.email}
-                          </div>
-                          <div className="flex items-center mt-1">
-                            <Phone className="h-3 w-3 mr-1 text-muted-foreground" />
-                            {patient.phone}
-                          </div>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div className="flex items-center">
+                          <Mail className="h-3 w-3 mr-1 text-muted-foreground" />
+                          {patient.email}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(patient.lastMessageDate)}
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(patient.lastAppointmentDate)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex items-center mt-1">
+                          <Phone className="h-3 w-3 mr-1 text-muted-foreground" />
+                          {patient.phone}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(patient.lastMessageDate)}
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(patient.lastAppointmentDate)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={(e) => handleEditClick(patient, e)}
+                        >
+                          <FileEdit className="h-4 w-4" />
+                        </Button>
+                        {isDoctor && (
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            onClick={(e) => handleEditClick(patient, e)}
+                            onClick={(e) => handleDeleteClick(patient, e)}
                           >
-                            <FileEdit className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                          {isDoctor && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={(e) => handleDeleteClick(patient, e)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       <Dialog open={isAddPatientOpen} onOpenChange={setIsAddPatientOpen}>
