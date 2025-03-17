@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, subDays, isSameDay } from "date-fns";
+
+import { useState, useEffect } from "react";
+import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, subDays, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, ChevronLeft, ChevronRight, Edit, User, MapPin, Phone, Mail, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,8 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { toast } from "sonner";
 import { Sidebar } from "@/components/Sidebar";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for appointments
 const MOCK_APPOINTMENTS = [
@@ -56,6 +58,7 @@ export default function SecretaryDashboard() {
   const [view, setView] = useState<"day" | "week">("day");
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile>(initialDoctorProfile);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [appointments, setAppointments] = useState<any[]>(MOCK_APPOINTMENTS);
 
   // Initialize profile edit form
   const form = useForm<DoctorProfile>({
@@ -63,19 +66,87 @@ export default function SecretaryDashboard() {
     defaultValues: doctorProfile,
   });
 
+  // Fetch appointments from Supabase
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const formattedDate = format(date, 'yyyy-MM-dd');
+        const { data, error } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            date,
+            time,
+            type,
+            status,
+            notes,
+            patients(name)
+          `)
+          .eq('date', formattedDate);
+
+        if (error) {
+          console.error('Error fetching appointments:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          // Transform data to match our component format
+          const formattedAppointments = data.map(apt => ({
+            id: apt.id,
+            name: apt.patients?.name || 'Unknown',
+            time: apt.time.substring(0, 5), // Format time from "HH:MM:SS" to "HH:MM"
+            type: apt.type,
+            status: apt.status,
+            notes: apt.notes
+          }));
+          setAppointments(formattedAppointments);
+        } else {
+          // If no appointments, use mock data for demo purposes
+          setAppointments(MOCK_APPOINTMENTS);
+        }
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+        // Fallback to mock data
+        setAppointments(MOCK_APPOINTMENTS);
+      }
+    };
+
+    fetchAppointments();
+  }, [date]);
+
   // Navigation functions for different views
   const navigatePrevious = () => {
-    if (view === "day") setDate(subDays(date, 1));
-    else if (view === "week") setDate(subWeeks(date, 1));
+    if (view === "day") {
+      const newDate = subDays(date, 1);
+      setDate(newDate);
+      toast.info(`Visualizando ${format(newDate, "dd 'de' MMMM", { locale: ptBR })}`);
+    } else if (view === "week") {
+      const newDate = subWeeks(date, 1);
+      setDate(newDate);
+      const startDate = startOfWeek(newDate, { weekStartsOn: 0 });
+      const endDate = endOfWeek(newDate, { weekStartsOn: 0 });
+      toast.info(`Visualizando semana de ${format(startDate, "dd/MM", { locale: ptBR })} a ${format(endDate, "dd/MM", { locale: ptBR })}`);
+    }
   };
 
   const navigateNext = () => {
-    if (view === "day") setDate(addDays(date, 1));
-    else if (view === "week") setDate(addWeeks(date, 1));
+    if (view === "day") {
+      const newDate = addDays(date, 1);
+      setDate(newDate);
+      toast.info(`Visualizando ${format(newDate, "dd 'de' MMMM", { locale: ptBR })}`);
+    } else if (view === "week") {
+      const newDate = addWeeks(date, 1);
+      setDate(newDate);
+      const startDate = startOfWeek(newDate, { weekStartsOn: 0 });
+      const endDate = endOfWeek(newDate, { weekStartsOn: 0 });
+      toast.info(`Visualizando semana de ${format(startDate, "dd/MM", { locale: ptBR })} a ${format(endDate, "dd/MM", { locale: ptBR })}`);
+    }
   };
 
   const navigateToday = () => {
-    setDate(new Date());
+    const today = new Date();
+    setDate(today);
+    toast.success("Visualizando hoje");
   };
 
   // Get view range text
@@ -126,16 +197,16 @@ export default function SecretaryDashboard() {
   // Filter appointments for the current day
   const getDayAppointments = () => {
     // In a real application, filter from backend based on date
-    return MOCK_APPOINTMENTS;
+    return appointments;
   };
 
   // Render the appointments for day view
   const renderDayView = () => {
-    const appointments = getDayAppointments();
+    const dayAppointments = getDayAppointments();
     
     return (
       <div className="space-y-4">
-        {appointments.map((appointment) => (
+        {dayAppointments.map((appointment) => (
           <Card key={appointment.id} className="border-l-4 border-l-blue-500">
             <CardContent className="flex justify-between items-center p-4">
               <div>
@@ -183,7 +254,7 @@ export default function SecretaryDashboard() {
             </div>
             <div className="p-2 space-y-2 text-xs">
               {/* In a real app, filter appointments for each day */}
-              {index < 5 && MOCK_APPOINTMENTS.slice(0, 2).map((apt, i) => (
+              {index < 5 && appointments.slice(0, 2).map((apt, i) => (
                 <div key={i} className="bg-blue-50 p-2 rounded border-l-2 border-blue-500">
                   <div className="font-semibold">{apt.time} - {apt.name}</div>
                   <div className="text-gray-500">{apt.type}</div>
