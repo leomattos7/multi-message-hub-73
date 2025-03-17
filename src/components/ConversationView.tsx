@@ -1,10 +1,9 @@
+
 import { useRef, useEffect, useState } from "react";
 import { 
   ChevronLeft,
   MoreVertical,
-  UserPlus,
-  Archive,
-  Trash2
+  UserPlus
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -23,17 +22,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 interface ConversationViewProps {
   conversation: any;
@@ -62,42 +50,6 @@ export function ConversationView({
         queryFn: () => conversationService.getConversation(initialConversation.id),
         initialData: initialConversation,
       });
-
-  // Mock mutations for when using mock data
-  const archiveMutation = useMutation({
-    mutationFn: (archive: boolean) => {
-      if (useMockData) {
-        // Just return a mock success response with consistent shape
-        return Promise.resolve({ success: true, id: conversation.id });
-      }
-      
-      if (archive) {
-        return conversationService.archiveConversation(conversation.id).then(result => {
-          return { success: true, id: conversation.id, ...result };
-        });
-      } else {
-        return conversationService.unarchiveConversation(conversation.id).then(result => {
-          return { success: true, id: conversation.id, ...result };
-        });
-      }
-    },
-    onSuccess: () => {
-      if (!useMockData) {
-        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        queryClient.invalidateQueries({ queryKey: ['conversation', conversation.id] });
-      }
-      toast({
-        description: "Conversation updated successfully",
-      });
-    },
-    onError: (error) => {
-      console.error('Error updating conversation:', error);
-      toast({
-        variant: "destructive",
-        description: "Failed to update conversation",
-      });
-    }
-  });
 
   // Mock mutation for adding to patients
   const addToPatientsMutation = useMutation({
@@ -189,10 +141,6 @@ export function ConversationView({
     sendMessageMutation.mutate(content);
   };
 
-  const handleArchive = (archive: boolean) => {
-    archiveMutation.mutate(archive);
-  };
-
   const handleAddToPatients = () => {
     addToPatientsMutation.mutate();
   };
@@ -259,7 +207,6 @@ export function ConversationView({
   const patientName = useMockData ? conversation.contact.name : (conversation.patient?.name || "Unknown");
   const patientAvatar = useMockData ? conversation.contact.avatar : conversation.patient?.avatar_url;
   const channel = useMockData ? conversation.channel : conversation.channel;
-  const isArchived = useMockData ? false : (conversation.is_archived || false);
 
   return (
     <div className={cn(
@@ -308,35 +255,6 @@ export function ConversationView({
               <UserPlus className="h-4 w-4 mr-2" />
               Add to Patients
             </DropdownMenuItem>
-            
-            <DropdownMenuSeparator />
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Archive className="h-4 w-4 mr-2" />
-                  {isArchived ? "Unarchive" : "Archive"}
-                </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {isArchived ? "Unarchive Conversation" : "Archive Conversation"}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {isArchived 
-                      ? "Are you sure you want to unarchive this conversation? It will be moved back to your inbox."
-                      : "Are you sure you want to archive this conversation? It will be moved to the archived tab."}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleArchive(!isArchived)}>
-                    {isArchived ? "Unarchive" : "Archive"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

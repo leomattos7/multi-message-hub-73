@@ -13,17 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChannelType, sortedConversations, filterByChannel, searchConversations, mockConversations } from "@/data/mockData";
 import { conversationService, supabase } from "@/integrations/supabase/client";
@@ -44,7 +33,6 @@ type UnifiedConversation = {
   unread?: number;
   lastActivity?: Date;
   last_activity?: string;
-  is_archived?: boolean;
   contact?: {
     id: string;
     name: string;
