@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { 
@@ -30,9 +31,6 @@ import {
   FileEdit, 
   Trash2, 
   CalendarClock,
-  FileText,
-  Plus,
-  Save,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
@@ -40,18 +38,6 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthGuard";
 import { supabase } from "@/integrations/supabase/client";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface Patient {
   id: string;
@@ -60,13 +46,6 @@ interface Patient {
   phone: string;
   lastMessageDate: Date | null;
   lastAppointmentDate: Date | null;
-}
-
-interface MedicalRecord {
-  id: string;
-  date: Date;
-  content: string;
-  patientId: string;
 }
 
 // Dados mockados para demonstração
@@ -113,28 +92,6 @@ const mockPatients: Patient[] = [
   }
 ];
 
-// Dados mockados de prontuários médicos
-const mockMedicalRecords: MedicalRecord[] = [
-  {
-    id: "1",
-    date: new Date(2023, 11, 10), // 10/12/2023
-    content: "Paciente relatou dores de cabeça frequentes. Prescritos analgésicos e exames laboratoriais.",
-    patientId: "1",
-  },
-  {
-    id: "2",
-    date: new Date(2023, 10, 5), // 05/11/2023
-    content: "Retorno. Resultados de exames normais. Manter medicação por mais duas semanas.",
-    patientId: "1",
-  },
-  {
-    id: "3",
-    date: new Date(2023, 9, 15), // 15/10/2023
-    content: "Consulta inicial. Paciente com queixas de insônia. Orientações de higiene do sono e acompanhamento.",
-    patientId: "2",
-  },
-];
-
 export default function PatientCRM() {
   const isMobile = useIsMobile();
   const [patients, setPatients] = useState<Patient[]>(mockPatients);
@@ -146,11 +103,6 @@ export default function PatientCRM() {
     email: "",
     phone: "",
   });
-  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>(mockMedicalRecords);
-  const [newRecord, setNewRecord] = useState({
-    content: "",
-  });
-  const [isAddRecordOpen, setIsAddRecordOpen] = useState(false);
   
   const { user } = useAuth();
   const isDoctor = user?.role === "doctor";
@@ -252,33 +204,10 @@ export default function PatientCRM() {
     toast.success("Paciente adicionado com sucesso!");
   };
 
-  const handleAddMedicalRecord = () => {
-    if (!newRecord.content || !selectedPatient) {
-      toast.error("Por favor, preencha o conteúdo do prontuário");
-      return;
-    }
-
-    const newRecordObj: MedicalRecord = {
-      id: `${medicalRecords.length + 1}`,
-      date: new Date(),
-      content: newRecord.content,
-      patientId: selectedPatient.id,
-    };
-
-    setMedicalRecords([...medicalRecords, newRecordObj]);
-    setNewRecord({ content: "" });
-    setIsAddRecordOpen(false);
-    toast.success("Prontuário adicionado com sucesso!");
-  };
-
   const formatDate = (date: Date | null) => {
     if (!date) return "Não definido";
     return format(date, "dd/MM/yyyy", { locale: ptBR });
   };
-
-  const patientMedicalRecords = medicalRecords.filter(
-    record => selectedPatient && record.patientId === selectedPatient.id
-  ).sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -322,103 +251,29 @@ export default function PatientCRM() {
                 </Button>
               </div>
               
-              <Tabs defaultValue="info" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="info">Informações</TabsTrigger>
-                  {isDoctor && <TabsTrigger value="records">Prontuário</TabsTrigger>}
-                </TabsList>
+              <div className="space-y-4">
+                <div className="flex items-center text-sm">
+                  <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                  {selectedPatient.email}
+                </div>
+                <div className="flex items-center text-sm">
+                  <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                  {selectedPatient.phone}
+                </div>
+                <div className="pt-2">
+                  <p className="text-sm text-gray-500">Última Mensagem: {formatDate(selectedPatient.lastMessageDate)}</p>
+                  <p className="text-sm text-gray-500 mt-1">Última Consulta: {formatDate(selectedPatient.lastAppointmentDate)}</p>
+                </div>
                 
-                <TabsContent value="info" className="space-y-4">
-                  <div className="flex items-center text-sm">
-                    <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                    {selectedPatient.email}
-                  </div>
-                  <div className="flex items-center text-sm">
-                    <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                    {selectedPatient.phone}
-                  </div>
-                  <div className="pt-2">
-                    <p className="text-sm text-gray-500">Última Mensagem: {formatDate(selectedPatient.lastMessageDate)}</p>
-                    <p className="text-sm text-gray-500 mt-1">Última Consulta: {formatDate(selectedPatient.lastAppointmentDate)}</p>
-                  </div>
-                  
-                  <div className="pt-4">
-                    <Button variant="outline" size="sm" asChild className="w-full justify-center">
-                      <a href="/agendamentos">
-                        <CalendarClock className="h-4 w-4 mr-2" />
-                        Ver/Criar Agendamento
-                      </a>
-                    </Button>
-                  </div>
-                </TabsContent>
-                
-                {isDoctor && (
-                  <TabsContent value="records" className="space-y-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-medium">Histórico de Prontuários</h3>
-                      <Button size="sm" onClick={() => setIsAddRecordOpen(true)}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Novo Registro
-                      </Button>
-                    </div>
-                    
-                    {patientMedicalRecords.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                        <p>Nenhum prontuário encontrado para este paciente</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {patientMedicalRecords.map((record) => (
-                          <Collapsible key={record.id} className="border rounded-md">
-                            <CollapsibleTrigger className="flex justify-between items-center w-full p-3 hover:bg-gray-50">
-                              <div className="font-medium">{formatDate(record.date)}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {record.content.substring(0, 40)}...
-                              </div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="p-3 pt-0 border-t text-sm">
-                              {record.content}
-                            </CollapsibleContent>
-                          </Collapsible>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <Dialog open={isAddRecordOpen} onOpenChange={setIsAddRecordOpen}>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Adicionar Novo Prontuário</DialogTitle>
-                          <DialogDescription>
-                            Adicione informações detalhadas sobre a consulta ou atendimento.
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="grid gap-4 py-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="record-content">Conteúdo do prontuário *</Label>
-                            <Textarea
-                              id="record-content"
-                              rows={6}
-                              placeholder="Descreva aqui o diagnóstico, observações, tratamentos prescritos, etc."
-                              value={newRecord.content}
-                              onChange={(e) => setNewRecord({...newRecord, content: e.target.value})}
-                            />
-                          </div>
-                        </div>
-                        
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setIsAddRecordOpen(false)}>Cancelar</Button>
-                          <Button onClick={handleAddMedicalRecord}>
-                            <Save className="h-4 w-4 mr-2" />
-                            Salvar
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </TabsContent>
-                )}
-              </Tabs>
+                <div className="pt-4">
+                  <Button variant="outline" size="sm" asChild className="w-full justify-center">
+                    <a href="/agendamentos">
+                      <CalendarClock className="h-4 w-4 mr-2" />
+                      Ver/Criar Agendamento
+                    </a>
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             <Table>
@@ -539,4 +394,3 @@ export default function PatientCRM() {
     </div>
   );
 }
-
