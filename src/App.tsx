@@ -16,6 +16,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import EmployeeManagement from "./pages/EmployeeManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
+import ScheduleManagementSecretary from "./pages/ScheduleManagementSecretary";
 import DoctorLinkTree from "./pages/DoctorLinkTree";
 import PublicDoctorProfile from "./pages/PublicDoctorProfile";
 
@@ -73,6 +74,17 @@ const App = () => (
                 <Sidebar />
                 <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
                   <PatientCRM />
+                </main>
+              </div>
+            </AuthGuard>
+          } />
+          
+          <Route path="/gestao-agenda" element={
+            <AuthGuard>
+              <div className="flex h-screen w-full overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                  <ScheduleManagementSecretary />
                 </main>
               </div>
             </AuthGuard>

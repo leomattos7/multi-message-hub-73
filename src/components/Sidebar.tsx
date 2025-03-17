@@ -12,6 +12,7 @@ import {
   Briefcase,
   Calendar,
   Link2,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,11 @@ const sidebarItems = [
     name: "Agenda",
     href: "/secretaria",
     icon: <Calendar />,
+  },
+  {
+    name: "Gestão de Agenda",
+    href: "/gestao-agenda",
+    icon: <CalendarDays />,
   },
   {
     name: "Pacientes",
