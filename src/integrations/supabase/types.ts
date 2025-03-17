@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          doctor_id: string | null
           id: string
           notes: string | null
           patient_id: string
@@ -25,6 +26,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date: string
+          doctor_id?: string | null
           id?: string
           notes?: string | null
           patient_id: string
@@ -37,6 +39,7 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          doctor_id?: string | null
           id?: string
           notes?: string | null
           patient_id?: string
@@ -96,6 +99,7 @@ export type Database = {
         Row: {
           channel: string
           created_at: string
+          doctor_id: string | null
           id: string
           is_archived: boolean
           last_activity: string
@@ -105,6 +109,7 @@ export type Database = {
         Insert: {
           channel: string
           created_at?: string
+          doctor_id?: string | null
           id?: string
           is_archived?: boolean
           last_activity?: string
@@ -114,6 +119,7 @@ export type Database = {
         Update: {
           channel?: string
           created_at?: string
+          doctor_id?: string | null
           id?: string
           is_archived?: boolean
           last_activity?: string
@@ -316,6 +322,7 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           created_at: string
+          doctor_id: string | null
           email: string | null
           id: string
           name: string
@@ -327,6 +334,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
+          doctor_id?: string | null
           email?: string | null
           id?: string
           name: string
@@ -338,6 +346,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
+          doctor_id?: string | null
           email?: string | null
           id?: string
           name?: string
@@ -352,7 +361,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_employee_of: {
+        Args: {
+          doctor_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

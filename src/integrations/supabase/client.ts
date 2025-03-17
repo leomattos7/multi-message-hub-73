@@ -20,15 +20,25 @@ const generateUUID = () => {
   });
 };
 
+// Helper to get current user ID
+export const getCurrentUserId = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id;
+};
+
 // Conversations and messages utility functions
 export const conversationService = {
   async getConversations() {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
     const { data, error } = await supabase
       .from('conversations')
       .select(`
         *,
         patient:patients(id, name, email, phone, avatar_url)
       `)
+      .eq('doctor_id', userId)
       .order('last_activity', { ascending: false });
     
     if (error) throw error;
@@ -36,6 +46,9 @@ export const conversationService = {
   },
   
   async getConversation(id: string) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -44,6 +57,7 @@ export const conversationService = {
         messages(*)
       `)
       .eq('id', id)
+      .eq('doctor_id', userId)
       .order('messages.timestamp', { ascending: true })
       .single();
     
@@ -52,10 +66,14 @@ export const conversationService = {
   },
   
   async updateConversation(id: string, updates: any) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
     const { data, error } = await supabase
       .from('conversations')
       .update(updates)
       .eq('id', id)
+      .eq('doctor_id', userId)
       .select()
       .single();
     
@@ -74,11 +92,15 @@ export const conversationService = {
   },
   
   async sendMessage(conversationId: string, content: string) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
     // Update the conversation's last_activity timestamp
     await supabase
       .from('conversations')
       .update({ last_activity: new Date().toISOString() })
-      .eq('id', conversationId);
+      .eq('id', conversationId)
+      .eq('doctor_id', userId);
     
     // Insert the new message
     const { data, error } = await supabase
@@ -100,6 +122,9 @@ export const conversationService = {
     console.log("Adding patient from conversation:", conversation);
     
     try {
+      const userId = await getCurrentUserId();
+      if (!userId) throw new Error("User not authenticated");
+      
       // Check if the conversation has patient_id
       const patientId = conversation.patient_id;
       
@@ -130,7 +155,8 @@ export const conversationService = {
         name: patientName,
         email: patientEmail,
         phone: patientPhone,
-        avatar_url: patientAvatar
+        avatar_url: patientAvatar,
+        doctor_id: userId
       });
       
       // Check if patient already exists
@@ -159,6 +185,7 @@ export const conversationService = {
             email: patientEmail,
             phone: patientPhone,
             avatar_url: patientAvatar,
+            doctor_id: userId,
             updated_at: new Date().toISOString()
           })
           .eq('id', patientId)
@@ -182,7 +209,8 @@ export const conversationService = {
             name: patientName,
             email: patientEmail,
             phone: patientPhone,
-            avatar_url: patientAvatar
+            avatar_url: patientAvatar,
+            doctor_id: userId
           })
           .select()
           .single();
@@ -317,6 +345,13 @@ export const doctorProfileService = {
   },
   
   async createLink(link: any) {
+    // Add the current user ID if not provided
+    if (!link.doctor_id) {
+      const userId = await getCurrentUserId();
+      if (!userId) throw new Error("User not authenticated");
+      link.doctor_id = userId;
+    }
+    
     // Get the current highest display order
     const { data: links, error: fetchError } = await supabase
       .from('doctor_links')
@@ -347,10 +382,14 @@ export const doctorProfileService = {
   },
   
   async updateLink(linkId: string, updates: any) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
     const { data, error } = await supabase
       .from('doctor_links')
       .update(updates)
       .eq('id', linkId)
+      .eq('doctor_id', userId)
       .select()
       .single();
     
@@ -359,23 +398,30 @@ export const doctorProfileService = {
   },
   
   async deleteLink(linkId: string) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
     const { error } = await supabase
       .from('doctor_links')
       .delete()
-      .eq('id', linkId);
+      .eq('id', linkId)
+      .eq('doctor_id', userId);
     
     if (error) throw error;
     return { success: true };
   },
   
   async reorderLinks(doctorId: string, linkIds: string[]) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
     // Update each link with its new display order
     const updates = linkIds.map((id, index) => {
       return supabase
         .from('doctor_links')
         .update({ display_order: index + 1 })
         .eq('id', id)
-        .eq('doctor_id', doctorId);
+        .eq('doctor_id', userId);
     });
     
     await Promise.all(updates);
