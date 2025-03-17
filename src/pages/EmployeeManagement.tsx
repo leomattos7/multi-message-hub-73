@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Sidebar } from "@/components/Sidebar";
 import { UserPlus, Trash2, Mail, UserCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 
@@ -103,65 +102,61 @@ export default function EmployeeManagement() {
   });
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+    <div className="w-full p-6">
+      <div className="container mx-auto max-w-6xl">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Gerenciamento de Funcionários</h1>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Adicionar Funcionário
+          </Button>
+        </div>
 
-      <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">Gerenciamento de Funcionários</h1>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Adicionar Funcionário
-            </Button>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Funcionários</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {employees.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhum funcionário adicionado ainda
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {employees.map((employee) => (
-                    <div key={employee.id} className="py-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center">
-                          <UserCircle className="h-6 w-6 text-slate-500" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{employee.name}</h3>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Mail className="mr-1 h-3 w-3" />
-                            {employee.email}
-                          </div>
-                        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Funcionários</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {employees.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum funcionário adicionado ainda
+              </div>
+            ) : (
+              <div className="divide-y">
+                {employees.map((employee) => (
+                  <div key={employee.id} className="py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center">
+                        <UserCircle className="h-6 w-6 text-slate-500" />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">
-                          {employee.role}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openRemoveDialog(employee)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div>
+                        <h3 className="font-medium">{employee.name}</h3>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Mail className="mr-1 h-3 w-3" />
+                          {employee.email}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">
+                        {employee.role}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openRemoveDialog(employee)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Add Employee Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
