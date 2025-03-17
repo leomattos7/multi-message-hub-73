@@ -20,6 +20,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         calendar: "bg-blue-500 text-white hover:bg-blue-600",
+        schedule: "bg-emerald-500 text-white hover:bg-emerald-600",
       },
       size: {
         default: "h-10 px-4 py-2",
