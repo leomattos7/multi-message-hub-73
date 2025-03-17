@@ -24,6 +24,8 @@ const doctorProfileSchema = z.object({
   phone: z.string().min(8, { message: "Telefone é obrigatório" }),
   email: z.string().email({ message: "Email inválido" }),
   consultationDuration: z.string().min(1, { message: "Duração da consulta é obrigatória" }),
+  followUpDuration: z.string().min(1, { message: "Duração da consulta de retorno é obrigatória" }),
+  urgentDuration: z.string().min(1, { message: "Duração da consulta de encaixe é obrigatória" }),
 });
 
 export type DoctorProfile = z.infer<typeof doctorProfileSchema>;
@@ -37,10 +39,12 @@ interface ProfileEditFormProps {
 export function ProfileEditForm({ doctorId, initialProfile, onProfileUpdate }: ProfileEditFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   
-  // Set default consultation duration if it doesn't exist
+  // Set default consultation durations if they don't exist
   const defaultValues = {
     ...initialProfile,
-    consultationDuration: initialProfile.consultationDuration || "30"
+    consultationDuration: initialProfile.consultationDuration || "30",
+    followUpDuration: initialProfile.followUpDuration || "20",
+    urgentDuration: initialProfile.urgentDuration || "15"
   };
 
   const form = useForm<DoctorProfile>({
@@ -154,34 +158,6 @@ export function ProfileEditForm({ doctorId, initialProfile, onProfileUpdate }: P
 
               <FormField
                 control={form.control}
-                name="consultationDuration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      Duração das consultas (minutos)
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a duração" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutos</SelectItem>
-                        <SelectItem value="20">20 minutos</SelectItem>
-                        <SelectItem value="30">30 minutos</SelectItem>
-                        <SelectItem value="45">45 minutos</SelectItem>
-                        <SelectItem value="60">60 minutos</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="photo"
                 render={({ field }) => (
                   <FormItem>
@@ -193,6 +169,94 @@ export function ProfileEditForm({ doctorId, initialProfile, onProfileUpdate }: P
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="pt-2 pb-2">
+              <h3 className="font-medium text-sm mb-4">Duração de Consultas</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="consultationDuration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Consulta Comum (min)
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a duração" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="15">15 minutos</SelectItem>
+                          <SelectItem value="20">20 minutos</SelectItem>
+                          <SelectItem value="30">30 minutos</SelectItem>
+                          <SelectItem value="45">45 minutos</SelectItem>
+                          <SelectItem value="60">60 minutos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="followUpDuration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Consulta de Retorno (min)
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a duração" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="10">10 minutos</SelectItem>
+                          <SelectItem value="15">15 minutos</SelectItem>
+                          <SelectItem value="20">20 minutos</SelectItem>
+                          <SelectItem value="30">30 minutos</SelectItem>
+                          <SelectItem value="45">45 minutos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="urgentDuration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Consulta de Encaixe (min)
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a duração" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="10">10 minutos</SelectItem>
+                          <SelectItem value="15">15 minutos</SelectItem>
+                          <SelectItem value="20">20 minutos</SelectItem>
+                          <SelectItem value="30">30 minutos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <FormField
