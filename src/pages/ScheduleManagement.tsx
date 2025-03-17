@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Clock, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { Calendar, Clock, Plus, Trash2, AlertTriangle, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -49,11 +49,12 @@ const EVENT_TYPES = [
 
 export default function ScheduleManagement() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<string>("calendar");
+  const [activeTab, setActiveTab] = useState<string>("availability");
   const [weeklyAvailability, setWeeklyAvailability] = useState<Availability[]>([]);
   const [specialEvents, setSpecialEvents] = useState<CalendarEvent[]>([]);
   const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Initialize the doctor ID (in a real app, this would come from authentication)
   const doctorId = "00000000-0000-0000-0000-000000000000"; // Placeholder
@@ -61,6 +62,7 @@ export default function ScheduleManagement() {
   // Fetch doctor's weekly availability
   useEffect(() => {
     const fetchWeeklyAvailability = async () => {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from("doctor_availability")
@@ -79,6 +81,8 @@ export default function ScheduleManagement() {
       } catch (error) {
         console.error("Error:", error);
         toast.error("Erro ao carregar disponibilidade");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -115,14 +119,25 @@ export default function ScheduleManagement() {
   // Handle updating weekly availability
   const handleAvailabilityChange = async (updatedAvailability: Availability[]) => {
     try {
+      setIsLoading(true);
       console.log("Handling availability change:", updatedAvailability);
       
       // Find entries that need to be added to the database (those without an ID)
       const newEntries = updatedAvailability.filter(avail => !avail.id);
       
+      // Find entries that need to be updated (have an ID and are in updated state)
+      const updatedEntries = updatedAvailability.filter(
+        avail => avail.id && weeklyAvailability.some(
+          old => old.id === avail.id && 
+                (old.is_available !== avail.is_available ||
+                 old.start_time !== avail.start_time ||
+                 old.end_time !== avail.end_time)
+        )
+      );
+      
       // Find entries that need to be removed (in current state but not in updated state)
-      const removedEntries = weeklyAvailability.filter(
-        oldAvail => !updatedAvailability.some(
+      const entriesToDelete = weeklyAvailability.filter(
+        oldAvail => oldAvail.id && !updatedAvailability.some(
           newAvail => newAvail.id === oldAvail.id
         )
       );
@@ -141,38 +156,65 @@ export default function ScheduleManagement() {
         }
         
         // Update the entries with their new IDs
-        const finalAvailability = updatedAvailability.map(
-          avail => newEntries.includes(avail) && insertedData 
-            ? insertedData.find(inserted => 
-                inserted.day_of_week === avail.day_of_week && 
-                inserted.start_time === avail.start_time
-              ) || avail
-            : avail
-        );
+        if (insertedData) {
+          updatedAvailability = updatedAvailability.map(avail => {
+            if (!avail.id && newEntries.includes(avail)) {
+              const matchingInserted = insertedData.find(
+                inserted => inserted.day_of_week === avail.day_of_week && 
+                          inserted.start_time === avail.start_time &&
+                          inserted.end_time === avail.end_time
+              );
+              return matchingInserted || avail;
+            }
+            return avail;
+          });
+        }
+      }
+      
+      // Update existing entries
+      for (const entry of updatedEntries) {
+        if (!entry.id) continue;
         
-        setWeeklyAvailability(finalAvailability);
-      } else {
-        setWeeklyAvailability(updatedAvailability);
+        const { error: updateError } = await supabase
+          .from("doctor_availability")
+          .update({
+            is_available: entry.is_available,
+            start_time: entry.start_time,
+            end_time: entry.end_time
+          })
+          .eq("id", entry.id);
+          
+        if (updateError) {
+          console.error("Error updating availability:", updateError);
+          toast.error("Erro ao atualizar disponibilidade");
+          return;
+        }
       }
       
       // Delete removed entries
-      for (const entry of removedEntries) {
-        if (entry.id) {
-          const { error: deleteError } = await supabase
-            .from("doctor_availability")
-            .delete()
-            .eq("id", entry.id);
-            
-          if (deleteError) {
-            console.error("Error deleting availability:", deleteError);
-            toast.error("Erro ao remover disponibilidade");
-            return;
-          }
+      for (const entry of entriesToDelete) {
+        if (!entry.id) continue;
+        
+        const { error: deleteError } = await supabase
+          .from("doctor_availability")
+          .delete()
+          .eq("id", entry.id);
+          
+        if (deleteError) {
+          console.error("Error deleting availability:", deleteError);
+          toast.error("Erro ao remover disponibilidade");
+          return;
         }
       }
+      
+      setWeeklyAvailability(updatedAvailability);
+      toast.success("Horários de disponibilidade atualizados com sucesso");
+      
     } catch (error) {
       console.error("Error updating availability:", error);
       toast.error("Erro ao atualizar disponibilidade");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -284,35 +326,39 @@ export default function ScheduleManagement() {
     <div className="container max-w-full mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold text-gray-800 mb-8">Gerenciamento de Agenda</h1>
 
-      <Tabs defaultValue="calendar" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="availability" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
-          <TabsTrigger value="calendar">Agenda Estilo Google Calendar</TabsTrigger>
-          <TabsTrigger value="events">Lista de Bloqueios</TabsTrigger>
+          <TabsTrigger value="availability">Disponibilidade Semanal</TabsTrigger>
+          <TabsTrigger value="blocks">Bloqueios de Agenda</TabsTrigger>
         </TabsList>
 
-        {/* Google Calendar Style Tab */}
-        <TabsContent value="calendar">
+        {/* Weekly Availability Tab */}
+        <TabsContent value="availability">
           <Card>
             <CardHeader>
-              <CardTitle>Bloqueios de Agenda</CardTitle>
+              <CardTitle>Horários de Atendimento</CardTitle>
               <CardDescription>
-                Adicione datas e horários para bloquear na sua agenda
+                Configure quais dias e horários você está disponível para atendimento
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <VisualWeeklySchedule 
-                doctorId={doctorId}
-                weeklyAvailability={weeklyAvailability}
-                specialEvents={specialEvents}
-                onAvailabilityChange={handleAvailabilityChange}
-                onSpecialEventsChange={handleSpecialEventsChange}
-              />
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <p>Carregando disponibilidade...</p>
+                </div>
+              ) : (
+                <VisualWeeklySchedule 
+                  doctorId={doctorId}
+                  weeklyAvailability={weeklyAvailability}
+                  onAvailabilityChange={handleAvailabilityChange}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Special Events List Tab */}
-        <TabsContent value="events">
+        <TabsContent value="blocks">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -328,7 +374,7 @@ export default function ScheduleManagement() {
                   <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium">Sem bloqueios cadastrados</h3>
                   <p className="mt-2">
-                    Adicione bloqueios na aba "Agenda Estilo Google Calendar"
+                    Adicione bloqueios para indisponibilizar determinadas datas e horários
                   </p>
                 </div>
               ) : (

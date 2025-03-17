@@ -108,6 +108,7 @@ export default function Appointments() {
   const [reservedTimes, setReservedTimes] = useState<string[]>([]);
   const [doctorAvailability, setDoctorAvailability] = useState<Availability[]>([]);
   const [specialEvents, setSpecialEvents] = useState<CalendarEvent[]>([]);
+  const [availableDays, setAvailableDays] = useState<number[]>([]);
 
   // Initialize the doctor ID (in a real app, this would come from authentication)
   const doctorId = "00000000-0000-0000-0000-000000000000"; // Placeholder
@@ -144,7 +145,8 @@ export default function Appointments() {
         const { data, error } = await supabase
           .from("doctor_availability")
           .select("*")
-          .eq("doctor_id", doctorId);
+          .eq("doctor_id", doctorId)
+          .eq("is_available", true);
 
         if (error) {
           console.error("Error fetching availability:", error);
@@ -153,6 +155,10 @@ export default function Appointments() {
 
         if (data) {
           setDoctorAvailability(data);
+          
+          // Extract the days of the week that have availability
+          const days = data.map(item => item.day_of_week);
+          setAvailableDays([...new Set(days)]); // Remove duplicates
         }
       } catch (error) {
         console.error("Error:", error);
@@ -297,12 +303,17 @@ export default function Appointments() {
   const isDateAvailable = (date: Date) => {
     const dayOfWeek = date.getDay(); // 0-6 for Sunday-Saturday
     
-    // Check if there's any availability set for this day of the week
-    const dayAvailability = doctorAvailability.filter(
-      avail => avail.day_of_week === dayOfWeek && avail.is_available
-    );
+    // First check if the day of week is in the available days list
+    if (!availableDays.includes(dayOfWeek)) {
+      return false;
+    }
     
-    return dayAvailability.length > 0;
+    // Then check for special blocks on this date
+    const formattedDate = format(date, "yyyy-MM-dd");
+    const hasBlocks = specialEvents.some(event => event.date === formattedDate);
+    
+    // Date is available if it has general availability and no blocks
+    return !hasBlocks;
   };
 
   // Function to check if a time is within the doctor's availability for a specific date
@@ -335,8 +346,7 @@ export default function Appointments() {
       avail => avail.day_of_week === dayOfWeek && avail.is_available
     );
     
-    // If no availability is set for this day, default to available
-    if (availableRanges.length === 0) return true;
+    if (availableRanges.length === 0) return false;
     
     return availableRanges.some(range => {
       const rangeStart = parse(range.start_time, "HH:mm", new Date());
@@ -355,6 +365,26 @@ export default function Appointments() {
     
     return AVAILABLE_TIMES.filter(time => 
       !reservedTimes.includes(time) && isTimeAvailable(time, selectedDate)
+    );
+  };
+  
+  // Render a calendar day with custom styling
+  const renderCalendarDay = (day: Date, modifiers: any) => {
+    const isAvailable = isDateAvailable(day);
+    
+    return (
+      <div className={cn(
+        "relative h-10 w-10 flex items-center justify-center",
+        isAvailable ? "bg-green-50" : "",
+        modifiers.disabled ? "opacity-40" : ""
+      )}>
+        {day.getDate()}
+        {isAvailable && (
+          <div className="absolute bottom-1 left-0 right-0 flex justify-center">
+            <div className="h-1 w-1 rounded-full bg-green-500"></div>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -388,11 +418,13 @@ export default function Appointments() {
                 onSelect={handleDateSelection}
                 disabled={(date) => 
                   isBefore(date, startOfDay(new Date())) || // No past dates
-                  date.getDay() === 0 || date.getDay() === 6 || // No weekends
                   !isDateAvailable(date) // Check doctor availability
                 }
                 initialFocus
                 className="mx-auto border-none w-full"
+                components={{
+                  Day: ({ date, ...props }) => renderCalendarDay(date, props),
+                }}
               />
             </CardContent>
             <CardHeader className="pb-2 pt-0">
@@ -418,6 +450,32 @@ export default function Appointments() {
               
               <div className="mt-4 text-sm text-gray-600">
                 <p>{doctorProfile.bio}</p>
+              </div>
+
+              <div className="mt-4">
+                <h4 className="font-medium text-green-700 mb-1 flex items-center">
+                  <Check className="h-4 w-4 mr-1" /> 
+                  Horários disponíveis
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {availableDays.sort().map(day => {
+                    const dayAvailabilities = doctorAvailability.filter(a => a.day_of_week === day && a.is_available);
+                    if (dayAvailabilities.length === 0) return null;
+                    
+                    return (
+                      <div key={day} className="bg-green-50 rounded p-2 border border-green-100">
+                        <div className="font-medium">{formatWeekday(new Date(2023, 0, day + 2))}</div>
+                        <div className="text-xs text-gray-600">
+                          {dayAvailabilities.map((a, i) => (
+                            <div key={i}>
+                              {a.start_time} - {a.end_time}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </CardContent>
           </Card>

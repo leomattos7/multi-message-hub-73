@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface TimeBlock {
   id?: string;
@@ -21,14 +22,22 @@ interface DateTimeBlockSelectorProps {
   blocks: TimeBlock[];
   onChange: (blocks: TimeBlock[]) => void;
   timezone?: string;
+  mode?: "available" | "block";
 }
+
+// Predefined time slots
+const TIME_SLOTS = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
+];
 
 export function DateTimeBlockSelector({
   blocks = [],
   onChange,
-  timezone = "(GMT-03:00) Horário Padrão de Brasília - São Paulo"
+  timezone = "(GMT-03:00) Horário Padrão de Brasília - São Paulo",
+  mode = "block"
 }: DateTimeBlockSelectorProps) {
-  const [newBlocks, setNewBlocks] = useState<TimeBlock[]>(blocks);
+  const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>(blocks);
 
   // Add a new empty block
   const addBlock = () => {
@@ -38,52 +47,67 @@ export function DateTimeBlockSelector({
       startTime: "08:00",
       endTime: "17:00"
     };
-    const updatedBlocks = [...newBlocks, newBlock];
-    setNewBlocks(updatedBlocks);
+    const updatedBlocks = [...timeBlocks, newBlock];
+    setTimeBlocks(updatedBlocks);
     onChange(updatedBlocks);
   };
 
   // Remove a block
   const removeBlock = (index: number) => {
-    const updatedBlocks = [...newBlocks];
+    const updatedBlocks = [...timeBlocks];
     const removedBlock = updatedBlocks.splice(index, 1)[0];
-    setNewBlocks(updatedBlocks);
+    setTimeBlocks(updatedBlocks);
     onChange(updatedBlocks);
     
     const formattedDate = format(removedBlock.date, "dd MMM. yyyy", { locale: ptBR });
-    toast.success(`Bloco de horário removido: ${formattedDate} ${removedBlock.startTime} - ${removedBlock.endTime}`);
+    toast.success(`${mode === "available" ? "Horário disponível" : "Bloco de horário"} removido: ${formattedDate} ${removedBlock.startTime} - ${removedBlock.endTime}`);
   };
 
   // Update a block's date
   const updateBlockDate = (index: number, date: Date) => {
-    const updatedBlocks = [...newBlocks];
+    const updatedBlocks = [...timeBlocks];
     updatedBlocks[index] = { ...updatedBlocks[index], date };
-    setNewBlocks(updatedBlocks);
+    setTimeBlocks(updatedBlocks);
     onChange(updatedBlocks);
   };
 
   // Update a block's time
   const updateBlockTime = (index: number, field: 'startTime' | 'endTime', value: string) => {
-    const updatedBlocks = [...newBlocks];
+    const updatedBlocks = [...timeBlocks];
     updatedBlocks[index] = { ...updatedBlocks[index], [field]: value };
-    setNewBlocks(updatedBlocks);
+    
+    // Validate start time is before end time
+    if (field === 'startTime' && value >= updatedBlocks[index].endTime) {
+      toast.error("O horário inicial deve ser anterior ao horário final");
+      return;
+    }
+    
+    if (field === 'endTime' && value <= updatedBlocks[index].startTime) {
+      toast.error("O horário final deve ser posterior ao horário inicial");
+      return;
+    }
+    
+    setTimeBlocks(updatedBlocks);
     onChange(updatedBlocks);
   };
 
   // Check if a date appears more than once in the blocks
   const isDuplicateDate = (date: Date, index: number): boolean => {
     const dateString = format(date, "yyyy-MM-dd");
-    return newBlocks.some((block, i) => 
+    return timeBlocks.some((block, i) => 
       i !== index && format(block.date, "yyyy-MM-dd") === dateString
     );
   };
 
   return (
     <div className="space-y-4">
-      {newBlocks.map((block, index) => (
+      {timeBlocks.map((block, index) => (
         <div 
           key={index} 
-          className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
+          className={cn(
+            "flex flex-col sm:flex-row gap-2 p-3 rounded-lg border",
+            mode === "available" ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+          )}
         >
           <div className="flex-1">
             <Popover>
@@ -91,8 +115,11 @@ export function DateTimeBlockSelector({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal bg-rose-100 hover:bg-rose-200 border-rose-200",
-                    isDuplicateDate(block.date, index) && "border-red-500"
+                    "w-full justify-start text-left font-normal", 
+                    mode === "available" 
+                      ? "bg-green-100 hover:bg-green-200 border-green-200"
+                      : "bg-red-100 hover:bg-red-200 border-red-200",
+                    isDuplicateDate(block.date, index) && "border-yellow-500 bg-yellow-100"
                   )}
                 >
                   {format(block.date, "dd MMM. yyyy", { locale: ptBR })}
@@ -109,35 +136,50 @@ export function DateTimeBlockSelector({
               </PopoverContent>
             </Popover>
             {isDuplicateDate(block.date, index) && (
-              <div className="text-red-500 text-xs mt-1">
-                As mesmas datas foram adicionadas mais de uma vez
+              <div className="text-yellow-600 text-xs mt-1">
+                Atenção: Esta data foi adicionada mais de uma vez
               </div>
             )}
           </div>
           
           <div className="flex gap-2 items-center">
-            <div className="bg-gray-200 px-3 py-2 rounded">
-              <input
-                type="time"
-                value={block.startTime}
-                onChange={(e) => updateBlockTime(index, 'startTime', e.target.value)}
-                className="bg-transparent border-none focus:outline-none text-center w-[80px]"
-              />
-            </div>
+            <Select 
+              value={block.startTime} 
+              onValueChange={(value) => updateBlockTime(index, 'startTime', value)}
+            >
+              <SelectTrigger className="w-[110px]">
+                <SelectValue placeholder="Início" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIME_SLOTS.map(time => (
+                  <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
             <span className="text-gray-500">–</span>
-            <div className="bg-gray-200 px-3 py-2 rounded">
-              <input
-                type="time"
-                value={block.endTime}
-                onChange={(e) => updateBlockTime(index, 'endTime', e.target.value)}
-                className="bg-transparent border-none focus:outline-none text-center w-[80px]"
-              />
-            </div>
+            
+            <Select 
+              value={block.endTime} 
+              onValueChange={(value) => updateBlockTime(index, 'endTime', value)}
+            >
+              <SelectTrigger className="w-[110px]">
+                <SelectValue placeholder="Fim" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIME_SLOTS.map(time => (
+                  <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-gray-400 hover:text-gray-600"
+              className={cn(
+                "text-gray-400 hover:text-gray-600",
+                mode === "available" ? "hover:bg-green-100" : "hover:bg-red-100"
+              )}
               onClick={() => removeBlock(index)}
             >
               <X className="h-4 w-4" />
@@ -147,11 +189,12 @@ export function DateTimeBlockSelector({
       ))}
 
       <Button 
-        variant="outline" 
+        variant={mode === "available" ? "available" : "block"}
         className="w-full border-dashed"
         onClick={addBlock}
       >
-        <Plus className="mr-2 h-4 w-4" /> Adicionar uma data
+        <Plus className="mr-2 h-4 w-4" /> 
+        Adicionar {mode === "available" ? "disponibilidade" : "bloqueio"}
       </Button>
 
       <div className="text-sm text-gray-500 mt-2">
