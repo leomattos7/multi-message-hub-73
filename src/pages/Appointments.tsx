@@ -277,16 +277,6 @@ export default function Appointments() {
                       {formatWeekday(selectedDate)}, {format(selectedDate, "dd 'de' MMMM 'de' yyyy")}
                     </CardDescription>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="rounded-full"
-                      onClick={() => setStep("calendar")}
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </div>
               </CardHeader>
               <CardContent>
