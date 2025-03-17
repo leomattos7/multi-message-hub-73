@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -43,6 +42,7 @@ const App = () => (
             </AuthGuard>
           } />
           
+          {/* Keep the route for URL access, but it's not in the menu */}
           <Route path="/agendamentos" element={
             <AuthGuard>
               <div className="flex h-screen w-full overflow-hidden">

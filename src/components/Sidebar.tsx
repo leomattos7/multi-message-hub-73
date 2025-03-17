@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -26,11 +25,6 @@ const sidebarItems = [
     name: "Secretária",
     href: "/secretaria",
     icon: <CalendarCheck2 />,
-  },
-  {
-    name: "Agendar Consulta",
-    href: "/agendamentos",
-    icon: <UserRound />,
   },
   {
     name: "Pacientes",
