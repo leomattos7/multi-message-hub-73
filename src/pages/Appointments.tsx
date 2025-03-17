@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -156,11 +157,13 @@ export default function Appointments() {
         }
 
         if (data) {
+          console.log("Availability data:", data);
           setDoctorAvailability(data);
           
           // Extract the days of the week that have availability
           const days = data.map(item => item.day_of_week);
           setAvailableDays([...new Set(days)]); // Remove duplicates
+          console.log("Available days:", [...new Set(days)]);
         }
       } catch (error) {
         console.error("Error:", error);
@@ -242,6 +245,7 @@ export default function Appointments() {
   // Function to handle date selection and move to time selection step
   const handleDateSelection = (date: Date | undefined) => {
     if (date) {
+      console.log("Selected date:", date);
       setSelectedDate(date);
       form.setValue("date", date);
       setStep("time");
@@ -411,8 +415,8 @@ export default function Appointments() {
     if (availableRanges.length === 0) return false;
     
     return availableRanges.some(range => {
-      const rangeStart = parse(range.start_time, "HH:mm", new Date());
-      const rangeEnd = parse(range.end_time, "HH:mm", new Date());
+      const rangeStart = parse(range.start_time.substring(0, 5), "HH:mm", new Date());
+      const rangeEnd = parse(range.end_time.substring(0, 5), "HH:mm", new Date());
       
       return isWithinInterval(timeObj, { 
         start: rangeStart, 
@@ -430,15 +434,15 @@ export default function Appointments() {
     );
   };
   
-  // Render a calendar day with custom styling
+  // Render a calendar day with custom styling and interactivity
   const renderCalendarDay = (day: Date, modifiers: any) => {
     const isAvailable = isDateAvailable(day);
     
     return (
       <div className={cn(
         "relative h-10 w-10 flex items-center justify-center",
-        isAvailable ? "bg-green-50" : "",
-        modifiers.disabled ? "opacity-40" : ""
+        isAvailable ? "bg-green-50 hover:bg-green-100 cursor-pointer" : "",
+        modifiers.disabled ? "opacity-40 cursor-not-allowed" : ""
       )}>
         {day.getDate()}
         {isAvailable && (
@@ -491,7 +495,7 @@ export default function Appointments() {
                   !isDateAvailable(date) // Check doctor availability
                 }
                 initialFocus
-                className="mx-auto border-none w-full"
+                className="mx-auto border-none w-full pointer-events-auto"
                 components={{
                   Day: ({ date, ...props }) => renderCalendarDay(date, props),
                 }}
@@ -538,7 +542,7 @@ export default function Appointments() {
                         <div className="text-xs text-gray-600">
                           {dayAvailabilities.map((a, i) => (
                             <div key={i}>
-                              {a.start_time} - {a.end_time}
+                              {a.start_time.substring(0, 5)} - {a.end_time.substring(0, 5)}
                             </div>
                           ))}
                         </div>
