@@ -13,7 +13,7 @@ import { ArrowRight, LucideStethoscope } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
-  specialty: z.string().min(2, { message: "Especialidade é obrigatória" }),
+  phone: z.string().min(10, { message: "Telefone deve ser válido" }),
   email: z.string().email({ message: "E-mail inválido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string().min(6, { message: "Confirme sua senha" }),
@@ -32,7 +32,7 @@ export default function SignUp() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      specialty: "",
+      phone: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -54,7 +54,7 @@ export default function SignUp() {
           email: data.email,
           role: "doctor",
           name: data.name,
-          specialty: data.specialty
+          phone: data.phone
         }));
         
         toast.success("Conta criada com sucesso!");
@@ -107,12 +107,12 @@ export default function SignUp() {
                   />
                   <FormField
                     control={form.control}
-                    name="specialty"
+                    name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Especialidade</FormLabel>
+                        <FormLabel>Telefone</FormLabel>
                         <FormControl>
-                          <Input placeholder="Cardiologia" {...field} />
+                          <Input placeholder="(11) 99999-9999" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
