@@ -14,30 +14,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./Avatar";
 import { toast } from "sonner";
+import { useAuth } from "./AuthGuard";
 
 interface SidebarProps {
   className?: string;
 }
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
 export function Sidebar({ className }: SidebarProps) {
   const [expanded, setExpanded] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+  const { user } = useAuth();
 
   const toggleSidebar = () => {
     setExpanded(!expanded);
@@ -49,11 +36,15 @@ export function Sidebar({ className }: SidebarProps) {
     navigate("/login");
   };
 
+  // Define navigation items based on user role
   const navItems = [
     { icon: Inbox, label: "Inbox", path: "/", active: location.pathname === "/" },
     { icon: Users, label: "Contatos", path: "/pacientes", active: location.pathname === "/pacientes" },
     { icon: Calendar, label: "Agenda", path: "/secretaria", active: location.pathname === "/secretaria" },
-    { icon: UserPlus, label: "Funcionários", path: "/funcionarios", active: location.pathname === "/funcionarios" },
+    // Only show Employee Management for doctors
+    ...(user?.role === "doctor" ? [
+      { icon: UserPlus, label: "Funcionários", path: "/funcionarios", active: location.pathname === "/funcionarios" }
+    ] : [])
   ];
 
   return (
@@ -106,7 +97,7 @@ export function Sidebar({ className }: SidebarProps) {
           />
           <div className={cn("flex flex-col transition-opacity duration-200", !expanded && "opacity-0 invisible")}>
             <p className="font-medium text-sm">{user?.name || "Usuário"}</p>
-            <p className="text-xs text-muted-foreground">{user?.role || "Médico"}</p>
+            <p className="text-xs text-muted-foreground">{user?.role === "doctor" ? "Médico" : "Secretária"}</p>
           </div>
         </div>
         

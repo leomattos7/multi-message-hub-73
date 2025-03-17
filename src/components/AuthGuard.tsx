@@ -1,20 +1,63 @@
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: "doctor" | "secretary";
+  phone?: string;
+}
 
 interface AuthGuardProps {
   children: ReactNode;
+  requiredRole?: "doctor" | "secretary" | undefined;
 }
 
-export function AuthGuard({ children }: AuthGuardProps) {
+export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (!user) {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const userData = JSON.parse(userStr) as User;
+      setUser(userData);
+      
+      // If a specific role is required and the user doesn't have it, redirect
+      if (requiredRole && userData.role !== requiredRole) {
+        navigate("/secretaria");
+        return;
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error);
       navigate("/login");
     }
-  }, [navigate]);
+  }, [navigate, requiredRole]);
 
   return <>{children}</>;
+}
+
+export function useAuth(): { user: User | null } {
+  const [user, setUser] = useState<User | null>(null);
+  
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr) as User;
+        setUser(userData);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+  
+  return { user };
 }

@@ -34,7 +34,9 @@ const App = () => (
           <Route path="/agendamentos" element={<AuthGuard><Appointments /></AuthGuard>} />
           <Route path="/secretaria" element={<AuthGuard><SecretaryDashboard /></AuthGuard>} />
           <Route path="/pacientes" element={<AuthGuard><PatientCRM /></AuthGuard>} />
-          <Route path="/funcionarios" element={<AuthGuard><EmployeeManagement /></AuthGuard>} />
+          
+          {/* Doctor-only route */}
+          <Route path="/funcionarios" element={<AuthGuard requiredRole="doctor"><EmployeeManagement /></AuthGuard>} />
           
           {/* Redirect to login if not authenticated */}
           <Route path="*" element={<NotFound />} />
