@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,8 @@ import ScheduleManagement from "./pages/ScheduleManagement";
 import ScheduleManagementSecretary from "./pages/ScheduleManagementSecretary";
 import DoctorLinkTree from "./pages/DoctorLinkTree";
 import PublicDoctorProfile from "./pages/PublicDoctorProfile";
+import MedicalRecords from "./pages/MedicalRecords";
+import MedicalRecordDetail from "./pages/MedicalRecordDetail";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +77,28 @@ const App = () => (
                 <Sidebar />
                 <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
                   <PatientCRM />
+                </main>
+              </div>
+            </AuthGuard>
+          } />
+          
+          <Route path="/prontuarios" element={
+            <AuthGuard>
+              <div className="flex h-screen w-full overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                  <MedicalRecords />
+                </main>
+              </div>
+            </AuthGuard>
+          } />
+          
+          <Route path="/prontuarios/:id" element={
+            <AuthGuard>
+              <div className="flex h-screen w-full overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                  <MedicalRecordDetail />
                 </main>
               </div>
             </AuthGuard>

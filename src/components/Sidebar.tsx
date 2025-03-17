@@ -13,6 +13,7 @@ import {
   Calendar,
   Link2,
   CalendarDays,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,11 @@ const sidebarItems = [
     name: "Pacientes",
     href: "/pacientes",
     icon: <User />,
+  },
+  {
+    name: "Prontuários",
+    href: "/prontuarios",
+    icon: <ClipboardList />,
   },
   {
     name: "Funcionários",
