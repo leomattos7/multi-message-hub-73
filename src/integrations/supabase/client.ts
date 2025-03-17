@@ -242,8 +242,8 @@ export const doctorProfileService = {
     
     // Check if the ID is not in UUID format (contains 'user-' prefix)
     if (doctorId.includes('user-')) {
-      // Create a UUID v4 based on the user ID
-      const { data: uuidResult } = await supabase.rpc('generate_uuid_v4') as unknown as { data: string };
+      // Fix the type error by using a more explicit type assertion for the RPC call
+      const { data: uuidResult } = await supabase.rpc('generate_uuid_v4') as { data: string, error: null | { message: string } };
       if (uuidResult) {
         profileId = uuidResult;
       } else {
