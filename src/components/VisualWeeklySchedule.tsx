@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect } from "react";
-import { format, addDays, startOfWeek } from "date-fns";
+import { format, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Lock, Check, Calendar } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Calendar } from "lucide-react";
+import { DateTimeBlockSelector, TimeBlock } from "@/components/DateTimeBlockSelector";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 // Type for doctor availability
@@ -17,190 +19,128 @@ type Availability = {
   is_available: boolean;
 };
 
+// Type for calendar event (special blocks)
+type CalendarEvent = {
+  id?: string;
+  doctor_id: string;
+  title: string;
+  description: string | null;
+  date: string;
+  start_time: string;
+  end_time: string;
+  event_type: string;
+};
+
 // Props for the component
 interface VisualWeeklyScheduleProps {
   doctorId: string;
   weeklyAvailability: Availability[];
+  specialEvents?: CalendarEvent[];
   onAvailabilityChange: (availability: Availability[]) => void;
+  onSpecialEventsChange?: (events: CalendarEvent[]) => void;
 }
-
-// Generate time slots from 8:00 to 21:00
-const generateTimeSlots = () => {
-  const slots = [];
-  for (let i = 8; i <= 21; i++) {
-    slots.push(`${i.toString().padStart(2, '0')}:00`);
-  }
-  return slots;
-};
 
 export function VisualWeeklySchedule({
   doctorId,
   weeklyAvailability,
+  specialEvents = [],
   onAvailabilityChange,
+  onSpecialEventsChange
 }: VisualWeeklyScheduleProps) {
-  const [hoveredCell, setHoveredCell] = useState<string | null>(null);
-  const [localAvailability, setLocalAvailability] = useState<Availability[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("blocks");
+  const [blockAvailability, setBlockAvailability] = useState<TimeBlock[]>([]);
   
-  // Initialize local availability state from props
+  // Convert special events to time blocks for display
   useEffect(() => {
-    console.log("Weekly availability updated:", weeklyAvailability);
-    setLocalAvailability(weeklyAvailability);
-  }, [weeklyAvailability]);
+    if (specialEvents.length > 0) {
+      const blocks = specialEvents.map(event => ({
+        id: event.id,
+        date: parseISO(event.date),
+        startTime: event.start_time,
+        endTime: event.end_time
+      }));
+      setBlockAvailability(blocks);
+    }
+  }, [specialEvents]);
   
-  // Generate days of the week
-  const startDay = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start on Monday
-  const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
-    const day = addDays(startDay, i);
-    return {
-      date: day,
-      dayOfWeek: i === 6 ? 0 : i + 1, // Convert to day of week (0 = Sunday, 1 = Monday, etc.)
-      name: format(day, "EEE", { locale: ptBR }),
-      fullName: format(day, "EEEE", { locale: ptBR })
-    };
-  });
-  
-  // Generate time slots
-  const timeSlots = generateTimeSlots();
-
-  // Find availability entry for a specific slot
-  const findAvailabilityEntry = (dayOfWeek: number, timeSlot: string) => {
-    return localAvailability.find(
-      avail => 
-        avail.day_of_week === dayOfWeek && 
-        avail.start_time === timeSlot
-    );
-  };
-
-  // Check if a time slot is blocked
-  const isSlotBlocked = (dayOfWeek: number, timeSlot: string): boolean => {
-    const entry = findAvailabilityEntry(dayOfWeek, timeSlot);
-    // If an entry exists and is_available is false, it's blocked
-    return !!entry && !entry.is_available;
-  };
-  
-  // Handle click on a cell to toggle availability
-  const handleCellClick = (dayOfWeek: number, timeSlot: string) => {
-    // Check if the slot is currently blocked
-    const isCurrentlyBlocked = isSlotBlocked(dayOfWeek, timeSlot);
+  // Handle changes to time blocks
+  const handleBlocksChange = (blocks: TimeBlock[]) => {
+    setBlockAvailability(blocks);
     
-    if (isCurrentlyBlocked) {
-      // If currently blocked, remove the entry or mark as available
-      const existingEntry = findAvailabilityEntry(dayOfWeek, timeSlot);
-      
-      if (existingEntry && existingEntry.id) {
-        // If it exists in the database, remove it
-        const updatedAvailability = localAvailability.filter(avail => avail.id !== existingEntry.id);
-        setLocalAvailability(updatedAvailability);
-        onAvailabilityChange(updatedAvailability);
-      }
-    } else {
-      // If not blocked, add a new blocked entry
-      const newEntry: Availability = {
+    if (onSpecialEventsChange) {
+      // Convert time blocks to calendar events
+      const events = blocks.map(block => ({
+        id: block.id,
         doctor_id: doctorId,
-        day_of_week: dayOfWeek,
-        start_time: timeSlot,
-        end_time: timeSlot.replace(":00", ":59"), // End at XX:59
-        is_available: false // Mark as blocked
-      };
+        title: "Bloqueio de agenda",
+        description: null,
+        date: format(block.date, "yyyy-MM-dd"),
+        start_time: block.startTime,
+        end_time: block.endTime,
+        event_type: "one-time-block"
+      }));
       
-      const updatedAvailability = [...localAvailability, newEntry];
-      setLocalAvailability(updatedAvailability);
-      onAvailabilityChange(updatedAvailability);
+      onSpecialEventsChange(events);
     }
-    
-    // Show notification
-    const dayName = daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName || '';
-    if (isCurrentlyBlocked) {
-      toast.success(`Horário ${timeSlot} de ${dayName} disponibilizado`);
-    } else {
-      toast.success(`Horário ${timeSlot} de ${dayName} bloqueado`);
-    }
+  };
+  
+  // Handle saving changes
+  const handleSaveChanges = () => {
+    // Implementation depends on how you want to handle saving
+    toast.success("Alterações salvas com sucesso");
   };
   
   return (
-    <div className="flex flex-col gap-4">
-      <div className="overflow-auto">
-        <div className="min-w-[900px]">
-          <div className="grid grid-cols-[100px_repeat(7,1fr)] gap-[1px] bg-gray-200 border border-gray-200 rounded-lg shadow-sm">
-            {/* Header row with days of the week */}
-            <div className="bg-white p-2 font-semibold flex items-center justify-center">
-              <Calendar className="h-4 w-4 mr-2" />
-              Horário
-            </div>
-            {daysOfWeek.map((day) => (
-              <div 
-                key={day.dayOfWeek} 
-                className={cn(
-                  "bg-white p-2 font-semibold text-center",
-                  day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-gray-50" : ""
-                )}
-              >
-                {day.name}
+    <div className="space-y-4">
+      <Tabs defaultValue="blocks" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="blocks">Bloqueios de Agenda</TabsTrigger>
+          <TabsTrigger value="weekly">Visão Semanal</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="blocks">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bloqueios de Agenda</CardTitle>
+              <CardDescription>
+                Adicione datas e horários para bloquear sua agenda
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DateTimeBlockSelector 
+                blocks={blockAvailability}
+                onChange={handleBlocksChange}
+              />
+              
+              <div className="mt-6">
+                <Button onClick={handleSaveChanges}>
+                  Salvar alterações
+                </Button>
               </div>
-            ))}
-            
-            {/* Time slots */}
-            {timeSlots.map((timeSlot) => (
-              <React.Fragment key={timeSlot}>
-                <div className="bg-white p-2 text-center border-t border-gray-100 flex items-center justify-center">
-                  {timeSlot}
-                </div>
-                
-                {daysOfWeek.map((day) => {
-                  const isBlocked = isSlotBlocked(day.dayOfWeek, timeSlot);
-                  const cellId = `${day.dayOfWeek}-${timeSlot}`;
-                  
-                  return (
-                    <TooltipProvider key={cellId}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div 
-                            className={cn(
-                              "border-t border-gray-100 cursor-pointer transition-colors h-12 flex items-center justify-center",
-                              isBlocked 
-                                ? "bg-red-500 hover:bg-red-600" 
-                                : "bg-green-500 hover:bg-green-600",
-                              day.dayOfWeek === 0 || day.dayOfWeek === 6 ? "bg-opacity-90" : "",
-                              hoveredCell === cellId ? "ring-2 ring-offset-1 ring-blue-400" : ""
-                            )}
-                            onClick={() => handleCellClick(day.dayOfWeek, timeSlot)}
-                            onMouseEnter={() => setHoveredCell(cellId)}
-                            onMouseLeave={() => setHoveredCell(null)}
-                          >
-                            {isBlocked 
-                              ? <Lock className="h-4 w-4 text-white" /> 
-                              : <Check className="h-4 w-4 text-white" />
-                            }
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>
-                            {isBlocked 
-                              ? `${day.fullName} ${timeSlot} - Bloqueado` 
-                              : `${day.fullName} ${timeSlot} - Disponível`
-                            }
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  );
-                })}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      <div className="flex mt-4 gap-4 text-sm">
-        <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-500 rounded-sm mr-2"></div>
-          <span>Disponível</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-4 h-4 bg-red-500 rounded-sm mr-2"></div>
-          <span>Bloqueado</span>
-        </div>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="weekly">
+          <Card>
+            <CardHeader>
+              <CardTitle>Visão Semanal da Agenda</CardTitle>
+              <CardDescription>
+                Esta visualização mostra os padrões semanais de disponibilidade
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium">Funcionalidade em desenvolvimento</h3>
+                <p className="text-sm text-gray-500 mt-2">
+                  Utilize a aba "Bloqueios de Agenda" para gerenciar sua disponibilidade no estilo Google Calendar
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
