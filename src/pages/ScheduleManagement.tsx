@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { VisualWeeklySchedule } from "@/components/VisualWeeklySchedule";
-import { ProfileEditForm, type DoctorProfile } from "@/components/ProfileEditForm";
+import { ProfileEditForm } from "@/components/ProfileEditForm";
+import { DoctorProfile } from "@/components/DoctorProfile/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -35,14 +36,21 @@ export default function ScheduleManagement() {
 
   // Initial doctor profile (same as in Appointments.tsx)
   const initialDoctorProfile: DoctorProfile = {
+    id: doctorId,
     name: "Dra. Ana Silva",
     specialty: "Clínico Geral",
     bio: "Médica com mais de 10 anos de experiência em clínica geral, especializada em saúde preventiva e bem-estar.",
-    photo: "https://randomuser.me/api/portraits/women/68.jpg",
+    profile_image_url: "https://randomuser.me/api/portraits/women/68.jpg",
     address: "Av. Paulista, 1000, São Paulo - SP",
     phone: "(11) 95555-5555",
     email: "dra.anasilva@clinica.com.br",
-    consultationDuration: "30"
+    consultationDuration: "30",
+    followUpDuration: "20",
+    urgentDuration: "15",
+    public_url_slug: "dra-ana-silva",
+    theme: "default",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
   // State for doctor profile

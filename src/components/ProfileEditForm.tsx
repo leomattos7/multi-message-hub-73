@@ -10,6 +10,9 @@ import { BioField } from "@/components/DoctorProfile/BioField";
 import { useProfileForm } from "@/components/DoctorProfile/useProfileForm";
 import { DoctorProfile } from "@/components/DoctorProfile/types";
 
+// Re-export the DoctorProfile type
+export type { DoctorProfile };
+
 interface ProfileEditFormProps {
   doctorId: string;
   initialProfile: DoctorProfile;

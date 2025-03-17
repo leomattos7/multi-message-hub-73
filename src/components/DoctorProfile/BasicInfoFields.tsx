@@ -84,7 +84,7 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
 
       <FormField
         control={form.control}
-        name="photo"
+        name="profile_image_url"
         render={({ field }) => (
           <FormItem>
             <FormLabel>URL da foto (opcional)</FormLabel>

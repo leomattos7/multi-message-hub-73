@@ -11,7 +11,7 @@ const doctorProfileSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   specialty: z.string().min(2, { message: "Especialidade é obrigatória" }),
   bio: z.string().min(10, { message: "Biografia deve ter pelo menos 10 caracteres" }),
-  photo: z.string().optional(),
+  profile_image_url: z.string().optional(),
   address: z.string().min(5, { message: "Endereço é obrigatório" }),
   phone: z.string().min(8, { message: "Telefone é obrigatório" }),
   email: z.string().email({ message: "Email inválido" }),
