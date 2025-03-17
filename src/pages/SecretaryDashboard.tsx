@@ -21,6 +21,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Sidebar } from "@/components/Sidebar";
 import { supabase } from "@/integrations/supabase/client";
+import { ConsultationDurationFields } from "@/components/DoctorProfile/ConsultationDurationFields";
 
 const APPOINTMENT_TYPES = [
   { id: "routine", name: "Consulta de Rotina" },
@@ -80,6 +81,9 @@ const doctorProfileSchema = z.object({
   address: z.string().min(5, { message: "Endereço é obrigatório" }),
   phone: z.string().min(10, { message: "Telefone inválido" }),
   email: z.string().email({ message: "Email inválido" }),
+  consultationDuration: z.string().min(1, { message: "Duração da consulta é obrigatória" }),
+  followUpDuration: z.string().min(1, { message: "Duração da consulta de retorno é obrigatória" }),
+  urgentDuration: z.string().min(1, { message: "Duração da consulta de encaixe é obrigatória" }),
 });
 
 type DoctorProfile = z.infer<typeof doctorProfileSchema>;
@@ -92,6 +96,9 @@ const initialDoctorProfile: DoctorProfile = {
   address: "Av. Paulista, 1000, São Paulo - SP",
   phone: "(11) 95555-5555",
   email: "dra.anasilva@clinica.com.br",
+  consultationDuration: "30",
+  followUpDuration: "20",
+  urgentDuration: "15"
 };
 
 export default function SecretaryDashboard() {
@@ -638,103 +645,120 @@ export default function SecretaryDashboard() {
                         Editar Perfil
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
+                    <DialogContent className="sm:max-w-[700px]">
                       <DialogHeader>
                         <DialogTitle>Editar Perfil do Médico</DialogTitle>
                       </DialogHeader>
                       <Form {...profileForm}>
-                        <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-                          <FormField
-                            control={profileForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nome</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="specialty"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Especialidade</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="bio"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Biografia</FormLabel>
-                                <FormControl>
-                                  <Textarea {...field} className="resize-none" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="photo"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>URL da Foto</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="address"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Endereço</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="phone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Telefone</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                        <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+                          <div className="mb-6">
+                            <h3 className="text-lg font-medium mb-4">Duração das Consultas</h3>
+                            <ConsultationDurationFields form={profileForm} />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                              <FormField
+                                control={profileForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nome</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={profileForm.control}
+                                name="specialty"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Especialidade</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={profileForm.control}
+                                name="photo"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>URL da Foto</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={profileForm.control}
+                                name="email"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            
+                            <div className="space-y-4">
+                              <FormField
+                                control={profileForm.control}
+                                name="address"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Endereço</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={profileForm.control}
+                                name="phone"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Telefone</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={profileForm.control}
+                                name="bio"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Biografia</FormLabel>
+                                    <FormControl>
+                                      <Textarea {...field} className="resize-none" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
                           <DialogFooter>
                             <Button type="submit">Salvar Alterações</Button>
                           </DialogFooter>

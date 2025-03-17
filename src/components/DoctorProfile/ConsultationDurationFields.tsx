@@ -5,6 +5,9 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { DoctorProfile } from "./types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ConsultationDurationFieldsProps {
   form: UseFormReturn<DoctorProfile>;
@@ -13,8 +16,7 @@ interface ConsultationDurationFieldsProps {
 export function ConsultationDurationFields({ form }: ConsultationDurationFieldsProps) {
   return (
     <div className="pt-2 pb-2">
-      <h3 className="font-medium text-sm mb-4">Duração de Consultas</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <FormField
           control={form.control}
           name="consultationDuration"
