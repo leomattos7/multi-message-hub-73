@@ -25,7 +25,7 @@ export default function Index() {
   };
 
   return (
-    <div className="w-full h-screen flex flex-col overflow-hidden">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
         {(!isMobile || !showConversation) && (
           <div className="w-full md:w-1/3 border-r flex flex-col">

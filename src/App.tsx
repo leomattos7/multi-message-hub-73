@@ -34,9 +34,9 @@ const App = () => (
           {/* Protected routes with sidebar */}
           <Route path="/" element={
             <AuthGuard>
-              <div className="flex h-screen overflow-hidden">
+              <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto w-full">
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
                   <Index />
                 </main>
               </div>
@@ -45,9 +45,9 @@ const App = () => (
           
           <Route path="/agendamentos" element={
             <AuthGuard>
-              <div className="flex h-screen overflow-hidden">
+              <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto w-full">
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
                   <Appointments />
                 </main>
               </div>
@@ -56,9 +56,9 @@ const App = () => (
           
           <Route path="/secretaria" element={
             <AuthGuard>
-              <div className="flex h-screen overflow-hidden">
+              <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto w-full">
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
                   <SecretaryDashboard />
                 </main>
               </div>
@@ -67,9 +67,9 @@ const App = () => (
           
           <Route path="/pacientes" element={
             <AuthGuard>
-              <div className="flex h-screen overflow-hidden">
+              <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto w-full">
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
                   <PatientCRM />
                 </main>
               </div>
@@ -78,9 +78,9 @@ const App = () => (
           
           <Route path="/agenda" element={
             <AuthGuard requiredRole="doctor">
-              <div className="flex h-screen overflow-hidden">
+              <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto w-full">
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
                   <ScheduleManagement />
                 </main>
               </div>
@@ -89,9 +89,9 @@ const App = () => (
           
           <Route path="/funcionarios" element={
             <AuthGuard requiredRole="doctor">
-              <div className="flex h-screen overflow-hidden">
+              <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto w-full">
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">
                   <EmployeeManagement />
                 </main>
               </div>
