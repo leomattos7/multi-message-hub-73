@@ -42,6 +42,7 @@ export default function ScheduleManagement() {
     address: "Av. Paulista, 1000, São Paulo - SP",
     phone: "(11) 95555-5555",
     email: "dra.anasilva@clinica.com.br",
+    consultationDuration: "30"
   };
 
   // State for doctor profile
