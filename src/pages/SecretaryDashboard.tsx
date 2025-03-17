@@ -154,7 +154,7 @@ export default function SecretaryDashboard() {
             type: apt.type,
             status: apt.status as AppointmentStatus, // Explicitly type as our enum
             notes: apt.notes || "",
-            paymentMethod: apt.payment_method || "insurance" // Default to insurance if missing
+            paymentMethod: apt.payment_method || "insurance" // Map from Supabase field
           }));
           setAppointments(formattedAppointments);
         } else {
@@ -236,16 +236,35 @@ export default function SecretaryDashboard() {
   };
   
   // Handle appointment update
-  const onAppointmentSubmit = (data: Appointment) => {
-    // In a real app, update in the database
-    setAppointments(appointments.map(app => 
-      app.id === data.id ? data : app
-    ));
-    
-    setIsEditAppointmentOpen(false);
-    setEditingAppointment(null);
-    
-    toast.success("Consulta atualizada com sucesso!");
+  const onAppointmentSubmit = async (data: Appointment) => {
+    try {
+      // In a real application, this would update the appointment in Supabase
+      // For example:
+      // const { error } = await supabase
+      //   .from('appointments')
+      //   .update({
+      //     status: data.status,
+      //     type: data.type,
+      //     notes: data.notes,
+      //     payment_method: data.paymentMethod
+      //   })
+      //   .eq('id', data.id);
+      
+      // if (error) throw error;
+      
+      // For now, we'll just update the local state
+      setAppointments(appointments.map(app => 
+        app.id === data.id ? data : app
+      ));
+      
+      setIsEditAppointmentOpen(false);
+      setEditingAppointment(null);
+      
+      toast.success("Consulta atualizada com sucesso!");
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      toast.error("Erro ao atualizar consulta");
+    }
   };
 
   // Get status badge class

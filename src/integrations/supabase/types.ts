@@ -16,6 +16,7 @@ export type Database = {
           id: string
           notes: string | null
           patient_id: string
+          payment_method: string | null
           status: string
           time: string
           type: string
@@ -27,6 +28,7 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id: string
+          payment_method?: string | null
           status?: string
           time: string
           type: string
@@ -38,6 +40,7 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id?: string
+          payment_method?: string | null
           status?: string
           time?: string
           type?: string
