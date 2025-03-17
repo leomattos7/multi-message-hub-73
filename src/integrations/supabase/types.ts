@@ -97,6 +97,7 @@ export type Database = {
           channel: string
           created_at: string
           id: string
+          is_archived: boolean
           last_activity: string
           patient_id: string
           unread: number | null
@@ -105,6 +106,7 @@ export type Database = {
           channel: string
           created_at?: string
           id?: string
+          is_archived?: boolean
           last_activity?: string
           patient_id: string
           unread?: number | null
@@ -113,6 +115,7 @@ export type Database = {
           channel?: string
           created_at?: string
           id?: string
+          is_archived?: boolean
           last_activity?: string
           patient_id?: string
           unread?: number | null

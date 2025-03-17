@@ -3,19 +3,26 @@ import { useState } from "react";
 import { MessageCircle, Inbox } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
-import { mockConversations, Conversation } from "@/data/mockData";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useQuery } from "@tanstack/react-query";
+import { conversationService } from "@/integrations/supabase/client";
 
 export default function Index() {
   const isMobile = useIsMobile();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showConversation, setShowConversation] = useState(!isMobile);
 
+  // Fetch conversations
+  const { data: conversations = [], isLoading, error } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => conversationService.getConversations(),
+  });
+
   const selectedConversation = selectedConversationId 
-    ? mockConversations.find(c => c.id === selectedConversationId) || null
+    ? conversations.find(c => c.id === selectedConversationId) || null
     : null;
 
-  const handleSelectConversation = (conversation: Conversation) => {
+  const handleSelectConversation = (conversation: any) => {
     setSelectedConversationId(conversation.id);
     setShowConversation(true);
   };
@@ -23,6 +30,14 @@ export default function Index() {
   const handleBackToList = () => {
     setShowConversation(false);
   };
+
+  if (isLoading) {
+    return <div className="w-full h-full flex items-center justify-center">Loading conversations...</div>;
+  }
+
+  if (error) {
+    return <div className="w-full h-full flex items-center justify-center">Error loading conversations</div>;
+  }
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">

@@ -10,3 +10,111 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Conversations and messages utility functions
+export const conversationService = {
+  async getConversations() {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select(`
+        *,
+        patient:patients(id, name, email, phone, avatar_url)
+      `)
+      .order('last_activity', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async getConversation(id: string) {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select(`
+        *,
+        patient:patients(id, name, email, phone, avatar_url),
+        messages(*)
+      `)
+      .eq('id', id)
+      .order('messages.timestamp', { ascending: true })
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async updateConversation(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('conversations')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async archiveConversation(id: string) {
+    return this.updateConversation(id, { is_archived: true });
+  },
+  
+  async unarchiveConversation(id: string) {
+    return this.updateConversation(id, { is_archived: false });
+  },
+  
+  async sendMessage(conversationId: string, content: string) {
+    // Update the conversation's last_activity timestamp
+    await supabase
+      .from('conversations')
+      .update({ last_activity: new Date().toISOString() })
+      .eq('id', conversationId);
+    
+    // Insert the new message
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        content,
+        is_outgoing: true,
+        status: 'sent'
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async addPatientFromConversation(conversation: any) {
+    if (!conversation.patient) {
+      throw new Error('No patient data available');
+    }
+    
+    // Check if patient already exists
+    const { data: existingPatient } = await supabase
+      .from('patients')
+      .select('id')
+      .eq('id', conversation.patient_id)
+      .single();
+    
+    if (existingPatient) {
+      return existingPatient;
+    }
+    
+    // Create a new patient if they don't exist
+    const { data, error } = await supabase
+      .from('patients')
+      .insert({
+        id: conversation.patient_id,
+        name: conversation.patient.name,
+        email: conversation.patient.email,
+        phone: conversation.patient.phone,
+        avatar_url: conversation.patient.avatar_url
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
+};

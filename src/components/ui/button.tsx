@@ -24,6 +24,7 @@ const buttonVariants = cva(
         gray: "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200",
         block: "bg-red-100 text-red-700 border border-red-200 hover:bg-red-200",
         available: "bg-green-100 text-green-700 border border-green-200 hover:bg-green-200",
+        patient: "bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200",
       },
       size: {
         default: "h-10 px-4 py-2",

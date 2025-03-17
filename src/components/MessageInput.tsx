@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { ChannelType, Message } from "@/data/mockData";
+import { ChannelType } from "@/data/mockData";
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
@@ -69,7 +69,7 @@ export function MessageInput({
     )}>
       <div className="mb-2">
         <span className="text-xs font-medium text-muted-foreground">
-          Respondendo via {channelLabel[channel]}
+          Respondendo via {channelLabel[channel as keyof typeof channelLabel]}
         </span>
       </div>
       
