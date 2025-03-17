@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format, addDays, startOfDay, isBefore, isToday, parseISO, isWithinInterval, parse } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, Clock, Check, ArrowLeft, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,6 +62,7 @@ const doctorProfileSchema = z.object({
   address: z.string(),
   phone: z.string(),
   email: z.string(),
+  consultationDuration: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -97,6 +99,7 @@ const initialDoctorProfile: DoctorProfile = {
   address: "Av. Paulista, 1000, São Paulo - SP",
   phone: "(11) 95555-5555",
   email: "dra.anasilva@clinica.com.br",
+  consultationDuration: "30",
 };
 
 export default function Appointments() {
@@ -110,6 +113,7 @@ export default function Appointments() {
   const [specialEvents, setSpecialEvents] = useState<CalendarEvent[]>([]);
   const [availableDays, setAvailableDays] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
 
   // Initialize the doctor ID (in a real app, this would come from authentication)
   const doctorId = "00000000-0000-0000-0000-000000000000"; // Placeholder
@@ -239,8 +243,70 @@ export default function Appointments() {
       };
 
       fetchReservedTimes();
+      
+      // Calculate available times based on doctor's availability for the selected date
+      calculateAvailableTimeSlots(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, doctorAvailability, specialEvents]);
+
+  // Function to calculate available time slots based on doctor availability
+  const calculateAvailableTimeSlots = (date: Date) => {
+    if (!date) return;
+    
+    const dayOfWeek = date.getDay(); // 0-6 for Sunday-Saturday
+    const formattedDate = format(date, "yyyy-MM-dd");
+    
+    // Filter availability for the selected day of week
+    const dayAvailability = doctorAvailability.filter(
+      avail => avail.day_of_week === dayOfWeek && avail.is_available
+    );
+    
+    if (dayAvailability.length === 0) {
+      setAvailableTimeSlots([]);
+      return;
+    }
+    
+    // Get all possible time slots from the AVAILABLE_TIMES array
+    const possibleSlots = [...AVAILABLE_TIMES];
+    
+    // Filter the slots based on doctor's availability
+    const availableSlots = possibleSlots.filter(timeSlot => {
+      // Parse the time string to Date object for comparison
+      const slotTime = parse(timeSlot, "HH:mm", new Date());
+      
+      // Check if the time is within any of the available time ranges
+      return dayAvailability.some(range => {
+        const startTime = parse(range.start_time.substring(0, 5), "HH:mm", new Date());
+        const endTime = parse(range.end_time.substring(0, 5), "HH:mm", new Date());
+        
+        return isWithinInterval(slotTime, { start: startTime, end: endTime });
+      });
+    });
+    
+    // Remove reserved times
+    const finalAvailableSlots = availableSlots.filter(
+      slot => !reservedTimes.includes(slot)
+    );
+    
+    // Remove times blocked by special events
+    const slotsAfterEvents = finalAvailableSlots.filter(slot => {
+      const slotTime = parse(slot, "HH:mm", new Date());
+      
+      // Check if the slot is blocked by any special event
+      const isBlocked = specialEvents.some(event => {
+        if (event.date !== formattedDate) return false;
+        
+        const eventStart = parse(event.start_time.substring(0, 5), "HH:mm", new Date());
+        const eventEnd = parse(event.end_time.substring(0, 5), "HH:mm", new Date());
+        
+        return isWithinInterval(slotTime, { start: eventStart, end: eventEnd });
+      });
+      
+      return !isBlocked;
+    });
+    
+    setAvailableTimeSlots(slotsAfterEvents);
+  };
 
   // Function to handle date selection and move to time selection step
   const handleDateSelection = (date: Date | undefined) => {
@@ -425,15 +491,6 @@ export default function Appointments() {
     });
   };
 
-  // Get the available times (filtering out reserved ones and times outside availability)
-  const getAvailableTimes = () => {
-    if (!selectedDate) return [];
-    
-    return AVAILABLE_TIMES.filter(time => 
-      !reservedTimes.includes(time) && isTimeAvailable(time, selectedDate)
-    );
-  };
-  
   // Render a calendar day with custom styling and interactivity
   const renderCalendarDay = (day: Date, modifiers: any) => {
     const isAvailable = isDateAvailable(day);
@@ -583,13 +640,11 @@ export default function Appointments() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {getAvailableTimes().length > 0 ? (
-                    getAvailableTimes().map((time) => (
+                  {availableTimeSlots.length > 0 ? (
+                    availableTimeSlots.map((time) => (
                       <div 
                         key={time}
-                        className={cn(
-                          "border rounded-md p-3 flex justify-between items-center hover:border-blue-200 cursor-pointer"
-                        )}
+                        className="border rounded-md p-3 flex justify-between items-center hover:border-blue-200 cursor-pointer"
                         onClick={() => handleTimeSelection(time)}
                       >
                         <div className="flex items-center space-x-2">
@@ -759,3 +814,4 @@ export default function Appointments() {
     </div>
   );
 }
+
