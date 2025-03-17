@@ -86,6 +86,11 @@ export default function Appointments() {
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile>(initialDoctorProfile);
   
+  // Get the available times (filtering out reserved ones)
+  const getAvailableTimes = () => {
+    return AVAILABLE_TIMES.filter(time => !RESERVED_TIMES.includes(time));
+  };
+  
   // Initialize form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -286,35 +291,23 @@ export default function Appointments() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {AVAILABLE_TIMES.map((time) => {
-                    const isReserved = RESERVED_TIMES.includes(time);
-                    return (
-                      <div 
-                        key={time}
-                        className={cn(
-                          "border rounded-md p-3 flex justify-between items-center",
-                          isReserved 
-                            ? "bg-blue-50 border-blue-100" 
-                            : "hover:border-blue-200 cursor-pointer"
-                        )}
-                        onClick={() => !isReserved && handleTimeSelection(time)}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-gray-500" />
-                          <span>{time}</span>
-                        </div>
-                        {isReserved ? (
-                          <Badge variant="outline" className="bg-blue-100 text-blue-500 border-blue-200">
-                            Reservado
-                          </Badge>
-                        ) : (
-                          <Button size="sm" variant="ghost" className="text-blue-500 p-0 h-8 hover:bg-blue-50">
-                            Agendar
-                          </Button>
-                        )}
+                  {getAvailableTimes().map((time) => (
+                    <div 
+                      key={time}
+                      className={cn(
+                        "border rounded-md p-3 flex justify-between items-center hover:border-blue-200 cursor-pointer"
+                      )}
+                      onClick={() => handleTimeSelection(time)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-gray-500" />
+                        <span>{time}</span>
                       </div>
-                    );
-                  })}
+                      <Button size="sm" variant="ghost" className="text-blue-500 p-0 h-8 hover:bg-blue-50">
+                        Agendar
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
