@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Lock, Unlock } from "lucide-react";
@@ -48,7 +48,7 @@ export function VisualWeeklySchedule({
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
   
   // Generate days of the week
-  const startDay = startOfWeek(new Date(), { weekStart: 1 }); // Start on Monday
+  const startDay = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start on Monday
   const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
     const day = addDays(startDay, i);
     return {
