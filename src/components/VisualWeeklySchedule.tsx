@@ -84,14 +84,17 @@ export function VisualWeeklySchedule({
         avail.start_time === timeSlot
     );
     
-    // Toggle status logic
+    // Toggle status logic based on current status
     let newStatus: boolean;
     
     if (currentStatus === 'available') {
-      // If available, make it blocked
+      // If currently available, make it blocked
       newStatus = false;
+    } else if (currentStatus === 'blocked') {
+      // If currently blocked, make it available
+      newStatus = true;
     } else {
-      // If blocked or undefined, make it available
+      // If undefined (no entry yet), make it available by default
       newStatus = true;
     }
     
@@ -114,8 +117,10 @@ export function VisualWeeklySchedule({
       updatedAvailability = [...updatedAvailability, newAvailability];
     }
     
+    // Apply the changes
     onAvailabilityChange(updatedAvailability);
     
+    // Show toast notification
     toast.success(
       newStatus 
         ? `Horário de ${timeSlot} ${daysOfWeek.find(d => d.dayOfWeek === dayOfWeek)?.fullName} disponibilizado`
