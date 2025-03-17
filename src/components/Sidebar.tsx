@@ -7,7 +7,6 @@ import {
   Inbox,
   Menu,
   X,
-  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,11 +29,6 @@ const sidebarItems = [
     name: "Pacientes",
     href: "/pacientes",
     icon: <Users />,
-  },
-  {
-    name: "Gerenciar Agenda",
-    href: "/agenda",
-    icon: <Calendar />,
   },
   {
     name: "Funcionários",
