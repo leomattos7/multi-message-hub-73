@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-// Type for doctor availability
 type Availability = {
   id?: string;
   doctor_id: string;
@@ -31,20 +30,17 @@ type Availability = {
   is_available: boolean;
 };
 
-// Props for the component
 interface VisualWeeklyScheduleProps {
   doctorId: string;
   weeklyAvailability: Availability[];
   onAvailabilityChange: (availability: Availability[]) => void;
 }
 
-// Convert 0-6 day of week to readable day name
 const getDayName = (day: number): string => {
   const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
   return days[day];
 };
 
-// Get available time slots
 const TIME_SLOTS = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
   "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
@@ -57,24 +53,20 @@ export function VisualWeeklySchedule({
 }: VisualWeeklyScheduleProps) {
   const [activeTab, setActiveTab] = useState<string>("weekly");
   const [availability, setAvailability] = useState<Availability[]>(weeklyAvailability);
-  const [selectedDay, setSelectedDay] = useState<number>(1); // Default to Monday (1)
+  const [selectedDay, setSelectedDay] = useState<number>(1);
   const [startTime, setStartTime] = useState<string>("08:00");
   const [endTime, setEndTime] = useState<string>("17:00");
   
-  // Update local state when props change
   useEffect(() => {
     setAvailability(weeklyAvailability);
   }, [weeklyAvailability]);
 
-  // Handle adding a new availability slot
   const handleAddAvailability = () => {
-    // Validate end time is after start time
     if (startTime >= endTime) {
       toast.error("O horário final deve ser após o horário inicial");
       return;
     }
     
-    // Check for overlapping time slots on the same day
     const overlapping = availability.some(
       slot => slot.day_of_week === selectedDay && 
               slot.is_available &&
@@ -102,20 +94,17 @@ export function VisualWeeklySchedule({
     
     toast.success("Disponibilidade adicionada com sucesso");
   };
-  
-  // Handle removing an availability slot
+
   const handleRemoveAvailability = (index: number) => {
     const updatedAvailability = [...availability];
     const removedItem = updatedAvailability[index];
     
-    // If it has an ID, mark it as not available instead of removing
     if (removedItem.id) {
       updatedAvailability[index] = {
         ...removedItem,
         is_available: false
       };
     } else {
-      // Otherwise remove it from the array
       updatedAvailability.splice(index, 1);
     }
     
@@ -123,11 +112,9 @@ export function VisualWeeklySchedule({
     onAvailabilityChange(updatedAvailability);
     toast.success("Disponibilidade removida");
   };
-  
-  // Filter available slots (those marked as available)
+
   const availableSlots = availability.filter(slot => slot.is_available);
-  
-  // Group slots by day for better display
+
   const slotsByDay = availableSlots.reduce((acc, slot) => {
     const day = slot.day_of_week;
     if (!acc[day]) {
@@ -136,12 +123,11 @@ export function VisualWeeklySchedule({
     acc[day].push(slot);
     return acc;
   }, {} as Record<number, Availability[]>);
-  
-  // Generate week preview with current date as reference
+
   const generateWeekPreview = () => {
     const today = new Date();
-    const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 0 }); // Start with Sunday
-    
+    const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 0 });
+
     return Array.from({ length: 7 }, (_, i) => {
       const day = addDays(startOfCurrentWeek, i);
       const dayOfWeek = day.getDay();
@@ -172,7 +158,7 @@ export function VisualWeeklySchedule({
       );
     });
   };
-  
+
   return (
     <div className="space-y-4">
       <Tabs defaultValue="weekly" value={activeTab} onValueChange={setActiveTab}>
@@ -191,7 +177,6 @@ export function VisualWeeklySchedule({
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {/* Add new availability slot */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Adicionar novo horário disponível</h3>
                   
@@ -249,7 +234,6 @@ export function VisualWeeklySchedule({
                   </div>
                 </div>
                 
-                {/* Current availability list */}
                 <div>
                   <h3 className="text-lg font-medium mb-4">Horários configurados</h3>
                   
@@ -272,7 +256,9 @@ export function VisualWeeklySchedule({
                               {daySlots.map((slot, idx) => (
                                 <div key={idx} className="flex justify-between items-center bg-green-50 p-2 rounded-md border border-green-100">
                                   <div className="flex items-center">
-                                    <Badge variant="available" className="mr-2">Disponível</Badge>
+                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 mr-2">
+                                      Disponível
+                                    </Badge>
                                     <span>{slot.start_time} - {slot.end_time}</span>
                                   </div>
                                   <Button 
