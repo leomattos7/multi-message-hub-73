@@ -160,6 +160,91 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_links: {
+        Row: {
+          created_at: string
+          display_order: number
+          doctor_id: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          doctor_id: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          doctor_id?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_links_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctor_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          id: string
+          profile_image_url: string | null
+          public_url_slug: string
+          specialty: string | null
+          theme: string | null
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          id: string
+          profile_image_url?: string | null
+          public_url_slug: string
+          specialty?: string | null
+          theme?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          profile_image_url?: string | null
+          public_url_slug?: string
+          specialty?: string | null
+          theme?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           date_added: string

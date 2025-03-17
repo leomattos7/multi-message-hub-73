@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +17,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import EmployeeManagement from "./pages/EmployeeManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
+import DoctorLinkTree from "./pages/DoctorLinkTree";
+import PublicDoctorProfile from "./pages/PublicDoctorProfile";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +32,7 @@ const App = () => (
           {/* Public routes - no sidebar */}
           <Route path="/login" element={<SignIn />} />
           <Route path="/cadastro" element={<SignUp />} />
+          <Route path="/d/:slug" element={<PublicDoctorProfile />} />
           
           {/* Protected routes with sidebar */}
           <Route path="/" element={
@@ -42,7 +46,6 @@ const App = () => (
             </AuthGuard>
           } />
           
-          {/* Keep the route for URL access, but it's not in the menu */}
           <Route path="/agendamentos" element={
             <AuthGuard>
               <div className="flex h-screen w-full overflow-hidden">
@@ -93,6 +96,17 @@ const App = () => (
                 <Sidebar />
                 <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">
                   <EmployeeManagement />
+                </main>
+              </div>
+            </AuthGuard>
+          } />
+          
+          <Route path="/linktree" element={
+            <AuthGuard requiredRole="doctor">
+              <div className="flex h-screen w-full overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">
+                  <DoctorLinkTree />
                 </main>
               </div>
             </AuthGuard>

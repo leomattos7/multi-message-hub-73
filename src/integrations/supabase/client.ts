@@ -194,3 +194,154 @@ export const conversationService = {
     }
   }
 };
+
+// Doctor profile and links service
+export const doctorProfileService = {
+  async getProfileByDoctorId(doctorId: string) {
+    const { data, error } = await supabase
+      .from('doctor_profiles')
+      .select('*')
+      .eq('id', doctorId)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async getProfileBySlug(slug: string) {
+    const { data, error } = await supabase
+      .from('doctor_profiles')
+      .select(`
+        *,
+        doctor_links(*)
+      `)
+      .eq('public_url_slug', slug)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async createProfile(doctorId: string, profile: any) {
+    // Make sure the slug is unique
+    const slug = profile.public_url_slug.toLowerCase().replace(/\s+/g, '-');
+    
+    const { data: existingProfile, error: checkError } = await supabase
+      .from('doctor_profiles')
+      .select('public_url_slug')
+      .eq('public_url_slug', slug)
+      .maybeSingle();
+      
+    if (checkError && checkError.code !== 'PGRST116') throw checkError;
+    
+    if (existingProfile) {
+      throw new Error('Este nome de URL já está em uso. Por favor, escolha outro.');
+    }
+    
+    const { data, error } = await supabase
+      .from('doctor_profiles')
+      .insert({
+        id: doctorId,
+        bio: profile.bio,
+        specialty: profile.specialty,
+        profile_image_url: profile.profile_image_url,
+        public_url_slug: slug,
+        theme: profile.theme || 'default'
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async updateProfile(doctorId: string, updates: any) {
+    const { data, error } = await supabase
+      .from('doctor_profiles')
+      .update(updates)
+      .eq('id', doctorId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async getLinksByDoctorId(doctorId: string) {
+    const { data, error } = await supabase
+      .from('doctor_links')
+      .select('*')
+      .eq('doctor_id', doctorId)
+      .order('display_order', { ascending: true });
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async createLink(link: any) {
+    // Get the current highest display order
+    const { data: links, error: fetchError } = await supabase
+      .from('doctor_links')
+      .select('display_order')
+      .eq('doctor_id', link.doctor_id)
+      .order('display_order', { ascending: false })
+      .limit(1);
+    
+    if (fetchError) throw fetchError;
+    
+    const nextOrder = links && links.length > 0 ? links[0].display_order + 1 : 1;
+    
+    const { data, error } = await supabase
+      .from('doctor_links')
+      .insert({
+        doctor_id: link.doctor_id,
+        title: link.title,
+        url: link.url,
+        icon: link.icon,
+        is_active: link.is_active !== undefined ? link.is_active : true,
+        display_order: nextOrder
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async updateLink(linkId: string, updates: any) {
+    const { data, error } = await supabase
+      .from('doctor_links')
+      .update(updates)
+      .eq('id', linkId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async deleteLink(linkId: string) {
+    const { error } = await supabase
+      .from('doctor_links')
+      .delete()
+      .eq('id', linkId);
+    
+    if (error) throw error;
+    return { success: true };
+  },
+  
+  async reorderLinks(doctorId: string, linkIds: string[]) {
+    // Update each link with its new display order
+    const updates = linkIds.map((id, index) => {
+      return supabase
+        .from('doctor_links')
+        .update({ display_order: index + 1 })
+        .eq('id', id)
+        .eq('doctor_id', doctorId);
+    });
+    
+    await Promise.all(updates);
+    
+    return { success: true };
+  }
+};
