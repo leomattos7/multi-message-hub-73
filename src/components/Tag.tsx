@@ -13,16 +13,18 @@ export interface TagProps {
 }
 
 export function Tag({ id, name, color, onRemove, className, size = 'md' }: TagProps) {
-  // Adjust opacity for the background color
-  const bgColor = `${color}33`; // 20% opacity
-  const textColor = color;
-  const borderColor = `${color}66`; // 40% opacity
+  // Adjust opacity for the background color (20% opacity)
+  const bgColor = `${color}33`;
+  // Text color (full opacity)
+  const textColor = color; 
+  // Border color (40% opacity)
+  const borderColor = `${color}66`;
 
   return (
     <div
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 max-w-[150px]",
-        size === 'sm' ? "py-0 text-xs" : "py-0.5 text-xs",
+        size === 'sm' ? "py-0 text-xs" : "py-0.5 text-sm",
         className
       )}
       style={{ 
