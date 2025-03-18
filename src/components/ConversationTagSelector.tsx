@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { TagIcon } from 'lucide-react';
+import { Tag as TagIcon } from 'lucide-react';
 import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from '@/components/ui/popover';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -107,24 +109,26 @@ export function ConversationTagSelector({
         />
       ))}
       
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-6 px-2">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-6 px-2 hover:bg-muted">
             <TagIcon className="h-3.5 w-3.5" />
+            <span className="sr-only">Gerenciar tags</span>
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-56 p-4" align="start">
-          <div className="space-y-2">
-            <p className="text-xs font-medium">Atribuir tags</p>
-            
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Gerenciar tags</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             {isLoading ? (
-              <p className="text-xs text-muted-foreground">Carregando...</p>
+              <p className="text-sm text-muted-foreground">Carregando...</p>
             ) : allTags.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Nenhuma tag criada</p>
+              <p className="text-sm text-muted-foreground">Nenhuma tag criada</p>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-3">
                 {allTags.map((tag: any) => (
-                  <div key={tag.id} className="flex items-center space-x-2">
+                  <div key={tag.id} className="flex items-center space-x-3">
                     <Checkbox
                       id={`tag-${tag.id}`}
                       checked={selectedTags.includes(tag.id)}
@@ -134,7 +138,7 @@ export function ConversationTagSelector({
                     />
                     <Label 
                       htmlFor={`tag-${tag.id}`}
-                      className="flex items-center gap-2 text-xs cursor-pointer"
+                      className="flex items-center gap-2 text-sm cursor-pointer"
                     >
                       <div 
                         className="w-3 h-3 rounded-full" 
@@ -147,8 +151,8 @@ export function ConversationTagSelector({
               </div>
             )}
           </div>
-        </PopoverContent>
-      </Popover>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

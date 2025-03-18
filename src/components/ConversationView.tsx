@@ -1,8 +1,8 @@
-
 import { useRef, useEffect, useState } from "react";
 import { 
   ChevronLeft,
-  MoreVertical
+  MoreVertical,
+  Tag as TagIcon
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -41,8 +41,6 @@ export function ConversationView({
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
 
-  // For mock data, we'll use the conversation directly
-  // For real data, we'll fetch from Supabase
   const { data: conversation, isLoading, error } = useMockData
     ? { data: initialConversation, isLoading: false, error: null }
     : useQuery({
@@ -51,12 +49,10 @@ export function ConversationView({
         initialData: initialConversation,
       });
 
-  // Mock mutation for sending messages
   const [localMessages, setLocalMessages] = useState<any[]>([]);
   
   useEffect(() => {
     if (useMockData && conversation) {
-      // Initialize local messages with the conversation messages
       setLocalMessages(conversation.messages || []);
     }
   }, [useMockData, conversation]);
@@ -64,7 +60,6 @@ export function ConversationView({
   const sendMessageMutation = useMutation({
     mutationFn: (content: string) => {
       if (useMockData) {
-        // For mock data, create a new message locally
         const newMessage = {
           id: `local-${Date.now()}`,
           content,
@@ -76,7 +71,6 @@ export function ConversationView({
         setLocalMessages(prev => [...prev, newMessage]);
         return Promise.resolve({ success: true });
       }
-      // For real data, call the API and return result with success property
       return conversationService.sendMessage(conversation.id, content).then(result => {
         return { success: true, ...result };
       });
@@ -95,7 +89,6 @@ export function ConversationView({
     }
   });
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -130,12 +123,10 @@ export function ConversationView({
   };
 
   const renderMessageStatus = (message: any) => {
-    // For mock data
     if (useMockData && message.isOutgoing) {
       return <span className="text-muted-foreground">{message.status}</span>;
     }
     
-    // For real data
     if (!message.is_outgoing) return null;
     
     switch (message.status) {
@@ -162,12 +153,10 @@ export function ConversationView({
     return <div className="flex items-center justify-center h-full">Error loading conversation</div>;
   }
 
-  // Determine which messages to display
   const messages = useMockData 
     ? (localMessages.length > 0 ? localMessages : conversation.messages || [])
     : (conversation.messages || []);
   
-  // Handle different data structures between mock and real data
   const channelLabel = {
     whatsapp: "WhatsApp",
     instagram: "Instagram",
@@ -215,23 +204,25 @@ export function ConversationView({
           </div>
         </div>
 
-        {!useMockData && (
-          <ConversationTagSelector 
-            conversationId={conversation.id} 
-            initialTags={conversation.tags} 
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {!useMockData && (
+            <ConversationTagSelector 
+              conversationId={conversation.id} 
+              initialTags={conversation.tags} 
+            />
+          )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {/* Menu options can be added here if needed in the future */}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {/* Menu options can be added here if needed in the future */}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       
       <div className="flex-1 overflow-y-auto p-4 bg-secondary/30">
