@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tag as TagIcon } from 'lucide-react';
+import { TagIcon } from 'lucide-react';
 import { 
   Popover, 
   PopoverContent, 
@@ -113,7 +113,7 @@ export function ConversationTagSelector({
             <TagIcon className="h-3.5 w-3.5" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-56" align="start">
+        <PopoverContent className="w-56 p-4" align="start">
           <div className="space-y-2">
             <p className="text-xs font-medium">Atribuir tags</p>
             
