@@ -1,7 +1,7 @@
+
 import { useRef, useEffect, useState } from "react";
 import { 
   ChevronLeft,
-  MoreVertical,
   Tag as TagIcon
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,12 +16,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { conversationService } from "@/integrations/supabase/client";
 import { ConversationTagSelector } from "./ConversationTagSelector";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface ConversationViewProps {
   conversation: any;
@@ -40,6 +40,7 @@ export function ConversationView({
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
 
   const { data: conversation, isLoading, error } = useMockData
     ? { data: initialConversation, isLoading: false, error: null }
@@ -197,31 +198,33 @@ export function ConversationView({
                 size="sm" 
                 className="ml-2 flex-shrink-0"
               />
+              
+              {!useMockData && (
+                <Dialog open={tagDialogOpen} onOpenChange={setTagDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 ml-1">
+                      <TagIcon className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Gerenciar tags</DialogTitle>
+                    </DialogHeader>
+                    <div className="pt-4">
+                      <ConversationTagSelector 
+                        conversationId={conversation.id} 
+                        initialTags={conversation.tags}
+                        inDialog={true}
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
             <p className="text-sm text-muted-foreground truncate">
               via {channelLabel[channel as keyof typeof channelLabel]}
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {!useMockData && (
-            <ConversationTagSelector 
-              conversationId={conversation.id} 
-              initialTags={conversation.tags} 
-            />
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {/* Menu options can be added here if needed in the future */}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
       

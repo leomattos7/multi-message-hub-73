@@ -1,32 +1,24 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tag as TagIcon } from 'lucide-react';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tagService } from '@/integrations/supabase/client';
 import { Tag as TagComponent } from './Tag';
 
 interface ConversationTagSelectorProps {
   conversationId: string;
   initialTags?: any[];
+  inDialog?: boolean;
 }
 
 export function ConversationTagSelector({ 
   conversationId, 
-  initialTags = [] 
+  initialTags = [],
+  inDialog = false
 }: ConversationTagSelectorProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -96,6 +88,42 @@ export function ConversationTagSelector({
     removeTagMutation.mutate({ conversationId, tagId });
   };
 
+  if (inDialog) {
+    return (
+      <div className="space-y-4">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : allTags.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma tag criada</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {allTags.map((tag: any) => (
+              <div key={tag.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={`tag-${tag.id}`}
+                  checked={selectedTags.includes(tag.id)}
+                  onCheckedChange={(checked) => 
+                    handleTagChange(tag.id, checked as boolean)
+                  }
+                />
+                <Label 
+                  htmlFor={`tag-${tag.id}`}
+                  className="flex items-center gap-2 text-sm cursor-pointer"
+                >
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: tag.color }} 
+                  />
+                  {tag.name}
+                </Label>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap gap-1 items-center">
       {initialTags?.map(tag => (
@@ -108,51 +136,6 @@ export function ConversationTagSelector({
           onRemove={handleRemoveTag}
         />
       ))}
-      
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-6 px-2 hover:bg-muted">
-            <TagIcon className="h-3.5 w-3.5" />
-            <span className="sr-only">Gerenciar tags</span>
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Gerenciar tags</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {isLoading ? (
-              <p className="text-sm text-muted-foreground">Carregando...</p>
-            ) : allTags.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma tag criada</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-3">
-                {allTags.map((tag: any) => (
-                  <div key={tag.id} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={`tag-${tag.id}`}
-                      checked={selectedTags.includes(tag.id)}
-                      onCheckedChange={(checked) => 
-                        handleTagChange(tag.id, checked as boolean)
-                      }
-                    />
-                    <Label 
-                      htmlFor={`tag-${tag.id}`}
-                      className="flex items-center gap-2 text-sm cursor-pointer"
-                    >
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: tag.color }} 
-                      />
-                      {tag.name}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
