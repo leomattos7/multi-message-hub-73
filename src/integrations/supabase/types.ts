@@ -95,6 +95,63 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_tags: {
+        Row: {
+          color: string
+          created_at: string
+          doctor_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          doctor_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      conversation_to_tag: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          tag_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          tag_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_to_tag_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_to_tag_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           channel: string

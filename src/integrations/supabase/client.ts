@@ -35,13 +35,35 @@ export const conversationService = {
       .from('conversations')
       .select(`
         *,
-        patient:patients(id, name, email, phone, avatar_url)
+        patient:patients(id, name, email, phone, avatar_url),
+        conversation_to_tag(tag_id)
       `)
       .eq('doctor_id', userId)
       .order('last_activity', { ascending: false });
     
     if (error) throw error;
-    return data;
+    
+    // Get all tags for the current user
+    const { data: tags, error: tagsError } = await supabase
+      .from('conversation_tags')
+      .select('*')
+      .eq('doctor_id', userId);
+      
+    if (tagsError) throw tagsError;
+    
+    // Map tags to conversations
+    const dataWithTags = data.map(conversation => {
+      const conversationTags = conversation.conversation_to_tag || [];
+      const tagIds = conversationTags.map((ct: any) => ct.tag_id);
+      const assignedTags = tags.filter(tag => tagIds.includes(tag.id));
+      
+      return {
+        ...conversation,
+        tags: assignedTags
+      };
+    });
+    
+    return dataWithTags;
   },
   
   async getConversation(id: string) {
@@ -53,7 +75,8 @@ export const conversationService = {
       .select(`
         *,
         patient:patients(id, name, email, phone, avatar_url),
-        messages(*)
+        messages(*),
+        conversation_to_tag(tag_id)
       `)
       .eq('id', id)
       .eq('doctor_id', userId)
@@ -61,7 +84,24 @@ export const conversationService = {
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Get all tags for the current user
+    const { data: tags, error: tagsError } = await supabase
+      .from('conversation_tags')
+      .select('*')
+      .eq('doctor_id', userId);
+      
+    if (tagsError) throw tagsError;
+    
+    // Map tags to conversation
+    const conversationTags = data.conversation_to_tag || [];
+    const tagIds = conversationTags.map((ct: any) => ct.tag_id);
+    const assignedTags = tags.filter(tag => tagIds.includes(tag.id));
+    
+    return {
+      ...data,
+      tags: assignedTags
+    };
   },
   
   async updateConversation(id: string, updates: any) {
@@ -373,5 +413,111 @@ export const doctorProfileService = {
     await Promise.all(updates);
     
     return { success: true };
+  }
+};
+
+// Tag management service
+export const tagService = {
+  async getTags() {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
+    const { data, error } = await supabase
+      .from('conversation_tags')
+      .select('*')
+      .eq('doctor_id', userId)
+      .order('name');
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async createTag(name: string, color: string) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
+    const { data, error } = await supabase
+      .from('conversation_tags')
+      .insert({
+        name,
+        color,
+        doctor_id: userId
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async updateTag(id: string, updates: { name?: string; color?: string }) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
+    const { data, error } = await supabase
+      .from('conversation_tags')
+      .update(updates)
+      .eq('id', id)
+      .eq('doctor_id', userId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async deleteTag(id: string) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
+    const { error } = await supabase
+      .from('conversation_tags')
+      .delete()
+      .eq('id', id)
+      .eq('doctor_id', userId);
+    
+    if (error) throw error;
+    return { success: true };
+  },
+  
+  async assignTagToConversation(conversationId: string, tagId: string) {
+    const { data, error } = await supabase
+      .from('conversation_to_tag')
+      .insert({
+        conversation_id: conversationId,
+        tag_id: tagId
+      })
+      .select();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async removeTagFromConversation(conversationId: string, tagId: string) {
+    const { error } = await supabase
+      .from('conversation_to_tag')
+      .delete()
+      .eq('conversation_id', conversationId)
+      .eq('tag_id', tagId);
+    
+    if (error) throw error;
+    return { success: true };
+  },
+  
+  async getConversationTags(conversationId: string) {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
+    const { data, error } = await supabase
+      .from('conversation_to_tag')
+      .select(`
+        tag_id,
+        conversation_tags!inner(*)
+      `)
+      .eq('conversation_id', conversationId)
+      .eq('conversation_tags.doctor_id', userId);
+    
+    if (error) throw error;
+    return data.map((item: any) => item.conversation_tags);
   }
 };

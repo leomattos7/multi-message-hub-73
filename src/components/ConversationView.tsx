@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { conversationService } from "@/integrations/supabase/client";
+import { ConversationTagSelector } from "./ConversationTagSelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -213,6 +214,13 @@ export function ConversationView({
             </p>
           </div>
         </div>
+
+        {!useMockData && (
+          <ConversationTagSelector 
+            conversationId={conversation.id} 
+            initialTags={conversation.tags} 
+          />
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

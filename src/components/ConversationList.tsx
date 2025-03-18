@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Inbox as InboxIcon } from "lucide-react";
+import { Search, Filter, Inbox as InboxIcon, Tags } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar } from "./Avatar";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChannelType, sortedConversations, filterByChannel, searchConversations, mockConversations } from "@/data/mockData";
-import { conversationService, supabase } from "@/integrations/supabase/client";
+import { conversationService, supabase, tagService } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { TagManager } from "./TagManager";
+import { ConversationTagSelector } from "./ConversationTagSelector";
+import { Tag } from "./Tag";
 
 interface ConversationListProps {
   onSelectConversation: (conversation: any) => void;
@@ -47,6 +50,7 @@ type UnifiedConversation = {
   };
   messages?: any[];
   patient_id?: string;
+  tags?: any[];
 };
 
 export function ConversationList({ 
@@ -57,8 +61,16 @@ export function ConversationList({
 }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState<ChannelType | "all">("all");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Get all available tags
+  const { data: allTags = [] } = useQuery({
+    queryKey: ['conversation-tags'],
+    queryFn: tagService.getTags,
+    enabled: !useMockData
+  });
 
   // Use mock data if indicated, otherwise fetch from Supabase
   const { data: conversations = [], isLoading, error } = useMockData 
@@ -76,6 +88,10 @@ export function ConversationList({
     setChannelFilter(channel);
   };
 
+  const handleFilterTag = (tagId: string | null) => {
+    setTagFilter(tagId);
+  };
+
   // Function to safely cast channel string to ChannelType
   const getChannelType = (channelString: string): ChannelType => {
     const validChannels: ChannelType[] = ['whatsapp', 'instagram', 'facebook', 'email'];
@@ -84,11 +100,19 @@ export function ConversationList({
       : 'whatsapp'; // Default fallback
   };
 
-  // Filter conversations based on search, channel filter
+  // Filter conversations based on search, channel filter, and tag filter
   const filteredConversations = (conversations as UnifiedConversation[]).filter(conversation => {
     // Filter by channel if needed
     if (channelFilter !== "all" && conversation.channel !== channelFilter) {
       return false;
+    }
+    
+    // Filter by tag if selected
+    if (tagFilter !== null) {
+      const conversationTags = conversation.tags || [];
+      if (!conversationTags.some(tag => tag.id === tagFilter)) {
+        return false;
+      }
     }
     
     // Filter by search query if present
@@ -175,6 +199,43 @@ export function ConversationList({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        
+        {!useMockData && (
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex overflow-x-auto gap-1 py-1 flex-1">
+              {tagFilter !== null && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 px-2"
+                  onClick={() => handleFilterTag(null)}
+                >
+                  Limpar filtro
+                </Button>
+              )}
+              
+              {allTags.map((tag: any) => (
+                <button
+                  key={tag.id}
+                  onClick={() => handleFilterTag(tag.id === tagFilter ? null : tag.id)}
+                  className={cn(
+                    "rounded-full px-2 py-1 text-xs transition-colors",
+                    tagFilter === tag.id ? "opacity-100" : "opacity-70 hover:opacity-100"
+                  )}
+                  style={{ 
+                    backgroundColor: tagFilter === tag.id ? `${tag.color}33` : 'transparent',
+                    borderColor: tagFilter === tag.id ? `${tag.color}66` : 'transparent',
+                    color: tag.color
+                  }}
+                >
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+            
+            <TagManager />
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -209,6 +270,9 @@ export function ConversationList({
               ? conversation.lastActivity
               : conversation.last_activity;
             
+            // Get tags for this conversation
+            const conversationTags = conversation.tags || [];
+            
             return (
               <div
                 key={conversation.id}
@@ -241,6 +305,20 @@ export function ConversationList({
                     <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {getPreviewMessage(conversation)}
                     </p>
+                    
+                    {!useMockData && conversationTags.length > 0 && (
+                      <div className="flex flex-wrap mt-1 gap-1">
+                        {conversationTags.map((tag: any) => (
+                          <Tag 
+                            key={tag.id}
+                            id={tag.id}
+                            name={tag.name}
+                            color={tag.color}
+                            size="sm"
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
