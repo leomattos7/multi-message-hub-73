@@ -2,7 +2,6 @@
 import { useRef, useEffect, useState } from "react";
 import { 
   ChevronLeft,
-  Tag as TagIcon
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -146,6 +145,10 @@ export function ConversationView({
     }
   };
 
+  const handleTagClick = () => {
+    setTagDialogOpen(true);
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-full">Loading conversation...</div>;
   }
@@ -198,28 +201,6 @@ export function ConversationView({
                 size="sm" 
                 className="ml-2 flex-shrink-0"
               />
-              
-              {!useMockData && (
-                <Dialog open={tagDialogOpen} onOpenChange={setTagDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 ml-1">
-                      <TagIcon className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Gerenciar tags</DialogTitle>
-                    </DialogHeader>
-                    <div className="pt-4">
-                      <ConversationTagSelector 
-                        conversationId={conversation.id} 
-                        initialTags={conversation.tags}
-                        inDialog={true}
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )}
             </div>
             <p className="text-sm text-muted-foreground truncate">
               via {channelLabel[channel as keyof typeof channelLabel]}
@@ -230,6 +211,15 @@ export function ConversationView({
       
       <div className="flex-1 overflow-y-auto p-4 bg-secondary/30">
         <div className="flex flex-col space-y-4">
+          {!useMockData && conversation.tags && conversation.tags.length > 0 && (
+            <div className="mb-2">
+              <ConversationTagSelector 
+                conversationId={conversation.id} 
+                initialTags={conversation.tags} 
+              />
+            </div>
+          )}
+          
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground">No messages yet. Start a conversation!</p>
@@ -272,10 +262,29 @@ export function ConversationView({
         </div>
       </div>
       
+      {!useMockData && (
+        <Dialog open={tagDialogOpen} onOpenChange={setTagDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Gerenciar tags</DialogTitle>
+            </DialogHeader>
+            <div className="pt-4">
+              <ConversationTagSelector 
+                conversationId={conversation.id} 
+                initialTags={conversation.tags}
+                inDialog={true}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      
       <MessageInput 
         onSendMessage={handleSendMessage} 
         channel={channel}
         disabled={sendMessageMutation.isPending}
+        onTagClick={handleTagClick}
+        showTagButton={!useMockData}
       />
     </div>
   );

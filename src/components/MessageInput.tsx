@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Send, Paperclip, Smile } from "lucide-react";
+import { Send, Paperclip, Smile, Tag as TagIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -17,13 +17,17 @@ interface MessageInputProps {
   disabled?: boolean;
   channel: ChannelType;
   className?: string;
+  onTagClick?: () => void;
+  showTagButton?: boolean;
 }
 
 export function MessageInput({ 
   onSendMessage, 
   disabled = false, 
   channel,
-  className 
+  className,
+  onTagClick,
+  showTagButton = false
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -74,6 +78,23 @@ export function MessageInput({
       </div>
       
       <div className="flex items-end gap-2">
+        {showTagButton && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={onTagClick}
+                disabled={disabled}
+                className="flex-shrink-0"
+              >
+                <TagIcon className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Gerenciar tags</TooltipContent>
+          </Tooltip>
+        )}
+        
         <Tooltip>
           <TooltipTrigger asChild>
             <Button 
