@@ -58,11 +58,13 @@ export default function PatientMedicalRecords() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [isNewRecordOpen, setIsNewRecordOpen] = useState(false);
+  const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [recordContent, setRecordContent] = useState("");
   const [recordType, setRecordType] = useState("anamnesis");
+  const [editPatientData, setEditPatientData] = useState<Patient | null>(null);
 
   // Fetch patient details
-  const { data: patient, isLoading: patientLoading } = useQuery({
+  const { data: patient, isLoading: patientLoading, refetch: refetchPatient } = useQuery({
     queryKey: ["patient", patientId],
     queryFn: async () => {
       if (!patientId) throw new Error("Patient ID is required");
@@ -147,6 +149,57 @@ export default function PatientMedicalRecords() {
         description: "Houve um erro ao criar o prontuário. Tente novamente.",
         variant: "destructive",
       });
+    }
+  };
+
+  // Function to update patient data
+  const updatePatient = async () => {
+    if (!patientId || !editPatientData || !editPatientData.name.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "O nome do paciente é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("patients")
+        .update({
+          name: editPatientData.name,
+          email: editPatientData.email || null,
+          phone: editPatientData.phone || null,
+          address: editPatientData.address || null,
+          notes: editPatientData.notes || null
+        })
+        .eq("id", patientId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Paciente atualizado",
+        description: "Os dados do paciente foram atualizados com sucesso.",
+      });
+
+      // Close dialog and refetch patient data
+      setIsEditPatientOpen(false);
+      refetchPatient();
+    } catch (error) {
+      console.error("Error updating patient:", error);
+      toast({
+        title: "Erro ao atualizar paciente",
+        description: "Houve um erro ao atualizar os dados do paciente. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Open edit patient dialog with current data
+  const handleEditPatient = () => {
+    if (patient) {
+      setEditPatientData({ ...patient });
+      setIsEditPatientOpen(true);
     }
   };
 
@@ -283,6 +336,80 @@ export default function PatientMedicalRecords() {
         </Dialog>
       </div>
       
+      {/* Edit Patient Dialog */}
+      <Dialog open={isEditPatientOpen} onOpenChange={setIsEditPatientOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Editar Dados do Paciente</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do paciente conforme necessário.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome Completo*</Label>
+              <Input
+                id="name"
+                value={editPatientData?.name || ''}
+                onChange={(e) => setEditPatientData(prev => prev ? {...prev, name: e.target.value} : null)}
+                placeholder="Digite o nome do paciente"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={editPatientData?.email || ''}
+                onChange={(e) => setEditPatientData(prev => prev ? {...prev, email: e.target.value} : null)}
+                placeholder="Digite o email do paciente"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                value={editPatientData?.phone || ''}
+                onChange={(e) => setEditPatientData(prev => prev ? {...prev, phone: e.target.value} : null)}
+                placeholder="Digite o telefone do paciente"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="address">Endereço</Label>
+              <Input
+                id="address"
+                value={editPatientData?.address || ''}
+                onChange={(e) => setEditPatientData(prev => prev ? {...prev, address: e.target.value} : null)}
+                placeholder="Digite o endereço do paciente"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="notes">Anotações</Label>
+              <Textarea
+                id="notes"
+                value={editPatientData?.notes || ''}
+                onChange={(e) => setEditPatientData(prev => prev ? {...prev, notes: e.target.value} : null)}
+                placeholder="Informações adicionais sobre o paciente"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditPatientOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={updatePatient}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Patient Info Card */}
         <Card className="md:col-span-1">
@@ -329,7 +456,7 @@ export default function PatientMedicalRecords() {
             )}
             
             <div className="pt-2">
-              <Button className="w-full" variant="outline" onClick={() => navigate(`/contatos?patient=${patient.id}`)}>
+              <Button className="w-full" variant="outline" onClick={handleEditPatient}>
                 Editar Dados do Paciente
               </Button>
             </div>
