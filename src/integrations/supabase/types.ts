@@ -420,8 +420,10 @@ export type Database = {
           doctor_id: string | null
           email: string | null
           id: string
+          insurance_name: string | null
           name: string
           notes: string | null
+          payment_method: string | null
           phone: string | null
           updated_at: string
         }
@@ -432,8 +434,10 @@ export type Database = {
           doctor_id?: string | null
           email?: string | null
           id?: string
+          insurance_name?: string | null
           name: string
           notes?: string | null
+          payment_method?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -444,8 +448,10 @@ export type Database = {
           doctor_id?: string | null
           email?: string | null
           id?: string
+          insurance_name?: string | null
           name?: string
           notes?: string | null
+          payment_method?: string | null
           phone?: string | null
           updated_at?: string
         }

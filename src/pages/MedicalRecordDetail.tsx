@@ -145,9 +145,22 @@ export default function MedicalRecordDetail() {
     }
   };
 
+  // Handle back button navigation - MODIFIED TO GO TO PATIENT PAGE
+  const handleBackNavigation = () => {
+    if (record && record.patient_id) {
+      // Navigate to the patient's page instead of the general records list
+      navigate(`/prontuarios/paciente/${record.patient_id}`);
+    } else {
+      // Fallback to general records list if patient ID is not available
+      navigate("/prontuarios");
+    }
+  };
+
   // Handle record deletion
   const handleDelete = async () => {
-    if (!id) return;
+    if (!id || !record) return;
+    
+    const patientId = record.patient_id;
 
     try {
       const { error } = await supabase
@@ -162,7 +175,8 @@ export default function MedicalRecordDetail() {
         description: "O prontuário foi excluído com sucesso.",
       });
 
-      navigate("/prontuarios");
+      // Navigate to the patient's page after deletion instead of general records list
+      navigate(`/prontuarios/paciente/${patientId}`);
     } catch (error) {
       console.error("Error deleting record:", error);
       toast({
@@ -202,7 +216,7 @@ export default function MedicalRecordDetail() {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <Button variant="ghost" onClick={() => navigate("/prontuarios")} className="mr-2">
+          <Button variant="ghost" onClick={handleBackNavigation} className="mr-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
