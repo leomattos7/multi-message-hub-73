@@ -66,14 +66,18 @@ export default function EmployeeManagement() {
   const fetchEmployees = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching employees...");
       const { data, error } = await supabase
         .from("employees")
         .select("*")
         .order("name");
 
       if (error) {
+        console.error("Error fetching employees:", error);
         throw error;
       }
+
+      console.log("Fetched employees:", data);
 
       // Convert database format to our Employee interface
       const fetchedEmployees = data.map((emp) => ({
@@ -96,6 +100,8 @@ export default function EmployeeManagement() {
 
   const onAddEmployee = async (data: EmployeeFormValues) => {
     try {
+      console.log("Adding employee:", data);
+      
       // Insert new employee to Supabase
       const { data: newEmployee, error } = await supabase
         .from("employees")
@@ -110,8 +116,11 @@ export default function EmployeeManagement() {
         .single();
 
       if (error) {
+        console.error("Error adding employee:", error);
         throw error;
       }
+
+      console.log("New employee added:", newEmployee);
 
       // Format for our UI
       const formattedEmployee: Employee = {
@@ -147,6 +156,8 @@ export default function EmployeeManagement() {
     if (!selectedEmployee) return;
 
     try {
+      console.log("Updating employee:", selectedEmployee.id, data);
+      
       // Update employee in Supabase
       const { error } = await supabase
         .from("employees")
@@ -158,6 +169,7 @@ export default function EmployeeManagement() {
         .eq('id', selectedEmployee.id);
 
       if (error) {
+        console.error("Error updating employee:", error);
         throw error;
       }
 
@@ -184,6 +196,8 @@ export default function EmployeeManagement() {
   const removeEmployee = async () => {
     if (selectedEmployee) {
       try {
+        console.log("Removing employee:", selectedEmployee.id);
+        
         // Delete from Supabase
         const { error } = await supabase
           .from("employees")
@@ -191,6 +205,7 @@ export default function EmployeeManagement() {
           .eq('id', selectedEmployee.id);
 
         if (error) {
+          console.error("Error removing employee:", error);
           throw error;
         }
 
