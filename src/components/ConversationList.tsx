@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Inbox as InboxIcon, Tags, SlidersHorizontal, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Search, Filter, Inbox as InboxIcon, Tags, SlidersHorizontal, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar } from "./Avatar";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,7 @@ interface ConversationListProps {
 }
 
 // Define conversation status types
-type ConversationStatus = 'all' | 'unread' | 'read' | 'recent' | 'archived';
+type ConversationStatus = 'all' | 'unread' | 'read' | 'recent' | 'archived' | 'intervention';
 
 // Define a unified conversation type for both mock and real data
 type UnifiedConversation = {
@@ -77,6 +77,7 @@ type UnifiedConversation = {
   patient_id?: string;
   tags?: any[];
   is_archived?: boolean;
+  requiresHumanIntervention?: boolean;
 };
 
 export function ConversationList({ 
@@ -191,6 +192,11 @@ export function ConversationList({
       
       // Check for archived conversations
       if (statusFilter === "archived" && !conversation.is_archived) {
+        return false;
+      }
+      
+      // Check for conversations requiring human intervention
+      if (statusFilter === "intervention" && !conversation.requiresHumanIntervention) {
         return false;
       }
     }
@@ -314,6 +320,13 @@ export function ConversationList({
                 >
                   <Clock className="w-4 h-4 mr-2 text-blue-500" />
                   Recentes (24h)
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleFilterStatus("intervention")}
+                  className={statusFilter === "intervention" ? "bg-accent" : ""}
+                >
+                  <AlertCircle className="w-4 h-4 mr-2 text-red-500" />
+                  Requer intervenção
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleFilterStatus("archived")}
@@ -440,6 +453,7 @@ export function ConversationList({
                   statusFilter === "unread" ? "Não lidas" :
                   statusFilter === "read" ? "Lidas" :
                   statusFilter === "recent" ? "Recentes" :
+                  statusFilter === "intervention" ? "Requer intervenção" :
                   statusFilter === "archived" ? "Arquivadas" : ""
                 }</span>
                 <Button 
@@ -515,20 +529,19 @@ export function ConversationList({
             // For channel badge, ensure we have a valid ChannelType
             const channelType = getChannelType(conversation.channel);
             
-            // Get the last activity time from either source
-            const lastActivityTime = useMockData
-              ? conversation.lastActivity
-              : conversation.last_activity;
-            
             // Get tags for this conversation
             const conversationTags = conversation.tags || [];
+            
+            // Check if the conversation requires human intervention
+            const requiresIntervention = conversation.requiresHumanIntervention;
             
             return (
               <div
                 key={conversation.id}
                 className={cn(
                   "p-3 border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors",
-                  isSelected && "bg-secondary"
+                  isSelected && "bg-secondary",
+                  requiresIntervention && "border-l-4 border-l-red-500"
                 )}
                 onClick={() => onSelectConversation(conversation)}
               >
@@ -541,13 +554,17 @@ export function ConversationList({
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                      <h3 className="font-medium truncate">
+                      <h3 className="font-medium truncate flex items-center">
                         {name}
+                        {requiresIntervention && (
+                          <AlertCircle className="h-4 w-4 text-red-500 ml-1 flex-shrink-0" />
+                        )}
                       </h3>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <ChannelBadge channel={channelType} size="sm" />
                         <span className="text-xs text-muted-foreground">
-                          {lastActivityTime && formatLastActivity(lastActivityTime)}
+                          {conversation.lastActivity && formatLastActivity(conversation.lastActivity)}
+                          {conversation.last_activity && formatLastActivity(conversation.last_activity)}
                         </span>
                       </div>
                     </div>
@@ -555,6 +572,15 @@ export function ConversationList({
                     <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {getPreviewMessage(conversation)}
                     </p>
+                    
+                    {requiresIntervention && (
+                      <div className="mt-1">
+                        <span className="text-xs bg-red-100 text-red-800 rounded-full px-2 py-0.5 inline-flex items-center">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Intervenção solicitada
+                        </span>
+                      </div>
+                    )}
                     
                     {!useMockData && conversationTags.length > 0 && (
                       <div className="flex flex-wrap mt-1 gap-1">

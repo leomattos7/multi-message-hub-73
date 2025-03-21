@@ -20,6 +20,7 @@ export interface Conversation {
   messages: Message[];
   unread: number;
   lastActivity: Date;
+  requiresHumanIntervention?: boolean;
 }
 
 const generateRandomTime = (hoursBack: number) => {
@@ -88,6 +89,7 @@ export const mockConversations: Conversation[] = [
     channel: 'facebook',
     unread: 0,
     lastActivity: generateRandomTime(5),
+    requiresHumanIntervention: true,
     messages: [
       {
         id: '2001',
@@ -100,6 +102,13 @@ export const mockConversations: Conversation[] = [
         id: '2002',
         content: 'Olá João, sem problemas. Qual dia da próxima semana seria melhor para você?',
         timestamp: generateRandomTime(5),
+        isOutgoing: true,
+        status: 'read',
+      },
+      {
+        id: '2003',
+        content: 'Preciso de mais detalhes sobre sua disponibilidade. Esta questão requer intervenção humana.',
+        timestamp: generateRandomTime(4),
         isOutgoing: true,
         status: 'read',
       },
@@ -149,6 +158,7 @@ export const mockConversations: Conversation[] = [
     channel: 'email',
     unread: 0,
     lastActivity: generateRandomTime(8),
+    requiresHumanIntervention: true,
     messages: [
       {
         id: '4001',
@@ -161,6 +171,13 @@ export const mockConversations: Conversation[] = [
         id: '4002',
         content: 'Prezado Carlos, para solicitar a cópia do seu prontuário, precisamos que você preencha um formulário de autorização em nosso consultório. Podemos enviar o documento por email para você imprimir e trazer assinado, ou você pode vir pessoalmente preencher conosco. Qual opção prefere? Atenciosamente, Secretaria Dr. Ricardo',
         timestamp: generateRandomTime(8),
+        isOutgoing: true,
+        status: 'read',
+      },
+      {
+        id: '4003',
+        content: 'Este caso exige validação adicional de documentos. Solicitando intervenção humana para orientação específica sobre o caso.',
+        timestamp: generateRandomTime(7),
         isOutgoing: true,
         status: 'read',
       },
@@ -237,4 +254,9 @@ export const searchConversations = (query: string) => {
       convo.contact.name.toLowerCase().includes(normalizedQuery) ||
       convo.messages.some((msg) => msg.content.toLowerCase().includes(normalizedQuery))
   );
+};
+
+// Function to filter conversations that require human intervention
+export const filterRequiresIntervention = () => {
+  return sortedConversations().filter((convo) => convo.requiresHumanIntervention === true);
 };

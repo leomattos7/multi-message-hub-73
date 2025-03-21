@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { MessageCircle, Inbox } from "lucide-react";
+import { MessageCircle, Inbox, AlertCircle } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -37,6 +37,9 @@ export default function Index() {
     return <div className="w-full h-full flex items-center justify-center">Error loading conversations</div>;
   }
 
+  // Count of conversations requiring human intervention
+  const interventionCount = conversations.filter(c => c.requiresHumanIntervention).length;
+
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
@@ -46,6 +49,11 @@ export default function Index() {
               <h2 className="font-semibold text-lg flex items-center">
                 <Inbox className="mr-2 h-5 w-5" />
                 Mensagens
+                {interventionCount > 0 && (
+                  <span className="ml-2 bg-red-500 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
+                    {interventionCount}
+                  </span>
+                )}
               </h2>
             </div>
             <ConversationList 
