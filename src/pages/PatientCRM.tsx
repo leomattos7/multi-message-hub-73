@@ -32,6 +32,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   Search, 
   Filter, 
@@ -44,7 +45,8 @@ import {
   Save,
   X,
   MapPin,
-  Clipboard
+  Clipboard,
+  CreditCard
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
@@ -61,6 +63,8 @@ interface Patient {
   phone: string;
   address?: string;
   notes?: string;
+  payment_method?: string;
+  insurance_name?: string;
   lastMessageDate: Date | null;
   lastAppointmentDate: Date | null;
 }
@@ -81,6 +85,8 @@ export default function PatientCRM() {
     phone: "",
     address: "",
     notes: "",
+    payment_method: "particular",
+    insurance_name: "",
   });
   const [editingPatient, setEditingPatient] = useState({
     id: "",
@@ -89,6 +95,8 @@ export default function PatientCRM() {
     phone: "",
     address: "",
     notes: "",
+    payment_method: "particular",
+    insurance_name: "",
   });
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [patientFilters, setPatientFilters] = useState<PatientFilters>({
@@ -130,7 +138,7 @@ export default function PatientCRM() {
 
       const { data: patientsData, error: patientsError } = await supabase
         .from('patients')
-        .select('id, name, email, phone, address, notes, created_at, updated_at');
+        .select('id, name, email, phone, address, notes, payment_method, insurance_name, created_at, updated_at');
 
       if (patientsError) {
         console.error("Error fetching patients:", patientsError);
@@ -175,6 +183,8 @@ export default function PatientCRM() {
           phone: patient.phone ?? "",
           address: patient.address ?? "",
           notes: patient.notes ?? "",
+          payment_method: patient.payment_method ?? "particular",
+          insurance_name: patient.insurance_name ?? "",
           lastMessageDate: patientMessages.has(patient.id) ? new Date(patientMessages.get(patient.id)) : null,
           lastAppointmentDate: patientAppointments.has(patient.id) ? new Date(patientAppointments.get(patient.id)) : null,
         }));
@@ -295,7 +305,9 @@ export default function PatientCRM() {
           email: newPatient.email || null,
           phone: newPatient.phone || null,
           address: newPatient.address || null,
-          notes: newPatient.notes || null
+          notes: newPatient.notes || null,
+          payment_method: newPatient.payment_method || "particular",
+          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null
         })
         .select();
         
@@ -313,12 +325,22 @@ export default function PatientCRM() {
           phone: data[0].phone || "",
           address: data[0].address || "",
           notes: data[0].notes || "",
+          payment_method: data[0].payment_method || "particular",
+          insurance_name: data[0].insurance_name || "",
           lastMessageDate: null,
           lastAppointmentDate: null,
         };
 
         setPatients([...patients, newPatientObj]);
-        setNewPatient({ name: "", email: "", phone: "", address: "", notes: "" });
+        setNewPatient({ 
+          name: "", 
+          email: "", 
+          phone: "", 
+          address: "", 
+          notes: "", 
+          payment_method: "particular", 
+          insurance_name: "" 
+        });
         setIsAddPatientOpen(false);
         toast.success("Paciente adicionado com sucesso!");
       }
@@ -337,6 +359,8 @@ export default function PatientCRM() {
       phone: patient.phone,
       address: patient.address || "",
       notes: patient.notes || "",
+      payment_method: patient.payment_method || "particular",
+      insurance_name: patient.payment_method === "convenio" ? patient.insurance_name || "" : "",
     });
     setIsEditPatientOpen(true);
   };
@@ -355,7 +379,9 @@ export default function PatientCRM() {
           email: editingPatient.email || null,
           phone: editingPatient.phone || null,
           address: editingPatient.address || null,
-          notes: editingPatient.notes || null
+          notes: editingPatient.notes || null,
+          payment_method: editingPatient.payment_method || "particular",
+          insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name || null : null
         })
         .eq('id', editingPatient.id);
         
@@ -374,6 +400,8 @@ export default function PatientCRM() {
             phone: editingPatient.phone,
             address: editingPatient.address,
             notes: editingPatient.notes,
+            payment_method: editingPatient.payment_method,
+            insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name : "",
           };
         }
         return patient;
@@ -389,6 +417,8 @@ export default function PatientCRM() {
           phone: editingPatient.phone,
           address: editingPatient.address,
           notes: editingPatient.notes,
+          payment_method: editingPatient.payment_method,
+          insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name : "",
         });
       }
       
@@ -590,6 +620,13 @@ export default function PatientCRM() {
                 </div>
               )}
               
+              <div className="flex items-center text-sm">
+                <CreditCard className="h-4 w-4 mr-2 text-gray-500" />
+                {selectedPatient.payment_method === "convenio" 
+                  ? `Convênio: ${selectedPatient.insurance_name || "Não especificado"}` 
+                  : "Particular"}
+              </div>
+              
               {selectedPatient.notes && (
                 <div className="pt-2 border-t">
                   <div className="flex items-center text-sm font-medium mb-1">
@@ -734,6 +771,36 @@ export default function PatientCRM() {
             </div>
             
             <div className="grid gap-2">
+              <Label>Forma de Pagamento</Label>
+              <RadioGroup 
+                value={newPatient.payment_method} 
+                onValueChange={(value) => setNewPatient({...newPatient, payment_method: value})}
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="particular" id="particular" />
+                  <Label htmlFor="particular">Particular</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="convenio" id="convenio" />
+                  <Label htmlFor="convenio">Convênio</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {newPatient.payment_method === "convenio" && (
+              <div className="grid gap-2">
+                <Label htmlFor="insurance_name">Nome do Convênio</Label>
+                <Input
+                  id="insurance_name"
+                  value={newPatient.insurance_name}
+                  onChange={(e) => setNewPatient({...newPatient, insurance_name: e.target.value})}
+                  placeholder="Digite o nome do convênio"
+                />
+              </div>
+            )}
+            
+            <div className="grid gap-2">
               <Label htmlFor="notes">Anotações</Label>
               <Textarea
                 id="notes"
@@ -797,6 +864,36 @@ export default function PatientCRM() {
                 onChange={(e) => setEditingPatient({...editingPatient, address: e.target.value})}
               />
             </div>
+            
+            <div className="grid gap-2">
+              <Label>Forma de Pagamento</Label>
+              <RadioGroup 
+                value={editingPatient.payment_method} 
+                onValueChange={(value) => setEditingPatient({...editingPatient, payment_method: value})}
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="particular" id="edit-particular" />
+                  <Label htmlFor="edit-particular">Particular</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="convenio" id="edit-convenio" />
+                  <Label htmlFor="edit-convenio">Convênio</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {editingPatient.payment_method === "convenio" && (
+              <div className="grid gap-2">
+                <Label htmlFor="edit-insurance_name">Nome do Convênio</Label>
+                <Input
+                  id="edit-insurance_name"
+                  value={editingPatient.insurance_name}
+                  onChange={(e) => setEditingPatient({...editingPatient, insurance_name: e.target.value})}
+                  placeholder="Digite o nome do convênio"
+                />
+              </div>
+            )}
             
             <div className="grid gap-2">
               <Label htmlFor="edit-notes">Anotações</Label>

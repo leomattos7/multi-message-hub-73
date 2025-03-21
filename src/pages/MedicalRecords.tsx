@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -27,6 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 
@@ -38,6 +38,8 @@ interface Patient {
   phone?: string;
   address?: string;
   notes?: string;
+  payment_method?: string;
+  insurance_name?: string;
   record_count?: number;
 }
 
@@ -56,6 +58,8 @@ export default function MedicalRecords() {
     phone: "",
     address: "",
     notes: "",
+    payment_method: "particular",
+    insurance_name: "",
   });
   const navigate = useNavigate();
 
@@ -66,7 +70,7 @@ export default function MedicalRecords() {
       // First get all patients
       let query = supabase
         .from("patients")
-        .select("id, name, email, phone, address, notes");
+        .select("id, name, email, phone, address, notes, payment_method, insurance_name");
       
       // Apply search filter if provided
       if (searchQuery) {
@@ -139,7 +143,9 @@ export default function MedicalRecords() {
           email: newPatient.email || null,
           phone: newPatient.phone || null,
           address: newPatient.address || null,
-          notes: newPatient.notes || null
+          notes: newPatient.notes || null,
+          payment_method: newPatient.payment_method || "particular",
+          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null
         })
         .select();
 
@@ -157,6 +163,8 @@ export default function MedicalRecords() {
         phone: "",
         address: "",
         notes: "",
+        payment_method: "particular",
+        insurance_name: "",
       });
       setIsAddPatientOpen(false);
       
@@ -214,7 +222,7 @@ export default function MedicalRecords() {
                 Preencha as informações do paciente para criar um novo prontuário.
               </DialogDescription>
             </DialogHeader>
-            
+          
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo*</Label>
@@ -225,7 +233,7 @@ export default function MedicalRecords() {
                   placeholder="Digite o nome do paciente"
                 />
               </div>
-              
+            
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -236,7 +244,7 @@ export default function MedicalRecords() {
                   placeholder="Digite o email do paciente"
                 />
               </div>
-              
+            
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
                 <Input
@@ -246,7 +254,7 @@ export default function MedicalRecords() {
                   placeholder="Digite o telefone do paciente"
                 />
               </div>
-              
+            
               <div className="space-y-2">
                 <Label htmlFor="address">Endereço</Label>
                 <Input
@@ -256,7 +264,37 @@ export default function MedicalRecords() {
                   placeholder="Digite o endereço do paciente"
                 />
               </div>
-              
+            
+              <div className="space-y-2">
+                <Label>Forma de Pagamento</Label>
+                <RadioGroup 
+                  value={newPatient.payment_method} 
+                  onValueChange={(value) => setNewPatient({...newPatient, payment_method: value})}
+                  className="flex space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="particular" id="particular" />
+                    <Label htmlFor="particular">Particular</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="convenio" id="convenio" />
+                    <Label htmlFor="convenio">Convênio</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            
+              {newPatient.payment_method === "convenio" && (
+                <div className="space-y-2">
+                  <Label htmlFor="insurance_name">Nome do Convênio</Label>
+                  <Input
+                    id="insurance_name"
+                    value={newPatient.insurance_name}
+                    onChange={(e) => setNewPatient({...newPatient, insurance_name: e.target.value})}
+                    placeholder="Digite o nome do convênio"
+                  />
+                </div>
+              )}
+            
               <div className="space-y-2">
                 <Label htmlFor="notes">Anotações</Label>
                 <Textarea
@@ -267,7 +305,7 @@ export default function MedicalRecords() {
                 />
               </div>
             </div>
-            
+          
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddPatientOpen(false)}>
                 Cancelar
