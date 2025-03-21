@@ -2,17 +2,11 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  CalendarCheck2,
-  UserRound,
-  Users,
   Inbox,
   Menu,
   X,
   User,
   Briefcase,
-  Calendar,
-  Link2,
-  CalendarDays,
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,16 +22,6 @@ const sidebarItems = [
     icon: <Inbox />,
   },
   {
-    name: "Agenda",
-    href: "/secretaria",
-    icon: <Calendar />,
-  },
-  {
-    name: "Gestão de Agenda",
-    href: "/gestao-agenda",
-    icon: <CalendarDays />,
-  },
-  {
     name: "Pacientes",
     href: "/pacientes",
     icon: <User />,
@@ -51,11 +35,6 @@ const sidebarItems = [
     name: "Funcionários",
     href: "/funcionarios",
     icon: <Briefcase />,
-  },
-  {
-    name: "Minisite Pessoal",
-    href: "/linktree",
-    icon: <Link2 />,
   },
 ];
 
@@ -125,7 +104,7 @@ export function Sidebar() {
             <div className="px-2 py-3">
               <div className="flex items-center">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
-                  <UserRound className="w-4 h-4" />
+                  <User className="w-4 h-4" />
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium">Meu Perfil</p>
