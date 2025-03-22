@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -29,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Define patient interface
 interface Patient {
@@ -41,6 +43,9 @@ interface Patient {
   payment_method?: string;
   insurance_name?: string;
   record_count?: number;
+  birth_date?: string;
+  biological_sex?: string;
+  gender_identity?: string;
 }
 
 // Define record summary interface
@@ -60,6 +65,9 @@ export default function MedicalRecords() {
     notes: "",
     payment_method: "particular",
     insurance_name: "",
+    birth_date: "",
+    biological_sex: "",
+    gender_identity: ""
   });
   const navigate = useNavigate();
 
@@ -70,7 +78,7 @@ export default function MedicalRecords() {
       // First get all patients
       let query = supabase
         .from("patients")
-        .select("id, name, email, phone, address, notes, payment_method, insurance_name");
+        .select("id, name, email, phone, address, notes, payment_method, insurance_name, birth_date, biological_sex, gender_identity");
       
       // Apply search filter if provided
       if (searchQuery) {
@@ -145,7 +153,10 @@ export default function MedicalRecords() {
           address: newPatient.address || null,
           notes: newPatient.notes || null,
           payment_method: newPatient.payment_method || "particular",
-          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null
+          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
+          birth_date: newPatient.birth_date || null,
+          biological_sex: newPatient.biological_sex || null,
+          gender_identity: newPatient.gender_identity || null
         })
         .select();
 
@@ -165,6 +176,9 @@ export default function MedicalRecords() {
         notes: "",
         payment_method: "particular",
         insurance_name: "",
+        birth_date: "",
+        biological_sex: "",
+        gender_identity: ""
       });
       setIsAddPatientOpen(false);
       
@@ -203,6 +217,22 @@ export default function MedicalRecords() {
     return recordSummary.reduce((sum, r) => sum + r.count, 0);
   };
 
+  // Calculate age from birth date
+  const calculateAge = (birthDate: string | undefined): number => {
+    if (!birthDate) return 0;
+    
+    const today = new Date();
+    const dob = new Date(birthDate);
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -232,6 +262,53 @@ export default function MedicalRecords() {
                   onChange={(e) => setNewPatient({...newPatient, name: e.target.value})}
                   placeholder="Digite o nome do paciente"
                 />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="birth_date">Data de Nascimento</Label>
+                <Input
+                  id="birth_date"
+                  type="date"
+                  value={newPatient.birth_date}
+                  onChange={(e) => setNewPatient({...newPatient, birth_date: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="biological_sex">Sexo Biológico</Label>
+                <Select
+                  value={newPatient.biological_sex}
+                  onValueChange={(value) => setNewPatient({...newPatient, biological_sex: value})}
+                >
+                  <SelectTrigger id="biological_sex">
+                    <SelectValue placeholder="Selecione o sexo biológico" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Masculino</SelectItem>
+                    <SelectItem value="female">Feminino</SelectItem>
+                    <SelectItem value="intersex">Intersexo</SelectItem>
+                    <SelectItem value="not_informed">Não Informado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="gender_identity">Identidade de Gênero</Label>
+                <Select
+                  value={newPatient.gender_identity}
+                  onValueChange={(value) => setNewPatient({...newPatient, gender_identity: value})}
+                >
+                  <SelectTrigger id="gender_identity">
+                    <SelectValue placeholder="Selecione a identidade de gênero" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="man">Homem</SelectItem>
+                    <SelectItem value="woman">Mulher</SelectItem>
+                    <SelectItem value="non_binary">Não-Binário</SelectItem>
+                    <SelectItem value="other">Outro</SelectItem>
+                    <SelectItem value="not_informed">Não Informado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             
               <div className="space-y-2">

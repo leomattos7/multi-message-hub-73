@@ -12,7 +12,8 @@ import {
   Phone, 
   Plus,
   MapPin,
-  ClipboardEdit
+  ClipboardEdit,
+  Info
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,6 +33,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Define interfaces for our data
 interface Patient {
@@ -41,6 +48,9 @@ interface Patient {
   phone?: string;
   address?: string;
   notes?: string;
+  birth_date?: string;
+  biological_sex?: string;
+  gender_identity?: string;
 }
 
 interface MedicalRecord {
@@ -104,6 +114,30 @@ export default function PatientMedicalRecords() {
     },
     enabled: !!patientId,
   });
+
+  // Calculate age from birth date
+  const calculateAge = (birthDate: string | undefined): number => {
+    if (!birthDate) return 0;
+    
+    const today = new Date();
+    const dob = new Date(birthDate);
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  // Format birth date for display
+  const formatBirthDate = (birthDate: string | undefined): string => {
+    if (!birthDate) return 'Não informado';
+    
+    const date = new Date(birthDate);
+    return new Intl.DateTimeFormat('pt-BR').format(date);
+  };
 
   // Handle creating a new medical record
   const createNewRecord = async () => {
@@ -171,7 +205,10 @@ export default function PatientMedicalRecords() {
           email: editPatientData.email || null,
           phone: editPatientData.phone || null,
           address: editPatientData.address || null,
-          notes: editPatientData.notes || null
+          notes: editPatientData.notes || null,
+          birth_date: editPatientData.birth_date || null,
+          biological_sex: editPatientData.biological_sex || null,
+          gender_identity: editPatientData.gender_identity || null
         })
         .eq("id", patientId);
 
@@ -358,6 +395,53 @@ export default function PatientMedicalRecords() {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="birth_date">Data de Nascimento</Label>
+              <Input
+                id="birth_date"
+                type="date"
+                value={editPatientData?.birth_date ? editPatientData.birth_date.split('T')[0] : ''}
+                onChange={(e) => setEditPatientData(prev => prev ? {...prev, birth_date: e.target.value} : null)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="biological_sex">Sexo Biológico</Label>
+              <Select
+                value={editPatientData?.biological_sex || ''}
+                onValueChange={(value) => setEditPatientData(prev => prev ? {...prev, biological_sex: value} : null)}
+              >
+                <SelectTrigger id="biological_sex">
+                  <SelectValue placeholder="Selecione o sexo biológico" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Masculino</SelectItem>
+                  <SelectItem value="female">Feminino</SelectItem>
+                  <SelectItem value="intersex">Intersexo</SelectItem>
+                  <SelectItem value="not_informed">Não Informado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="gender_identity">Identidade de Gênero</Label>
+              <Select
+                value={editPatientData?.gender_identity || ''}
+                onValueChange={(value) => setEditPatientData(prev => prev ? {...prev, gender_identity: value} : null)}
+              >
+                <SelectTrigger id="gender_identity">
+                  <SelectValue placeholder="Selecione a identidade de gênero" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="man">Homem</SelectItem>
+                  <SelectItem value="woman">Mulher</SelectItem>
+                  <SelectItem value="non_binary">Não-Binário</SelectItem>
+                  <SelectItem value="other">Outro</SelectItem>
+                  <SelectItem value="not_informed">Não Informado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -414,7 +498,49 @@ export default function PatientMedicalRecords() {
         {/* Patient Info Card */}
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle>Informações do Paciente</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Informações do Paciente</CardTitle>
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Info className="h-5 w-5 text-blue-500" />
+                    <span className="sr-only">Informações adicionais</span>
+                  </Button>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-80">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Informações Pessoais</h4>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Idade:</span>
+                      <span className="text-sm font-medium">
+                        {patient.birth_date ? `${calculateAge(patient.birth_date)} anos` : 'Não informado'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Data de Nascimento:</span>
+                      <span className="text-sm font-medium">{formatBirthDate(patient.birth_date)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Sexo Biológico:</span>
+                      <span className="text-sm font-medium">
+                        {patient.biological_sex === 'male' ? 'Masculino' : 
+                         patient.biological_sex === 'female' ? 'Feminino' : 
+                         patient.biological_sex === 'intersex' ? 'Intersexo' : 'Não informado'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Identidade de Gênero:</span>
+                      <span className="text-sm font-medium">
+                        {patient.gender_identity === 'man' ? 'Homem' : 
+                         patient.gender_identity === 'woman' ? 'Mulher' : 
+                         patient.gender_identity === 'non_binary' ? 'Não-Binário' : 
+                         patient.gender_identity === 'other' ? 'Outro' : 'Não informado'}
+                      </span>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1">

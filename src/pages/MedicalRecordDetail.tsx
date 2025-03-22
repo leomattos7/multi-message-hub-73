@@ -11,7 +11,8 @@ import {
   Edit, 
   Trash2, 
   Save, 
-  X 
+  X,
+  Info
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,6 +31,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 // Define interfaces for our data
 interface Patient {
@@ -37,6 +43,9 @@ interface Patient {
   name: string;
   email?: string;
   phone?: string;
+  birth_date?: string;
+  biological_sex?: string;
+  gender_identity?: string;
 }
 
 interface MedicalRecord {
@@ -84,7 +93,7 @@ export default function MedicalRecordDetail() {
       // Then fetch the associated patient
       const { data: patientData, error: patientError } = await supabase
         .from("patients")
-        .select("id, name, email, phone")
+        .select("id, name, email, phone, birth_date, biological_sex, gender_identity")
         .eq("id", recordData.patient_id)
         .single();
 
@@ -111,6 +120,30 @@ export default function MedicalRecordDetail() {
       hour: '2-digit',
       minute: '2-digit',
     }).format(date);
+  };
+
+  // Calculate age from birth date
+  const calculateAge = (birthDate: string | undefined): number => {
+    if (!birthDate) return 0;
+    
+    const today = new Date();
+    const dob = new Date(birthDate);
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  // Format birth date for display
+  const formatBirthDate = (birthDate: string | undefined): string => {
+    if (!birthDate) return 'Não informado';
+    
+    const date = new Date(birthDate);
+    return new Intl.DateTimeFormat('pt-BR').format(date);
   };
 
   // Handle record update
@@ -277,12 +310,55 @@ export default function MedicalRecordDetail() {
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Paciente</h3>
-                  <div className="mt-1 flex items-center">
-                    <User className="h-5 w-5 text-gray-400 mr-2" />
-                    <p className="font-medium">{record.patient?.name}</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Paciente</h3>
+                    <div className="mt-1 flex items-center">
+                      <User className="h-5 w-5 text-gray-400 mr-2" />
+                      <p className="font-medium">{record.patient?.name}</p>
+                    </div>
                   </div>
+                  
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Info className="h-5 w-5 text-blue-500" />
+                        <span className="sr-only">Informações adicionais</span>
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-80">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-semibold">Informações Pessoais</h4>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Idade:</span>
+                          <span className="text-sm font-medium">
+                            {record.patient?.birth_date ? `${calculateAge(record.patient.birth_date)} anos` : 'Não informado'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Data de Nascimento:</span>
+                          <span className="text-sm font-medium">{formatBirthDate(record.patient?.birth_date)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Sexo Biológico:</span>
+                          <span className="text-sm font-medium">
+                            {record.patient?.biological_sex === 'male' ? 'Masculino' : 
+                             record.patient?.biological_sex === 'female' ? 'Feminino' : 
+                             record.patient?.biological_sex === 'intersex' ? 'Intersexo' : 'Não informado'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Identidade de Gênero:</span>
+                          <span className="text-sm font-medium">
+                            {record.patient?.gender_identity === 'man' ? 'Homem' : 
+                             record.patient?.gender_identity === 'woman' ? 'Mulher' : 
+                             record.patient?.gender_identity === 'non_binary' ? 'Não-Binário' : 
+                             record.patient?.gender_identity === 'other' ? 'Outro' : 'Não informado'}
+                          </span>
+                        </div>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
                 </div>
                 
                 {record.patient?.email && (
