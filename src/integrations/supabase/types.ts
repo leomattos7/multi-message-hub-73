@@ -416,9 +416,12 @@ export type Database = {
         Row: {
           address: string | null
           avatar_url: string | null
+          biological_sex: string | null
+          birth_date: string | null
           created_at: string
           doctor_id: string | null
           email: string | null
+          gender_identity: string | null
           id: string
           insurance_name: string | null
           name: string
@@ -430,9 +433,12 @@ export type Database = {
         Insert: {
           address?: string | null
           avatar_url?: string | null
+          biological_sex?: string | null
+          birth_date?: string | null
           created_at?: string
           doctor_id?: string | null
           email?: string | null
+          gender_identity?: string | null
           id?: string
           insurance_name?: string | null
           name: string
@@ -444,9 +450,12 @@ export type Database = {
         Update: {
           address?: string | null
           avatar_url?: string | null
+          biological_sex?: string | null
+          birth_date?: string | null
           created_at?: string
           doctor_id?: string | null
           email?: string | null
+          gender_identity?: string | null
           id?: string
           insurance_name?: string | null
           name?: string
