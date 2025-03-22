@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Send, Paperclip, Smile, Tag as TagIcon } from "lucide-react";
+import { Send, Paperclip, Smile, Tag as TagIcon, ToggleLeft, ToggleRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -8,6 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ChannelType } from "@/data/mockData";
@@ -19,6 +20,8 @@ interface MessageInputProps {
   className?: string;
   onTagClick?: () => void;
   showTagButton?: boolean;
+  aiEnabled?: boolean;
+  onAiToggle?: (enabled: boolean) => void;
 }
 
 export function MessageInput({ 
@@ -27,7 +30,9 @@ export function MessageInput({
   channel,
   className,
   onTagClick,
-  showTagButton = false
+  showTagButton = false,
+  aiEnabled = true,
+  onAiToggle
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -66,15 +71,49 @@ export function MessageInput({
     });
   };
 
+  const handleAiToggle = (checked: boolean) => {
+    if (onAiToggle) {
+      onAiToggle(checked);
+      toast({
+        title: checked ? "IA Ativada" : "IA Desativada",
+        description: checked 
+          ? "Respostas automáticas de IA estão habilitadas" 
+          : "Respostas automáticas de IA estão desabilitadas",
+      });
+    }
+  };
+
   return (
     <div className={cn(
       "border-t border-border p-4 bg-background",
       className
     )}>
-      <div className="mb-2">
+      <div className="flex justify-between items-center mb-2">
         <span className="text-xs font-medium text-muted-foreground">
           Respondendo via {channelLabel[channel as keyof typeof channelLabel]}
         </span>
+        
+        {onAiToggle && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Respostas IA
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center">
+                  <Switch 
+                    checked={aiEnabled}
+                    onCheckedChange={handleAiToggle}
+                    id="ai-mode"
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {aiEnabled ? "Desativar respostas automáticas" : "Ativar respostas automáticas"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </div>
       
       <div className="flex items-end gap-2">

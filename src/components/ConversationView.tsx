@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 import { 
   ChevronLeft,
@@ -40,6 +39,7 @@ export function ConversationView({
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
 
   const { data: conversation, isLoading, error } = useMockData
     ? { data: initialConversation, isLoading: false, error: null }
@@ -69,6 +69,20 @@ export function ConversationView({
         };
         
         setLocalMessages(prev => [...prev, newMessage]);
+        
+        if (aiEnabled) {
+          setTimeout(() => {
+            const aiResponse = {
+              id: `local-ai-${Date.now()}`,
+              content: "Esta é uma resposta automatizada da IA. O assistente respondeu com base nos dados disponíveis.",
+              timestamp: new Date(),
+              isOutgoing: false,
+              status: 'delivered',
+            };
+            setLocalMessages(prev => [...prev, aiResponse]);
+          }, 1500);
+        }
+        
         return Promise.resolve({ success: true });
       }
       return conversationService.sendMessage(conversation.id, content).then(result => {
@@ -107,6 +121,11 @@ export function ConversationView({
 
   const handleSendMessage = (content: string) => {
     sendMessageMutation.mutate(content);
+  };
+
+  const handleAiToggle = (enabled: boolean) => {
+    setAiEnabled(enabled);
+    console.log("AI automated responses:", enabled ? "enabled" : "disabled");
   };
 
   const shouldRenderDate = (index: number, messages: any[]) => {
@@ -285,6 +304,8 @@ export function ConversationView({
         disabled={sendMessageMutation.isPending}
         onTagClick={handleTagClick}
         showTagButton={!useMockData}
+        aiEnabled={aiEnabled}
+        onAiToggle={handleAiToggle}
       />
     </div>
   );
