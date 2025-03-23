@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, X, Save, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,16 @@ import { PatientInfoCard } from "@/components/medical-record/PatientInfoCard";
 import { PatientInfoHoverCard } from "@/components/medical-record/PatientInfoHoverCard";
 import { RecordContentCard } from "@/components/medical-record/RecordContentCard";
 import { DeleteRecordDialog } from "@/components/medical-record/DeleteRecordDialog";
+import { toast } from "@/components/ui/use-toast";
 
 export default function MedicalRecordDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    console.log("MedicalRecordDetail rendered with ID:", id);
+  }, [id]);
+  
   const {
     record,
     isLoading,
@@ -37,6 +43,8 @@ export default function MedicalRecordDetail() {
   }
 
   if (!record) {
+    const patientId = id?.split('/').pop();
+    
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center mb-6">
@@ -48,10 +56,16 @@ export default function MedicalRecordDetail() {
         <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
           <FileText className="h-12 w-12 text-gray-400 mb-3" />
           <h3 className="text-lg font-medium text-gray-600">Prontuário não encontrado</h3>
-          {id && (
+          {patientId && (
             <Button 
               className="mt-4" 
-              onClick={() => navigate(`/prontuarios/novo?pacienteId=${id.split('/').pop()}`)}
+              onClick={() => {
+                toast({
+                  title: "Navegando para criar novo prontuário",
+                  description: `Redirecionando para criar um prontuário para o paciente ID: ${patientId}`,
+                });
+                navigate(`/prontuarios/novo?pacienteId=${patientId}`);
+              }}
             >
               <Plus className="h-4 w-4 mr-2" />
               Criar prontuário

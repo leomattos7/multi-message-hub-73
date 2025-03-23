@@ -40,6 +40,8 @@ export const useMedicalRecord = (id: string | undefined) => {
     queryFn: async () => {
       if (!id) throw new Error("Record ID is required");
 
+      console.log("Fetching record with ID:", id);
+
       // First fetch the medical record
       const { data: recordData, error: recordError } = await supabase
         .from("patient_records")
@@ -53,8 +55,11 @@ export const useMedicalRecord = (id: string | undefined) => {
       }
       
       if (!recordData) {
+        console.log("No record found with ID:", id);
         return null;
       }
+      
+      console.log("Record data fetched:", recordData);
       
       // Then fetch the associated patient
       const { data: patientData, error: patientError } = await supabase
@@ -68,6 +73,8 @@ export const useMedicalRecord = (id: string | undefined) => {
         return null;
       }
       
+      console.log("Patient data fetched:", patientData);
+      
       // Set the initial edited content
       setEditedContent(recordData.content);
       
@@ -79,6 +86,13 @@ export const useMedicalRecord = (id: string | undefined) => {
     },
     refetchOnWindowFocus: false
   });
+
+  // Set initial edited content when record is loaded
+  useEffect(() => {
+    if (record?.content) {
+      setEditedContent(record.content);
+    }
+  }, [record]);
 
   // Handle back button navigation
   const handleBackNavigation = () => {
@@ -107,7 +121,7 @@ export const useMedicalRecord = (id: string | undefined) => {
       if (error) throw error;
 
       setIsEditing(false);
-      refetch();
+      await refetch();
       
       toast({
         title: "Prontuário atualizado",
