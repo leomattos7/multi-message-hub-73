@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, X, Save, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMedicalRecord } from "@/hooks/use-medical-record";
@@ -11,6 +11,7 @@ import { DeleteRecordDialog } from "@/components/medical-record/DeleteRecordDial
 
 export default function MedicalRecordDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate(); // Add useNavigate hook
   const {
     record,
     isLoading,
