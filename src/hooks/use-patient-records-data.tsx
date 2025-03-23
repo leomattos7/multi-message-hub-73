@@ -53,10 +53,28 @@ export const usePatientRecordsData = (patientId?: string, recordType: string = "
     return true;
   };
 
+  const deleteRecord = async (recordId: string) => {
+    if (!patientId || !recordId) {
+      throw new Error("Patient ID and record ID are required");
+    }
+    
+    const { error } = await supabase
+      .from("patient_records")
+      .delete()
+      .eq("id", recordId)
+      .eq("patient_id", patientId);
+
+    if (error) throw error;
+    
+    await refetchRecords();
+    return true;
+  };
+
   return {
     records,
     recordsLoading,
     refetchRecords,
-    createRecord
+    createRecord,
+    deleteRecord
   };
 };
