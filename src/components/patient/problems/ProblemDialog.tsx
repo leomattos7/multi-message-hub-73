@@ -10,7 +10,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { CodeAutocomplete } from "./CodeAutocomplete";
-import { cidCodes, ciapCodes, CodeOption } from "@/types/problem";
 
 interface ProblemDialogProps {
   isOpen: boolean;
@@ -52,7 +51,6 @@ export const ProblemDialog = ({
               placeholder="CID (opcional)"
               value={problemCID || ""}
               onChange={setProblemCID}
-              options={cidCodes}
             />
           </div>
           <div className="space-y-1">
@@ -60,7 +58,6 @@ export const ProblemDialog = ({
               placeholder="CIAP (opcional)"
               value={problemCIAP || ""}
               onChange={setProblemCIAP}
-              options={ciapCodes}
             />
           </div>
         </div>
