@@ -3,6 +3,7 @@ import React from "react";
 import { SectionType } from "@/hooks/use-collapsible-sections";
 import { MedicationsSection } from "@/components/patient/medications/MedicationsSection";
 import { ProblemsSection } from "@/components/patient/problems/ProblemsSection";
+import { MedicalHistorySection } from "@/components/patient/medicalHistory/MedicalHistorySection";
 
 export const renderPatientSectionContent = (sectionId: SectionType, patientId?: string) => {
   switch (sectionId) {
@@ -15,7 +16,7 @@ export const renderPatientSectionContent = (sectionId: SectionType, patientId?: 
     case "medicoes":
       return <p>Medições do paciente</p>;
     case "antecedente_pessoal":
-      return <p>Histórico médico pessoal do paciente</p>;
+      return <MedicalHistorySection patientId={patientId} />;
     case "historico_familiar":
       return <p>Doenças e condições presentes na família do paciente</p>;
     default:
