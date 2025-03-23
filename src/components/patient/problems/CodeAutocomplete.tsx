@@ -32,8 +32,8 @@ export const CodeAutocomplete = ({
   // Filter options based on search query
   const filteredOptions = safeOptions
     .filter((option) =>
-      option.code.toLowerCase().includes(search.toLowerCase()) ||
-      option.description.toLowerCase().includes(search.toLowerCase())
+      option.code.toLowerCase().includes((search || "").toLowerCase()) ||
+      option.description.toLowerCase().includes((search || "").toLowerCase())
     )
     .slice(0, 5); // Limit to 5 results
 
@@ -64,10 +64,10 @@ export const CodeAutocomplete = ({
         </div>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[300px]" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput 
             placeholder="Pesquisar..." 
-            value={search} 
+            value={search || ""} 
             onValueChange={(value) => setSearch(value || "")}
             className="h-9"
           />
