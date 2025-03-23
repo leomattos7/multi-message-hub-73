@@ -339,6 +339,47 @@ export type Database = {
         }
         Relationships: []
       }
+      lab_exams: {
+        Row: {
+          created_at: string
+          exam_date: string
+          id: string
+          is_abnormal: boolean
+          name: string
+          patient_id: string
+          reference_range: string | null
+          result: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date: string
+          id?: string
+          is_abnormal?: boolean
+          name: string
+          patient_id: string
+          reference_range?: string | null
+          result: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          id?: string
+          is_abnormal?: boolean
+          name?: string
+          patient_id?: string
+          reference_range?: string | null
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_exams_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
