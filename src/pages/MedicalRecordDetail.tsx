@@ -15,6 +15,7 @@ import {
   Info
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,6 +37,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { PatientSummaryItem, PatientSummaryItemType } from "@/components/PatientSummaryItem";
 
 // Define interfaces for our data
 interface Patient {
@@ -65,6 +67,27 @@ export default function MedicalRecordDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  // Define initial order of patient summary items
+  const [summaryItems, setSummaryItems] = useState<PatientSummaryItemType[]>([
+    "medications",
+    "problems",
+    "exams",
+    "medications", // This is duplicated in the requirements, maybe it should be another type?
+    "personalHistory",
+    "familyHistory"
+  ]);
+
+  // Handle drag and drop reordering
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(summaryItems);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    setSummaryItems(items);
+  };
 
   // Record type display mapping
   const recordTypeDisplay: Record<string, string> = {
@@ -178,7 +201,7 @@ export default function MedicalRecordDetail() {
     }
   };
 
-  // Handle back button navigation - MODIFIED TO GO TO PATIENT PAGE
+  // Handle back button navigation
   const handleBackNavigation = () => {
     if (record && record.patient_id) {
       // Navigate to the patient's page instead of the general records list
@@ -355,51 +378,57 @@ export default function MedicalRecordDetail() {
         <div className="md:col-span-1">
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Paciente</h3>
-                  <div className="mt-1 flex items-center">
-                    <User className="h-5 w-5 text-gray-400 mr-2" />
-                    <p className="font-medium">{record.patient?.name}</p>
-                  </div>
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="patientSummaryItems">
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="space-y-2"
+                    >
+                      {summaryItems.map((item, index) => (
+                        <Draggable key={item + index} draggableId={item + index} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                            >
+                              <PatientSummaryItem 
+                                type={item} 
+                                isDragging={snapshot.isDragging}
+                                dragHandleProps={provided.dragHandleProps}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+              
+              <div className="mt-4">
+                <h3 className="text-sm font-medium text-gray-500">Criado em</h3>
+                <div className="mt-1 flex items-center">
+                  <Calendar className="h-5 w-5 text-gray-400 mr-2" />
+                  <p>{formatDate(record.created_at)}</p>
                 </div>
-                
-                {record.patient?.email && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Email</h3>
-                    <p>{record.patient.email}</p>
-                  </div>
-                )}
-                
-                {record.patient?.phone && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Telefone</h3>
-                    <p>{record.patient.phone}</p>
-                  </div>
-                )}
-                
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Criado em</h3>
-                  <div className="mt-1 flex items-center">
-                    <Calendar className="h-5 w-5 text-gray-400 mr-2" />
-                    <p>{formatDate(record.created_at)}</p>
-                  </div>
+              </div>
+              
+              <div className="mt-4">
+                <h3 className="text-sm font-medium text-gray-500">Última atualização</h3>
+                <div className="mt-1 flex items-center">
+                  <Clock className="h-5 w-5 text-gray-400 mr-2" />
+                  <p>{formatDate(record.updated_at)}</p>
                 </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Última atualização</h3>
-                  <div className="mt-1 flex items-center">
-                    <Clock className="h-5 w-5 text-gray-400 mr-2" />
-                    <p>{formatDate(record.updated_at)}</p>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Tipo de prontuário</h3>
-                  <div className="mt-1 flex items-center">
-                    <FileText className="h-5 w-5 text-gray-400 mr-2" />
-                    <p>{recordTypeDisplay[record.record_type]}</p>
-                  </div>
+              </div>
+              
+              <div className="mt-4">
+                <h3 className="text-sm font-medium text-gray-500">Tipo de prontuário</h3>
+                <div className="mt-1 flex items-center">
+                  <FileText className="h-5 w-5 text-gray-400 mr-2" />
+                  <p>{recordTypeDisplay[record.record_type]}</p>
                 </div>
               </div>
             </CardContent>
