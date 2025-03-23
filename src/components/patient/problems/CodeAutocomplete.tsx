@@ -15,21 +15,24 @@ interface CodeAutocompleteProps {
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
-  options: CodeOption[];
+  options: CodeOption[] | undefined;
 }
 
 export const CodeAutocomplete = ({
   placeholder,
   value,
   onChange,
-  options,
+  options = [], // Provide a default empty array when options is undefined
 }: CodeAutocompleteProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Ensure options is always an array
+  const safeOptions = Array.isArray(options) ? options : [];
+
   // Filter options based on search query
-  const filteredOptions = options.filter((option) =>
+  const filteredOptions = safeOptions.filter((option) =>
     option.code.toLowerCase().includes(search.toLowerCase()) ||
     option.description.toLowerCase().includes(search.toLowerCase())
   ).slice(0, 5); // Limit to 5 results

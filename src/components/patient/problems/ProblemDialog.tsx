@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { CodeAutocomplete } from "./CodeAutocomplete";
-import { cidCodes, ciapCodes } from "@/types/problem";
+import { cidCodes, ciapCodes, CodeOption } from "@/types/problem";
 
 interface ProblemDialogProps {
   isOpen: boolean;

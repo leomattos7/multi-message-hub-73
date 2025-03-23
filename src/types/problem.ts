@@ -7,8 +7,13 @@ export interface ProblemItem {
   created_at: string;
 }
 
+export interface CodeOption {
+  code: string;
+  description: string;
+}
+
 // Sample CID codes (International Classification of Diseases)
-export const cidCodes = [
+export const cidCodes: CodeOption[] = [
   { code: "I10", description: "Hipertensão essencial (primária)" },
   { code: "E11", description: "Diabetes mellitus tipo 2" },
   { code: "J45", description: "Asma" },
@@ -21,7 +26,7 @@ export const cidCodes = [
 ];
 
 // Sample CIAP codes (International Classification of Primary Care)
-export const ciapCodes = [
+export const ciapCodes: CodeOption[] = [
   { code: "K86", description: "Hipertensão sem complicações" },
   { code: "T90", description: "Diabetes não insulino-dependente" },
   { code: "R96", description: "Asma" },
