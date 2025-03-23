@@ -33,15 +33,15 @@ export function CollapsibleSection({
         >
           <Card>
             <Collapsible open={isExpanded} onOpenChange={onToggle}>
-              <div className="pt-3 px-3 flex items-center justify-between">
+              <div className="flex items-center justify-between py-3 px-3">
                 <div className="flex items-center">
-                  <div {...provided.dragHandleProps} className="mr-2 cursor-grab">
+                  <div {...provided.dragHandleProps} className="mr-3 cursor-grab flex items-center">
                     <GripVertical size={18} className="text-gray-400" />
                   </div>
                   <h3 className="text-md font-medium">{title}</h3>
                 </div>
                 <CollapsibleTrigger asChild>
-                  <button className="p-1 rounded-md hover:bg-gray-100">
+                  <button className="p-1 rounded-md hover:bg-gray-100 flex items-center justify-center">
                     {isExpanded ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (
