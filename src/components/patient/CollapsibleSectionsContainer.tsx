@@ -6,7 +6,7 @@ import { SectionType, useCollapsibleSections } from "@/hooks/use-collapsible-sec
 
 interface CollapsibleSectionsContainerProps {
   patientId?: string;
-  renderSectionContent?: (sectionId: SectionType) => React.ReactNode;
+  renderSectionContent?: (sectionId: SectionType, patientId?: string) => React.ReactNode;
 }
 
 export function CollapsibleSectionsContainer({
@@ -44,7 +44,7 @@ export function CollapsibleSectionsContainer({
                 onToggle={() => toggleSection(section.id)}
                 index={index}
               >
-                {renderSectionContent && renderSectionContent(section.id)}
+                {renderSectionContent && renderSectionContent(section.id, patientId)}
               </CollapsibleSection>
             ))}
             {provided.placeholder}

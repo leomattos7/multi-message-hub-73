@@ -96,6 +96,6 @@ export const usePatientRecords = (patientId?: string) => {
     handleEditPatient,
     createNewRecord,
     updatePatient,
-    renderSectionContent: renderPatientSectionContent
+    renderSectionContent: (sectionId, patientId) => renderPatientSectionContent(sectionId, patientId)
   };
 };
