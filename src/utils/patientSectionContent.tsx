@@ -100,14 +100,62 @@ const MedicationsSection = ({ patientId }: { patientId?: string }) => {
 
   return (
     <div className="space-y-4">
-      {/* Add Medication Button */}
-      <div className="flex justify-end">
+      {/* Medications List */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium">Medicações registradas</h3>
+        {recordsLoading ? (
+          <p className="text-sm text-gray-500">Carregando medicações...</p>
+        ) : medications && medications.length > 0 ? (
+          <div className="grid grid-cols-1 gap-2">
+            {medications.map((med) => {
+              let medicationData: MedicationItem;
+              try {
+                medicationData = JSON.parse(med.content);
+              } catch (e) {
+                // Fallback for old format
+                medicationData = {
+                  id: med.id,
+                  name: med.content,
+                  created_at: med.created_at
+                };
+              }
+              
+              return (
+                <Card key={med.id} className="border border-gray-200">
+                  <CardContent className="p-3 relative">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 h-6 w-6 p-0 text-gray-500 hover:text-red-500"
+                      onClick={() => setMedicationToDelete(med.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <div className="font-medium pr-6">{medicationData.name}</div>
+                    {medicationData.dosage && (
+                      <div className="text-sm text-gray-600">Dosagem: {medicationData.dosage}</div>
+                    )}
+                    {medicationData.instructions && (
+                      <div className="text-sm text-gray-600">Posologia: {medicationData.instructions}</div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 italic">Nenhuma medicação registrada</p>
+        )}
+      </div>
+
+      {/* Add Medication Button - Now positioned below the medications list */}
+      <div className="flex justify-center">
         <Button 
           onClick={() => setIsDialogOpen(true)} 
           size="sm"
-          className="rounded-full h-8 w-8 p-0"
+          className="rounded-full h-10 w-10 p-0 bg-blue-500 hover:bg-blue-600"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-5 w-5" />
         </Button>
       </div>
 
@@ -162,54 +210,6 @@ const MedicationsSection = ({ patientId }: { patientId?: string }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Medications List */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Medicações registradas</h3>
-        {recordsLoading ? (
-          <p className="text-sm text-gray-500">Carregando medicações...</p>
-        ) : medications && medications.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2">
-            {medications.map((med) => {
-              let medicationData: MedicationItem;
-              try {
-                medicationData = JSON.parse(med.content);
-              } catch (e) {
-                // Fallback for old format
-                medicationData = {
-                  id: med.id,
-                  name: med.content,
-                  created_at: med.created_at
-                };
-              }
-              
-              return (
-                <Card key={med.id} className="border border-gray-200">
-                  <CardContent className="p-3 relative">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 h-6 w-6 p-0 text-gray-500 hover:text-red-500"
-                      onClick={() => setMedicationToDelete(med.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <div className="font-medium pr-6">{medicationData.name}</div>
-                    {medicationData.dosage && (
-                      <div className="text-sm text-gray-600">Dosagem: {medicationData.dosage}</div>
-                    )}
-                    {medicationData.instructions && (
-                      <div className="text-sm text-gray-600">Posologia: {medicationData.instructions}</div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 italic">Nenhuma medicação registrada</p>
-        )}
-      </div>
     </div>
   );
 };
