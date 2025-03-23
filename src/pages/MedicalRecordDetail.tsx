@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, X, Save, FileText } from "lucide-react";
+import { ArrowLeft, Edit, X, Save, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMedicalRecord } from "@/hooks/use-medical-record";
 import { PatientInfoCard } from "@/components/medical-record/PatientInfoCard";
@@ -11,7 +11,7 @@ import { DeleteRecordDialog } from "@/components/medical-record/DeleteRecordDial
 
 export default function MedicalRecordDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate(); // Add useNavigate hook
+  const navigate = useNavigate();
   const {
     record,
     isLoading,
@@ -48,6 +48,15 @@ export default function MedicalRecordDetail() {
         <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
           <FileText className="h-12 w-12 text-gray-400 mb-3" />
           <h3 className="text-lg font-medium text-gray-600">Prontuário não encontrado</h3>
+          {id && (
+            <Button 
+              className="mt-4" 
+              onClick={() => navigate(`/prontuarios/novo?pacienteId=${id.split('/').pop()}`)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Criar prontuário
+            </Button>
+          )}
         </div>
       </div>
     );

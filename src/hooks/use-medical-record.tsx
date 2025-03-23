@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,7 @@ export const useMedicalRecord = (id: string | undefined) => {
     "medications",
     "problems",
     "exams",
-    "medications", // This is duplicated in the requirements, maybe it should be another type?
+    "allergies",
     "personalHistory",
     "familyHistory"
   ]);
@@ -47,7 +47,14 @@ export const useMedicalRecord = (id: string | undefined) => {
         .eq("id", id)
         .single();
 
-      if (recordError) throw recordError;
+      if (recordError) {
+        console.error("Error fetching record:", recordError);
+        return null;
+      }
+      
+      if (!recordData) {
+        return null;
+      }
       
       // Then fetch the associated patient
       const { data: patientData, error: patientError } = await supabase
@@ -56,7 +63,10 @@ export const useMedicalRecord = (id: string | undefined) => {
         .eq("id", recordData.patient_id)
         .single();
 
-      if (patientError) throw patientError;
+      if (patientError) {
+        console.error("Error fetching patient:", patientError);
+        return null;
+      }
       
       // Set the initial edited content
       setEditedContent(recordData.content);
@@ -66,7 +76,8 @@ export const useMedicalRecord = (id: string | undefined) => {
         ...recordData,
         patient: patientData
       } as MedicalRecord;
-    }
+    },
+    refetchOnWindowFocus: false
   });
 
   // Handle back button navigation
