@@ -7,7 +7,7 @@ import { RecordContent } from "@/components/medicalRecord/RecordContent";
 import { RecordActions } from "@/components/medicalRecord/RecordActions";
 import { RecordNotFound } from "@/components/medicalRecord/RecordNotFound";
 import { CollapsibleSectionsContainer } from "@/components/patient/CollapsibleSectionsContainer";
-import { SectionType } from "@/hooks/use-collapsible-sections";
+import { renderPatientSectionContent } from "@/utils/patientSectionContent";
 
 export default function MedicalRecordDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,25 +23,6 @@ export default function MedicalRecordDetail() {
     handleSave,
     handleDelete,
   } = useMedicalRecord(id);
-
-  const renderSectionContent = (sectionId: SectionType) => {
-    switch (sectionId) {
-      case "medicacoes":
-        return <p>Lista de medicações prescritas anteriormente</p>;
-      case "problemas":
-        return <p>Lista de problemas e diagnósticos do paciente</p>;
-      case "exames":
-        return <p>Resultados dos últimos exames realizados</p>;
-      case "medicoes":
-        return <p>Medições do paciente</p>;
-      case "antecedente_pessoal":
-        return <p>Histórico médico pessoal do paciente</p>;
-      case "historico_familiar":
-        return <p>Doenças e condições presentes na família do paciente</p>;
-      default:
-        return <p>Informações não disponíveis</p>;
-    }
-  };
 
   if (isLoading) {
     return (
@@ -79,7 +60,7 @@ export default function MedicalRecordDetail() {
         <div className="md:col-span-1">
           <CollapsibleSectionsContainer 
             patientId={record?.patient_id}
-            renderSectionContent={renderSectionContent} 
+            renderSectionContent={renderPatientSectionContent} 
           />
         </div>
         
