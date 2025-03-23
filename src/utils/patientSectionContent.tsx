@@ -74,7 +74,7 @@ const MedicationsSection = ({ patientId }: { patientId?: string }) => {
             onChange={(e) => setMedDosage(e.target.value)}
           />
           <Input 
-            placeholder="Instruções (opcional)" 
+            placeholder="Posologia (opcional)" 
             value={medInstructions}
             onChange={(e) => setMedInstructions(e.target.value)}
           />
@@ -115,7 +115,7 @@ const MedicationsSection = ({ patientId }: { patientId?: string }) => {
                       <div className="text-sm text-gray-600">Dosagem: {medicationData.dosage}</div>
                     )}
                     {medicationData.instructions && (
-                      <div className="text-sm text-gray-600">Instruções: {medicationData.instructions}</div>
+                      <div className="text-sm text-gray-600">Posologia: {medicationData.instructions}</div>
                     )}
                   </CardContent>
                 </Card>
