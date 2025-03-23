@@ -4,6 +4,7 @@ import { SectionType } from "@/hooks/use-collapsible-sections";
 import { MedicationsSection } from "@/components/patient/medications/MedicationsSection";
 import { ProblemsSection } from "@/components/patient/problems/ProblemsSection";
 import { MedicalHistorySection } from "@/components/patient/medicalHistory/MedicalHistorySection";
+import { LabExamsSection } from "@/components/patient/labExams/LabExamsSection";
 
 export const renderPatientSectionContent = (sectionId: SectionType, patientId?: string) => {
   switch (sectionId) {
@@ -12,7 +13,7 @@ export const renderPatientSectionContent = (sectionId: SectionType, patientId?: 
     case "problemas":
       return <ProblemsSection patientId={patientId} />;
     case "exames":
-      return <p>Resultados dos últimos exames realizados</p>;
+      return <LabExamsSection patientId={patientId} />;
     case "medicoes":
       return <p>Medições do paciente</p>;
     case "antecedente_pessoal":
