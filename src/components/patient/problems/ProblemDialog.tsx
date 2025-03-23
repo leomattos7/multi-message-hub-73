@@ -9,7 +9,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { CodeAutocomplete } from "./CodeAutocomplete";
 
 interface ProblemDialogProps {
   isOpen: boolean;
@@ -46,19 +45,21 @@ export const ProblemDialog = ({
             value={newProblem || ""}
             onChange={(e) => setNewProblem(e.target.value)}
           />
-          <div className="space-y-1">
-            <CodeAutocomplete
-              placeholder="CID (opcional)"
-              value={problemCID || ""}
-              onChange={setProblemCID}
-            />
-          </div>
-          <div className="space-y-1">
-            <CodeAutocomplete
-              placeholder="CIAP (opcional)"
-              value={problemCIAP || ""}
-              onChange={setProblemCIAP}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Input
+                placeholder="CID (opcional)"
+                value={problemCID || ""}
+                onChange={(e) => setProblemCID(e.target.value)}
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="CIAP (opcional)"
+                value={problemCIAP || ""}
+                onChange={(e) => setProblemCIAP(e.target.value)}
+              />
+            </div>
           </div>
         </div>
         <DialogFooter>

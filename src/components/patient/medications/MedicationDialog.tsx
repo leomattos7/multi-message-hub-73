@@ -45,16 +45,22 @@ export const MedicationDialog = ({
             value={newMedication}
             onChange={(e) => setNewMedication(e.target.value)}
           />
-          <Input 
-            placeholder="Dosagem (opcional)" 
-            value={medDosage}
-            onChange={(e) => setMedDosage(e.target.value)}
-          />
-          <Input 
-            placeholder="Posologia (opcional)" 
-            value={medInstructions}
-            onChange={(e) => setMedInstructions(e.target.value)}
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Input 
+                placeholder="Dosagem (opcional)" 
+                value={medDosage}
+                onChange={(e) => setMedDosage(e.target.value)}
+              />
+            </div>
+            <div>
+              <Input 
+                placeholder="Posologia (opcional)" 
+                value={medInstructions}
+                onChange={(e) => setMedInstructions(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button onClick={onAdd}>
