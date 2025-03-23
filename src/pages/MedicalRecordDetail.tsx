@@ -32,8 +32,8 @@ export default function MedicalRecordDetail() {
         return <p>Lista de problemas e diagnósticos do paciente</p>;
       case "exames":
         return <p>Resultados dos últimos exames realizados</p>;
-      case "medicacoes_atuais":
-        return <p>Medicações em uso atual pelo paciente</p>;
+      case "medicoes":
+        return <p>Medições do paciente</p>;
       case "antecedente_pessoal":
         return <p>Histórico médico pessoal do paciente</p>;
       case "historico_familiar":

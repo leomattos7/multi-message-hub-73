@@ -6,7 +6,7 @@ export type SectionType =
   | "medicacoes"
   | "problemas"
   | "exames"
-  | "medicacoes_atuais"
+  | "medicoes"
   | "antecedente_pessoal"
   | "historico_familiar";
 
@@ -20,7 +20,7 @@ const defaultSections: SectionConfig[] = [
   { id: "medicacoes", title: "Medicações" },
   { id: "problemas", title: "Problemas" },
   { id: "exames", title: "Últimos Exames" },
-  { id: "medicacoes_atuais", title: "Medicações Atuais" },
+  { id: "medicoes", title: "Medições" },
   { id: "antecedente_pessoal", title: "Antecedente Pessoal" },
   { id: "historico_familiar", title: "Histórico Familiar" },
 ];
@@ -34,7 +34,7 @@ export function useCollapsibleSections(patientId?: string) {
     medicacoes: false,
     problemas: false,
     exames: false,
-    medicacoes_atuais: false,
+    medicoes: false,
     antecedente_pessoal: false,
     historico_familiar: false,
   });
