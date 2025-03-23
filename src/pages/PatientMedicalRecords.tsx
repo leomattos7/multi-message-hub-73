@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -43,8 +42,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CollapsibleSectionsContainer } from "@/components/patient/CollapsibleSectionsContainer";
+import { SectionType } from "@/hooks/use-collapsible-sections";
 
-// Define interfaces for our data
 interface Patient {
   id: string;
   name: string;
@@ -79,12 +79,10 @@ export default function PatientMedicalRecords() {
   const [isInfoOpen, setIsInfoOpen] = useState(true);
   const isMobile = useIsMobile();
 
-  // Automatically collapse on mobile devices
   React.useEffect(() => {
     setIsInfoOpen(!isMobile);
   }, [isMobile]);
 
-  // Fetch patient details
   const { data: patient, isLoading: patientLoading, refetch: refetchPatient } = useQuery({
     queryKey: ["patient", patientId],
     queryFn: async () => {
@@ -101,7 +99,6 @@ export default function PatientMedicalRecords() {
     }
   });
 
-  // Fetch patient records based on filters
   const { data: records, isLoading: recordsLoading, refetch: refetchRecords } = useQuery({
     queryKey: ["patient-records", patientId, activeTab],
     queryFn: async () => {
@@ -112,7 +109,6 @@ export default function PatientMedicalRecords() {
         .select("*")
         .eq("patient_id", patientId);
 
-      // Apply filter based on active tab
       if (activeTab !== "all") {
         query = query.eq("record_type", activeTab);
       }
@@ -126,7 +122,6 @@ export default function PatientMedicalRecords() {
     enabled: !!patientId,
   });
 
-  // Calculate age from birth date
   const calculateAge = (birthDate: string | undefined): number => {
     if (!birthDate) return 0;
     
@@ -142,7 +137,6 @@ export default function PatientMedicalRecords() {
     return age;
   };
 
-  // Format birth date for display
   const formatBirthDate = (birthDate: string | undefined): string => {
     if (!birthDate) return 'Não informado';
     
@@ -150,7 +144,6 @@ export default function PatientMedicalRecords() {
     return new Intl.DateTimeFormat('pt-BR').format(date);
   };
 
-  // Handle creating a new medical record
   const createNewRecord = async () => {
     if (!patientId || !recordContent.trim()) {
       toast({
@@ -180,12 +173,10 @@ export default function PatientMedicalRecords() {
         description: "O prontuário foi criado com sucesso.",
       });
 
-      // Reset form and close dialog
       setRecordContent("");
       setRecordType("anamnesis");
       setIsNewRecordOpen(false);
       
-      // Refetch records to update the list
       refetchRecords();
     } catch (error) {
       console.error("Error creating record:", error);
@@ -197,7 +188,6 @@ export default function PatientMedicalRecords() {
     }
   };
 
-  // Function to update patient data
   const updatePatient = async () => {
     if (!patientId || !editPatientData || !editPatientData.name.trim()) {
       toast({
@@ -230,7 +220,6 @@ export default function PatientMedicalRecords() {
         description: "Os dados do paciente foram atualizados com sucesso.",
       });
 
-      // Close dialog and refetch patient data
       setIsEditPatientOpen(false);
       refetchPatient();
     } catch (error) {
@@ -243,7 +232,6 @@ export default function PatientMedicalRecords() {
     }
   };
 
-  // Open edit patient dialog with current data
   const handleEditPatient = () => {
     if (patient) {
       setEditPatientData({ ...patient });
@@ -251,12 +239,10 @@ export default function PatientMedicalRecords() {
     }
   };
 
-  // Function to view a record's details
   const viewRecordDetails = (record: MedicalRecord) => {
     navigate(`/prontuarios/${record.id}`);
   };
 
-  // Record type options for the dropdown
   const recordTypes = [
     { value: "anamnesis", label: "Anamnese" },
     { value: "consultation", label: "Consulta" },
@@ -265,7 +251,6 @@ export default function PatientMedicalRecords() {
     { value: "evolution", label: "Evolução" },
   ];
 
-  // Format date helper function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('pt-BR', {
@@ -277,13 +262,31 @@ export default function PatientMedicalRecords() {
     }).format(date);
   };
 
-  // Record type display mapping
   const recordTypeDisplay: Record<string, string> = {
     anamnesis: "Anamnese",
     consultation: "Consulta",
     exam: "Exame",
     prescription: "Receita",
     evolution: "Evolução",
+  };
+
+  const renderSectionContent = (sectionId: SectionType) => {
+    switch (sectionId) {
+      case "medicacoes":
+        return <p>Lista de medicações prescritas anteriormente</p>;
+      case "problemas":
+        return <p>Lista de problemas e diagnósticos do paciente</p>;
+      case "exames":
+        return <p>Resultados dos últimos exames realizados</p>;
+      case "medicacoes_atuais":
+        return <p>Medicações em uso atual pelo paciente</p>;
+      case "antecedente_pessoal":
+        return <p>Histórico médico pessoal do paciente</p>;
+      case "historico_familiar":
+        return <p>Doenças e condições presentes na família do paciente</p>;
+      default:
+        return <p>Informações não disponíveis</p>;
+    }
   };
 
   if (patientLoading) {
@@ -384,7 +387,6 @@ export default function PatientMedicalRecords() {
         </Dialog>
       </div>
       
-      {/* Edit Patient Dialog */}
       <Dialog open={isEditPatientOpen} onOpenChange={setIsEditPatientOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -505,123 +507,15 @@ export default function PatientMedicalRecords() {
         </DialogContent>
       </Dialog>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Patient Info Card - Now Collapsible */}
-        <Card className="md:col-span-1">
-          <Collapsible open={isInfoOpen} onOpenChange={setIsInfoOpen} className="w-full">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle>Informações do Paciente</CardTitle>
-                <div className="flex items-center">
-                  <HoverCard>
-                    <HoverCardTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Info className="h-5 w-5 text-blue-500" />
-                        <span className="sr-only">Informações adicionais</span>
-                      </Button>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-80">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-semibold">Informações Pessoais</h4>
-                        <div className="flex justify-between">
-                          <span className="text-sm">Idade:</span>
-                          <span className="text-sm font-medium">
-                            {patient.birth_date ? `${calculateAge(patient.birth_date)} anos` : 'Não informado'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm">Data de Nascimento:</span>
-                          <span className="text-sm font-medium">{formatBirthDate(patient.birth_date)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm">Sexo Biológico:</span>
-                          <span className="text-sm font-medium">
-                            {patient.biological_sex === 'male' ? 'Masculino' : 
-                             patient.biological_sex === 'female' ? 'Feminino' : 
-                             patient.biological_sex === 'intersex' ? 'Intersexo' : 'Não informado'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm">Identidade de Gênero:</span>
-                          <span className="text-sm font-medium">
-                            {patient.gender_identity === 'man' ? 'Homem' : 
-                             patient.gender_identity === 'woman' ? 'Mulher' : 
-                             patient.gender_identity === 'non_binary' ? 'Não-Binário' : 
-                             patient.gender_identity === 'other' ? 'Outro' : 'Não informado'}
-                          </span>
-                        </div>
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
-                  
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="ml-1 p-0 h-9 w-9">
-                      {isInfoOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                      <span className="sr-only">
-                        {isInfoOpen ? "Fechar informações" : "Abrir informações"}
-                      </span>
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CollapsibleContent>
-              <CardContent className="space-y-4 pt-2">
-                <div className="space-y-1">
-                  <div className="flex items-center text-sm">
-                    <User className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="font-medium">{patient.name}</span>
-                  </div>
-                  
-                  {patient.email && (
-                    <div className="flex items-center text-sm">
-                      <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>{patient.email}</span>
-                    </div>
-                  )}
-                  
-                  {patient.phone && (
-                    <div className="flex items-center text-sm">
-                      <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>{patient.phone}</span>
-                    </div>
-                  )}
-                  
-                  {patient.address && (
-                    <div className="flex items-center text-sm">
-                      <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>{patient.address}</span>
-                    </div>
-                  )}
-                </div>
-                
-                {patient.notes && (
-                  <div className="pt-2 border-t">
-                    <h3 className="text-sm font-medium flex items-center mb-1">
-                      <ClipboardEdit className="h-4 w-4 mr-2 text-gray-500" />
-                      Anotações
-                    </h3>
-                    <p className="text-sm text-gray-700">{patient.notes}</p>
-                  </div>
-                )}
-                
-                <div className="pt-2">
-                  <Button className="w-full" variant="outline" onClick={handleEditPatient}>
-                    Editar Dados do Paciente
-                  </Button>
-                </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-1">
+          <CollapsibleSectionsContainer 
+            patientId={patientId} 
+            renderSectionContent={renderSectionContent} 
+          />
+        </div>
         
-        {/* Records Section */}
-        <div className="md:col-span-3">
+        <div className="md:col-span-2">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full flex overflow-x-auto mb-6">
               <TabsTrigger value="all" className="flex-1">Todos</TabsTrigger>

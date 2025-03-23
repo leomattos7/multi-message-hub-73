@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -40,8 +39,9 @@ import {
 } from "@/components/ui/hover-card";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CollapsibleSectionsContainer } from "@/components/patient/CollapsibleSectionsContainer";
+import { SectionType } from "@/hooks/use-collapsible-sections";
 
-// Define interfaces for our data
 interface Patient {
   id: string;
   name: string;
@@ -72,12 +72,10 @@ export default function MedicalRecordDetail() {
   const [isPatientInfoOpen, setIsPatientInfoOpen] = useState(true);
   const isMobile = useIsMobile();
 
-  // Auto-collapse patient info on mobile devices
   useEffect(() => {
     setIsPatientInfoOpen(!isMobile);
   }, [isMobile]);
 
-  // Record type display mapping
   const recordTypeDisplay: Record<string, string> = {
     anamnesis: "Anamnese",
     consultation: "Consulta",
@@ -86,13 +84,11 @@ export default function MedicalRecordDetail() {
     evolution: "Evolução",
   };
 
-  // Fetch record details
   const { data: record, isLoading, refetch } = useQuery({
     queryKey: ["medical-record", id],
     queryFn: async () => {
       if (!id) throw new Error("Record ID is required");
 
-      // First fetch the medical record
       const { data: recordData, error: recordError } = await supabase
         .from("patient_records")
         .select("*")
@@ -101,7 +97,6 @@ export default function MedicalRecordDetail() {
 
       if (recordError) throw recordError;
       
-      // Then fetch the associated patient
       const { data: patientData, error: patientError } = await supabase
         .from("patients")
         .select("id, name, email, phone, birth_date, biological_sex, gender_identity")
@@ -110,10 +105,8 @@ export default function MedicalRecordDetail() {
 
       if (patientError) throw patientError;
       
-      // Set the initial edited content
       setEditedContent(recordData.content);
       
-      // Combine the data
       return {
         ...recordData,
         patient: patientData
@@ -121,7 +114,6 @@ export default function MedicalRecordDetail() {
     }
   });
 
-  // Format date helper function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('pt-BR', {
@@ -133,7 +125,6 @@ export default function MedicalRecordDetail() {
     }).format(date);
   };
 
-  // Calculate age from birth date
   const calculateAge = (birthDate: string | undefined): number => {
     if (!birthDate) return 0;
     
@@ -149,7 +140,6 @@ export default function MedicalRecordDetail() {
     return age;
   };
 
-  // Format birth date for display
   const formatBirthDate = (birthDate: string | undefined): string => {
     if (!birthDate) return 'Não informado';
     
@@ -157,7 +147,6 @@ export default function MedicalRecordDetail() {
     return new Intl.DateTimeFormat('pt-BR').format(date);
   };
 
-  // Handle record update
   const handleSave = async () => {
     if (!id) return;
 
@@ -189,18 +178,14 @@ export default function MedicalRecordDetail() {
     }
   };
 
-  // Handle back button navigation - MODIFIED TO GO TO PATIENT PAGE
   const handleBackNavigation = () => {
     if (record && record.patient_id) {
-      // Navigate to the patient's page instead of the general records list
       navigate(`/prontuarios/paciente/${record.patient_id}`);
     } else {
-      // Fallback to general records list if patient ID is not available
       navigate("/prontuarios");
     }
   };
 
-  // Handle record deletion
   const handleDelete = async () => {
     if (!id || !record) return;
     
@@ -219,7 +204,6 @@ export default function MedicalRecordDetail() {
         description: "O prontuário foi excluído com sucesso.",
       });
 
-      // Navigate to the patient's page after deletion instead of general records list
       navigate(`/prontuarios/paciente/${patientId}`);
     } catch (error) {
       console.error("Error deleting record:", error);
@@ -228,6 +212,25 @@ export default function MedicalRecordDetail() {
         description: "Houve um erro ao excluir o prontuário. Tente novamente.",
         variant: "destructive",
       });
+    }
+  };
+
+  const renderSectionContent = (sectionId: SectionType) => {
+    switch (sectionId) {
+      case "medicacoes":
+        return <p>Lista de medicações prescritas anteriormente</p>;
+      case "problemas":
+        return <p>Lista de problemas e diagnósticos do paciente</p>;
+      case "exames":
+        return <p>Resultados dos últimos exames realizados</p>;
+      case "medicacoes_atuais":
+        return <p>Medicações em uso atual pelo paciente</p>;
+      case "antecedente_pessoal":
+        return <p>Histórico médico pessoal do paciente</p>;
+      case "historico_familiar":
+        return <p>Doenças e condições presentes na família do paciente</p>;
+      default:
+        return <p>Informações não disponíveis</p>;
     }
   };
 
@@ -265,11 +268,9 @@ export default function MedicalRecordDetail() {
             Voltar
           </Button>
           
-          {/* Título com nome do paciente e ícone de informações */}
           <div className="flex items-center">
             <h1 className="text-2xl font-bold mr-2">{record.patient?.name}</h1>
             
-            {/* Ícone de informações com HoverCard */}
             <HoverCard>
               <HoverCardTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -364,77 +365,10 @@ export default function MedicalRecordDetail() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <Card>
-            <Collapsible open={isPatientInfoOpen} onOpenChange={setIsPatientInfoOpen}>
-              <div className="pt-6 px-6 flex items-center justify-between">
-                <h3 className="text-lg font-medium">Detalhes do Prontuário</h3>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="p-0 h-8 w-8">
-                    {isPatientInfoOpen ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                    <span className="sr-only">
-                      {isPatientInfoOpen ? "Ocultar detalhes" : "Mostrar detalhes"}
-                    </span>
-                  </Button>
-                </CollapsibleTrigger>
-              </div>
-              
-              <CollapsibleContent>
-                <CardContent className="pt-4">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Paciente</h3>
-                      <div className="mt-1 flex items-center">
-                        <User className="h-5 w-5 text-gray-400 mr-2" />
-                        <p className="font-medium">{record.patient?.name}</p>
-                      </div>
-                    </div>
-                    
-                    {record.patient?.email && (
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500">Email</h3>
-                        <p>{record.patient.email}</p>
-                      </div>
-                    )}
-                    
-                    {record.patient?.phone && (
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500">Telefone</h3>
-                        <p>{record.patient.phone}</p>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Criado em</h3>
-                      <div className="mt-1 flex items-center">
-                        <Calendar className="h-5 w-5 text-gray-400 mr-2" />
-                        <p>{formatDate(record.created_at)}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Última atualização</h3>
-                      <div className="mt-1 flex items-center">
-                        <Clock className="h-5 w-5 text-gray-400 mr-2" />
-                        <p>{formatDate(record.updated_at)}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Tipo de prontuário</h3>
-                      <div className="mt-1 flex items-center">
-                        <FileText className="h-5 w-5 text-gray-400 mr-2" />
-                        <p>{recordTypeDisplay[record.record_type]}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </Card>
+          <CollapsibleSectionsContainer 
+            patientId={record?.patient_id}
+            renderSectionContent={renderSectionContent} 
+          />
         </div>
         
         <div className="md:col-span-2">
