@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,9 +19,10 @@ import MedicalRecords from "./pages/MedicalRecords";
 import MedicalRecordDetail from "./pages/MedicalRecordDetail";
 import PatientMedicalRecords from "./pages/PatientMedicalRecords";
 
-const queryClient = new QueryClient();
-
 function App() {
+  // Create a client
+  const queryClient = new QueryClient();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
