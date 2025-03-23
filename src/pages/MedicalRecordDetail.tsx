@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -252,7 +253,53 @@ export default function MedicalRecordDetail() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-2xl font-bold">{recordTypeDisplay[record.record_type]}</h1>
+          
+          {/* Título com nome do paciente e ícone de informações */}
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold mr-2">{record.patient?.name}</h1>
+            
+            {/* Ícone de informações com HoverCard */}
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Info className="h-5 w-5 text-blue-500" />
+                  <span className="sr-only">Informações adicionais</span>
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-80">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">Informações Pessoais</h4>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Idade:</span>
+                    <span className="text-sm font-medium">
+                      {record.patient?.birth_date ? `${calculateAge(record.patient.birth_date)} anos` : 'Não informado'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Data de Nascimento:</span>
+                    <span className="text-sm font-medium">{formatBirthDate(record.patient?.birth_date)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Sexo Biológico:</span>
+                    <span className="text-sm font-medium">
+                      {record.patient?.biological_sex === 'male' ? 'Masculino' : 
+                       record.patient?.biological_sex === 'female' ? 'Feminino' : 
+                       record.patient?.biological_sex === 'intersex' ? 'Intersexo' : 'Não informado'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Identidade de Gênero:</span>
+                    <span className="text-sm font-medium">
+                      {record.patient?.gender_identity === 'man' ? 'Homem' : 
+                       record.patient?.gender_identity === 'woman' ? 'Mulher' : 
+                       record.patient?.gender_identity === 'non_binary' ? 'Não-Binário' : 
+                       record.patient?.gender_identity === 'other' ? 'Outro' : 'Não informado'}
+                    </span>
+                  </div>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
         </div>
         
         <div className="flex space-x-2">
@@ -309,55 +356,12 @@ export default function MedicalRecordDetail() {
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Paciente</h3>
-                    <div className="mt-1 flex items-center">
-                      <User className="h-5 w-5 text-gray-400 mr-2" />
-                      <p className="font-medium">{record.patient?.name}</p>
-                    </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Paciente</h3>
+                  <div className="mt-1 flex items-center">
+                    <User className="h-5 w-5 text-gray-400 mr-2" />
+                    <p className="font-medium">{record.patient?.name}</p>
                   </div>
-                  
-                  <HoverCard>
-                    <HoverCardTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Info className="h-5 w-5 text-blue-500" />
-                        <span className="sr-only">Informações adicionais</span>
-                      </Button>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-80">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-semibold">Informações Pessoais</h4>
-                        <div className="flex justify-between">
-                          <span className="text-sm">Idade:</span>
-                          <span className="text-sm font-medium">
-                            {record.patient?.birth_date ? `${calculateAge(record.patient.birth_date)} anos` : 'Não informado'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm">Data de Nascimento:</span>
-                          <span className="text-sm font-medium">{formatBirthDate(record.patient?.birth_date)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm">Sexo Biológico:</span>
-                          <span className="text-sm font-medium">
-                            {record.patient?.biological_sex === 'male' ? 'Masculino' : 
-                             record.patient?.biological_sex === 'female' ? 'Feminino' : 
-                             record.patient?.biological_sex === 'intersex' ? 'Intersexo' : 'Não informado'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm">Identidade de Gênero:</span>
-                          <span className="text-sm font-medium">
-                            {record.patient?.gender_identity === 'man' ? 'Homem' : 
-                             record.patient?.gender_identity === 'woman' ? 'Mulher' : 
-                             record.patient?.gender_identity === 'non_binary' ? 'Não-Binário' : 
-                             record.patient?.gender_identity === 'other' ? 'Outro' : 'Não informado'}
-                          </span>
-                        </div>
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
                 </div>
                 
                 {record.patient?.email && (
