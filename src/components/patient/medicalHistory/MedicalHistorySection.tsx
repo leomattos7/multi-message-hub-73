@@ -16,6 +16,8 @@ interface MedicalHistorySectionProps {
 export const MedicalHistorySection = ({ patientId }: MedicalHistorySectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRecord, setNewRecord] = useState("");
+  const [cid, setCid] = useState("");
+  const [ciap, setCiap] = useState("");
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   
   const { 
@@ -36,12 +38,16 @@ export const MedicalHistorySection = ({ patientId }: MedicalHistorySectionProps)
     }
 
     const recordData = {
-      description: newRecord
+      description: newRecord,
+      ...(cid ? { cid } : {}),
+      ...(ciap ? { ciap } : {})
     };
 
     try {
       await createRecord(JSON.stringify(recordData), "antecedente_pessoal");
       setNewRecord("");
+      setCid("");
+      setCiap("");
       setIsDialogOpen(false);
       
       toast({
@@ -143,6 +149,10 @@ export const MedicalHistorySection = ({ patientId }: MedicalHistorySectionProps)
         onOpenChange={setIsDialogOpen}
         newRecord={newRecord}
         setNewRecord={setNewRecord}
+        cid={cid}
+        setCid={setCid}
+        ciap={ciap}
+        setCiap={setCiap}
         onAdd={handleAddRecord}
       />
 

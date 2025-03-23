@@ -15,6 +15,10 @@ interface MedicalHistoryDialogProps {
   onOpenChange: (open: boolean) => void;
   newRecord: string;
   setNewRecord: (value: string) => void;
+  cid: string;
+  setCid: (value: string) => void;
+  ciap: string;
+  setCiap: (value: string) => void;
   onAdd: () => void;
 }
 
@@ -23,6 +27,10 @@ export const MedicalHistoryDialog = ({
   onOpenChange,
   newRecord = "", // Ensure these have default values
   setNewRecord,
+  cid = "",
+  setCid,
+  ciap = "",
+  setCiap,
   onAdd,
 }: MedicalHistoryDialogProps) => {
   return (
@@ -37,6 +45,22 @@ export const MedicalHistoryDialog = ({
             value={newRecord || ""}
             onChange={(e) => setNewRecord(e.target.value)}
           />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Input
+                placeholder="CID (opcional)"
+                value={cid || ""}
+                onChange={(e) => setCid(e.target.value)}
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="CIAP (opcional)"
+                value={ciap || ""}
+                onChange={(e) => setCiap(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button onClick={onAdd}>

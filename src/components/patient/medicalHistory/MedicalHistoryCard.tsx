@@ -23,6 +23,12 @@ export const MedicalHistoryCard = ({ medicalHistory, onDelete }: MedicalHistoryC
           <Trash2 className="h-4 w-4" />
         </Button>
         <div className="font-medium pr-6">{medicalHistory.description}</div>
+        {(medicalHistory.cid || medicalHistory.ciap) && (
+          <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-gray-500">
+            {medicalHistory.cid && <span>CID: {medicalHistory.cid}</span>}
+            {medicalHistory.ciap && <span>CIAP: {medicalHistory.ciap}</span>}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
