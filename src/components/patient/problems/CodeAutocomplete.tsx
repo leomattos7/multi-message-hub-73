@@ -5,11 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface CodeOption {
-  code: string;
-  description: string;
-}
+import { CodeOption } from "@/types/problem";
 
 interface CodeAutocompleteProps {
   placeholder: string;
@@ -20,7 +16,7 @@ interface CodeAutocompleteProps {
 
 export const CodeAutocomplete = ({
   placeholder,
-  value,
+  value = "", // Ensure value is never undefined
   onChange,
   options = [], // Provide a default empty array when options is undefined
 }: CodeAutocompleteProps) => {
@@ -28,18 +24,24 @@ export const CodeAutocomplete = ({
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Ensure options is always an array
-  const safeOptions = Array.isArray(options) ? options : [];
+  // Ensure options is always an array of valid CodeOption objects
+  const safeOptions = Array.isArray(options) 
+    ? options.filter(option => option && typeof option === 'object' && 'code' in option && 'description' in option)
+    : [];
 
   // Filter options based on search query
-  const filteredOptions = safeOptions.filter((option) =>
-    option.code.toLowerCase().includes(search.toLowerCase()) ||
-    option.description.toLowerCase().includes(search.toLowerCase())
-  ).slice(0, 5); // Limit to 5 results
+  const filteredOptions = safeOptions
+    .filter((option) =>
+      option.code.toLowerCase().includes(search.toLowerCase()) ||
+      option.description.toLowerCase().includes(search.toLowerCase())
+    )
+    .slice(0, 5); // Limit to 5 results
 
   // Set search when value changes
   useEffect(() => {
-    setSearch(value);
+    if (value !== undefined) {
+      setSearch(value);
+    }
   }, [value]);
 
   return (
@@ -48,7 +50,7 @@ export const CodeAutocomplete = ({
         <div className="relative w-full">
           <Input
             ref={inputRef}
-            value={value}
+            value={value || ""}
             onChange={(e) => {
               onChange(e.target.value);
               setSearch(e.target.value);
@@ -66,7 +68,7 @@ export const CodeAutocomplete = ({
           <CommandInput 
             placeholder="Pesquisar..." 
             value={search} 
-            onValueChange={setSearch}
+            onValueChange={(value) => setSearch(value || "")}
             className="h-9"
           />
           <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
@@ -76,7 +78,7 @@ export const CodeAutocomplete = ({
                 key={option.code}
                 value={option.code}
                 onSelect={(currentValue) => {
-                  onChange(currentValue);
+                  onChange(currentValue || "");
                   setOpen(false);
                 }}
                 className="flex items-center"

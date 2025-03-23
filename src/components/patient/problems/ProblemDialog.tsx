@@ -27,11 +27,11 @@ interface ProblemDialogProps {
 export const ProblemDialog = ({
   isOpen,
   onOpenChange,
-  newProblem,
+  newProblem = "", // Ensure these have default values
   setNewProblem,
-  problemCID,
+  problemCID = "",
   setProblemCID,
-  problemCIAP,
+  problemCIAP = "",
   setProblemCIAP,
   onAdd,
 }: ProblemDialogProps) => {
@@ -44,13 +44,13 @@ export const ProblemDialog = ({
         <div className="space-y-3 py-2">
           <Input 
             placeholder="Nome do problema/diagnóstico" 
-            value={newProblem}
+            value={newProblem || ""}
             onChange={(e) => setNewProblem(e.target.value)}
           />
           <div className="space-y-1">
             <CodeAutocomplete
               placeholder="CID (opcional)"
-              value={problemCID}
+              value={problemCID || ""}
               onChange={setProblemCID}
               options={cidCodes}
             />
@@ -58,7 +58,7 @@ export const ProblemDialog = ({
           <div className="space-y-1">
             <CodeAutocomplete
               placeholder="CIAP (opcional)"
-              value={problemCIAP}
+              value={problemCIAP || ""}
               onChange={setProblemCIAP}
               options={ciapCodes}
             />

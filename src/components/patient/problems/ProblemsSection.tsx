@@ -39,8 +39,8 @@ export const ProblemsSection = ({ patientId }: ProblemsSectionProps) => {
 
     const problemData = {
       name: newProblem,
-      cid: problemCID,
-      ciap: problemCIAP
+      cid: problemCID || "",
+      ciap: problemCIAP || ""
     };
 
     try {
