@@ -8,6 +8,7 @@ export type PatientSummaryItemType =
   | "medications" 
   | "problems" 
   | "exams" 
+  | "allergies"
   | "personalHistory"
   | "familyHistory";
 
@@ -39,6 +40,11 @@ export const PatientSummaryItem: React.FC<PatientSummaryItemProps> = ({
         return { 
           title: "Últimos Exames", 
           icon: <FileSearch className="h-5 w-5 text-purple-500" /> 
+        };
+      case "allergies":
+        return { 
+          title: "Alergias", 
+          icon: <AlertTriangle className="h-5 w-5 text-red-500" /> 
         };
       case "personalHistory":
         return { 
