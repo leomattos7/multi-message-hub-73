@@ -13,7 +13,9 @@ import {
   Plus,
   MapPin,
   ClipboardEdit,
-  Info
+  Info,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,6 +41,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Define interfaces for our data
 interface Patient {
@@ -72,6 +76,13 @@ export default function PatientMedicalRecords() {
   const [recordContent, setRecordContent] = useState("");
   const [recordType, setRecordType] = useState("anamnesis");
   const [editPatientData, setEditPatientData] = useState<Patient | null>(null);
+  const [isInfoOpen, setIsInfoOpen] = useState(true);
+  const isMobile = useIsMobile();
+
+  // Automatically collapse on mobile devices
+  React.useEffect(() => {
+    setIsInfoOpen(!isMobile);
+  }, [isMobile]);
 
   // Fetch patient details
   const { data: patient, isLoading: patientLoading, refetch: refetchPatient } = useQuery({
@@ -495,98 +506,118 @@ export default function PatientMedicalRecords() {
       </Dialog>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Patient Info Card */}
+        {/* Patient Info Card - Now Collapsible */}
         <Card className="md:col-span-1">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Informações do Paciente</CardTitle>
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Info className="h-5 w-5 text-blue-500" />
-                    <span className="sr-only">Informações adicionais</span>
-                  </Button>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-80">
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold">Informações Pessoais</h4>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Idade:</span>
-                      <span className="text-sm font-medium">
-                        {patient.birth_date ? `${calculateAge(patient.birth_date)} anos` : 'Não informado'}
+          <Collapsible open={isInfoOpen} onOpenChange={setIsInfoOpen} className="w-full">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle>Informações do Paciente</CardTitle>
+                <div className="flex items-center">
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Info className="h-5 w-5 text-blue-500" />
+                        <span className="sr-only">Informações adicionais</span>
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-80">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-semibold">Informações Pessoais</h4>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Idade:</span>
+                          <span className="text-sm font-medium">
+                            {patient.birth_date ? `${calculateAge(patient.birth_date)} anos` : 'Não informado'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Data de Nascimento:</span>
+                          <span className="text-sm font-medium">{formatBirthDate(patient.birth_date)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Sexo Biológico:</span>
+                          <span className="text-sm font-medium">
+                            {patient.biological_sex === 'male' ? 'Masculino' : 
+                             patient.biological_sex === 'female' ? 'Feminino' : 
+                             patient.biological_sex === 'intersex' ? 'Intersexo' : 'Não informado'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Identidade de Gênero:</span>
+                          <span className="text-sm font-medium">
+                            {patient.gender_identity === 'man' ? 'Homem' : 
+                             patient.gender_identity === 'woman' ? 'Mulher' : 
+                             patient.gender_identity === 'non_binary' ? 'Não-Binário' : 
+                             patient.gender_identity === 'other' ? 'Outro' : 'Não informado'}
+                          </span>
+                        </div>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                  
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="ml-1 p-0 h-9 w-9">
+                      {isInfoOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">
+                        {isInfoOpen ? "Fechar informações" : "Abrir informações"}
                       </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Data de Nascimento:</span>
-                      <span className="text-sm font-medium">{formatBirthDate(patient.birth_date)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Sexo Biológico:</span>
-                      <span className="text-sm font-medium">
-                        {patient.biological_sex === 'male' ? 'Masculino' : 
-                         patient.biological_sex === 'female' ? 'Feminino' : 
-                         patient.biological_sex === 'intersex' ? 'Intersexo' : 'Não informado'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Identidade de Gênero:</span>
-                      <span className="text-sm font-medium">
-                        {patient.gender_identity === 'man' ? 'Homem' : 
-                         patient.gender_identity === 'woman' ? 'Mulher' : 
-                         patient.gender_identity === 'non_binary' ? 'Não-Binário' : 
-                         patient.gender_identity === 'other' ? 'Outro' : 'Não informado'}
-                      </span>
-                    </div>
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CollapsibleContent>
+              <CardContent className="space-y-4 pt-2">
+                <div className="space-y-1">
+                  <div className="flex items-center text-sm">
+                    <User className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="font-medium">{patient.name}</span>
                   </div>
-                </HoverCardContent>
-              </HoverCard>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1">
-              <div className="flex items-center text-sm">
-                <User className="h-4 w-4 mr-2 text-gray-500" />
-                <span className="font-medium">{patient.name}</span>
-              </div>
-              
-              {patient.email && (
-                <div className="flex items-center text-sm">
-                  <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>{patient.email}</span>
+                  
+                  {patient.email && (
+                    <div className="flex items-center text-sm">
+                      <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                      <span>{patient.email}</span>
+                    </div>
+                  )}
+                  
+                  {patient.phone && (
+                    <div className="flex items-center text-sm">
+                      <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                      <span>{patient.phone}</span>
+                    </div>
+                  )}
+                  
+                  {patient.address && (
+                    <div className="flex items-center text-sm">
+                      <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                      <span>{patient.address}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              
-              {patient.phone && (
-                <div className="flex items-center text-sm">
-                  <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>{patient.phone}</span>
+                
+                {patient.notes && (
+                  <div className="pt-2 border-t">
+                    <h3 className="text-sm font-medium flex items-center mb-1">
+                      <ClipboardEdit className="h-4 w-4 mr-2 text-gray-500" />
+                      Anotações
+                    </h3>
+                    <p className="text-sm text-gray-700">{patient.notes}</p>
+                  </div>
+                )}
+                
+                <div className="pt-2">
+                  <Button className="w-full" variant="outline" onClick={handleEditPatient}>
+                    Editar Dados do Paciente
+                  </Button>
                 </div>
-              )}
-              
-              {patient.address && (
-                <div className="flex items-center text-sm">
-                  <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>{patient.address}</span>
-                </div>
-              )}
-            </div>
-            
-            {patient.notes && (
-              <div className="pt-2 border-t">
-                <h3 className="text-sm font-medium flex items-center mb-1">
-                  <ClipboardEdit className="h-4 w-4 mr-2 text-gray-500" />
-                  Anotações
-                </h3>
-                <p className="text-sm text-gray-700">{patient.notes}</p>
-              </div>
-            )}
-            
-            <div className="pt-2">
-              <Button className="w-full" variant="outline" onClick={handleEditPatient}>
-                Editar Dados do Paciente
-              </Button>
-            </div>
-          </CardContent>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
         
         {/* Records Section */}
