@@ -7,6 +7,7 @@ export type Appointment = {
   patient_id: string;
   date: string;
   time: string;
+  end_time?: string; // Add end_time as optional field
   type: string;
   status: string;
   payment_method?: string;

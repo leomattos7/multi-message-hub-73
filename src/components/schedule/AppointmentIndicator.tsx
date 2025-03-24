@@ -46,6 +46,11 @@ export const getStatusDetails = (status: string) => {
 const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }: AppointmentIndicatorProps) => {
   const { icon: StatusIcon, color, gradient } = getStatusDetails(appointment.status);
   
+  // Format the time display to show start and end (if available)
+  const timeDisplay = appointment.end_time 
+    ? `${appointment.time.substring(0, 5)} - ${appointment.end_time.substring(0, 5)}`
+    : appointment.time.substring(0, 5);
+  
   if (compact) {
     return (
       <TooltipProvider>
@@ -58,7 +63,7 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
             )} />
           </TooltipTrigger>
           <TooltipContent side="right" className="bg-white/95 backdrop-blur-sm border shadow-lg rounded-lg p-2">
-            <p className="font-medium">{appointment.time} - {appointment.patient?.name}</p>
+            <p className="font-medium">{timeDisplay} - {appointment.patient?.name}</p>
             <div className="flex items-center gap-1 mt-1">
               <StatusIcon className="h-3 w-3" />
               <p className="text-xs capitalize">{appointment.status}</p>
@@ -83,7 +88,7 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
         <div className="flex-1 overflow-hidden">
           <div className="font-medium truncate">{appointment.patient?.name}</div>
           <div className="text-[10px] flex items-center gap-1">
-            <span className="font-medium">{appointment.time}</span> 
+            <span className="font-medium">{timeDisplay}</span> 
             <span className="opacity-60">•</span> 
             <span>{appointment.type}</span>
           </div>

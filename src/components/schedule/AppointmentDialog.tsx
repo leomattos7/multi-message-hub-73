@@ -11,12 +11,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { Appointment } from "@/hooks/use-appointments";
+import { TimeRangeSelector } from "@/components/TimeRangeSelector";
 
 interface AppointmentDialogProps {
   date: Date;
   time: string | null;
   onClose: () => void;
-  appointment?: Appointment; // Add this for editing mode
+  appointment?: Appointment;
 }
 
 const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDialogProps) => {
@@ -25,6 +26,8 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
   const [type, setType] = useState("Consulta");
   const [paymentMethod, setPaymentMethod] = useState("insurance");
   const [notes, setNotes] = useState("");
+  const [startTime, setStartTime] = useState(time || "08:00");
+  const [endTime, setEndTime] = useState("09:00");
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   
@@ -36,8 +39,24 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
       setType(appointment.type);
       setPaymentMethod(appointment.payment_method || "insurance");
       setNotes(appointment.notes || "");
+      setStartTime(appointment.time);
+      setEndTime(appointment.end_time || calculateEndTime(appointment.time));
     }
   }, [appointment]);
+
+  // Calculate default end time (1 hour after start time)
+  const calculateEndTime = (startTimeStr: string): string => {
+    const [hours, minutes] = startTimeStr.split(':').map(Number);
+    let endHours = hours + 1;
+    if (endHours >= 24) endHours = 23;
+    return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+  
+  // Handle time range changes
+  const handleTimeChange = (newStartTime: string, newEndTime: string) => {
+    setStartTime(newStartTime);
+    setEndTime(newEndTime);
+  };
   
   const handleSubmit = async () => {
     if (!patientName.trim()) {
@@ -58,7 +77,8 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
             status: status,
             payment_method: paymentMethod,
             notes: notes,
-            time: time || appointment.time
+            time: startTime,
+            end_time: endTime
           })
           .eq('id', appointment.id);
           
@@ -112,7 +132,8 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
           .insert({
             patient_id: patientId,
             date: formattedDate,
-            time: time || "08:00",
+            time: startTime,
+            end_time: endTime,
             type: type,
             status: status,
             payment_method: paymentMethod,
@@ -125,7 +146,7 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
           return;
         }
         
-        toast.success(`Consulta agendada para ${format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} às ${time}`);
+        toast.success(`Consulta agendada para ${format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} das ${startTime} às ${endTime}`);
       }
       
       // Invalidate queries to refresh the data
@@ -152,10 +173,16 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
           <p className="font-medium mb-1">Data:</p>
           <p>{format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
         </div>
+        
         <div>
-          <p className="font-medium mb-1">Horário:</p>
-          <p>{time || (appointment ? appointment.time : "")}</p>
+          <p className="font-medium mb-1">Horário da Consulta:</p>
+          <TimeRangeSelector 
+            startTime={startTime} 
+            endTime={endTime} 
+            onTimeChange={handleTimeChange}
+          />
         </div>
+        
         <div>
           <label htmlFor="patientName" className="font-medium mb-1 block">Nome do Paciente:</label>
           <Input 
