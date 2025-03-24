@@ -19,6 +19,7 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMeasurement, setSelectedMeasurement] = useState<CalculatedMeasurement | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   
   if (measurements.length === 0) {
     return null;
@@ -50,16 +51,21 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
       return;
     }
     
-    const success = await saveMeasurement(
-      patientId,
-      selectedMeasurement.name,
-      numValue,
-      selectedMeasurement.unit
-    );
-    
-    if (success) {
-      setIsDialogOpen(false);
-      onMeasurementUpdated();
+    setIsSaving(true);
+    try {
+      const success = await saveMeasurement(
+        patientId,
+        selectedMeasurement.name,
+        numValue,
+        selectedMeasurement.unit
+      );
+      
+      if (success) {
+        setIsDialogOpen(false);
+        onMeasurementUpdated();
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -72,17 +78,20 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
           let colorClass = "";
           let isReadOnly = false;
           
-          if (measurement.name === "IMC" && typeof measurement.value === "number") {
+          if (measurement.name === "imc" && typeof measurement.value === "number") {
             const classification = getBMIClassification(measurement.value);
             colorClass = classification?.color || "";
             isReadOnly = true; // BMI is calculated and should be read-only
           }
           
+          // Format the display name
+          const displayName = MEASUREMENT_DISPLAY_NAMES[measurement.name] || measurement.name;
+          
           return (
             <Card key={index} className="border-gray-200">
               <CardContent className="p-4">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">{measurement.name}</span>
+                  <span className="font-medium">{displayName}</span>
                   <div className="flex items-center space-x-2">
                     <span className={colorClass}>
                       {measurement.value} {measurement.unit}
@@ -107,12 +116,13 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
         <MeasurementDialog
           isOpen={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          measurementName={selectedMeasurement.name}
+          measurementName={MEASUREMENT_DISPLAY_NAMES[selectedMeasurement.name] || selectedMeasurement.name}
           measurementValue={editValue}
           measurementUnit={selectedMeasurement.unit}
           setMeasurementValue={setEditValue}
           onSave={handleSaveMeasurement}
-          isReadOnly={selectedMeasurement.name === "IMC"} // IMC is calculated and should be read-only
+          isReadOnly={selectedMeasurement.name === "imc"} // IMC is calculated and should be read-only
+          isSaving={isSaving}
         />
       )}
     </div>

@@ -67,7 +67,10 @@ export const saveMeasurement = async (
       .eq("name", name.toLowerCase())
       .maybeSingle();
     
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error("Erro ao verificar medição existente:", fetchError);
+      throw fetchError;
+    }
     
     let result;
     
@@ -96,7 +99,10 @@ export const saveMeasurement = async (
         ]);
     }
 
-    if (result.error) throw result.error;
+    if (result.error) {
+      console.error("Erro na operação de banco de dados:", result.error);
+      throw result.error;
+    }
     
     toast({
       title: "Sucesso",

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ interface MeasurementDialogProps {
   setMeasurementValue: (value: string) => void;
   onSave: () => void;
   isReadOnly?: boolean;
+  isSaving?: boolean;
 }
 
 export const MeasurementDialog = ({
@@ -31,18 +32,8 @@ export const MeasurementDialog = ({
   setMeasurementValue,
   onSave,
   isReadOnly = false,
+  isSaving = false,
 }: MeasurementDialogProps) => {
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await onSave();
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -94,7 +85,7 @@ export const MeasurementDialog = ({
         </div>
         {!isReadOnly && (
           <DialogFooter>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={onSave} disabled={isSaving}>
               {isSaving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
