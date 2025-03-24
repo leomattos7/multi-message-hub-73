@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { EmptyStateDisplay } from "./EmptyStateDisplay";
-import { FileText, Plus, Check, Square, SquareCheck } from "lucide-react";
+import { FileText, Plus, Square, SquareCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
@@ -58,6 +58,12 @@ export const TasksTab: React.FC = () => {
     });
   };
 
+  // Sort tasks: incomplete first, completed last
+  const sortedTasks = [...tasks].sort((a, b) => {
+    if (a.completed === b.completed) return 0;
+    return a.completed ? 1 : -1;
+  });
+
   if (tasks.length === 0) {
     return (
       <div className="space-y-6">
@@ -88,8 +94,22 @@ export const TasksTab: React.FC = () => {
       <div className="space-y-4">
         <h3 className="font-medium text-lg">Tarefas do paciente</h3>
         
+        {/* Input field at the top of the list */}
+        <div className="flex gap-2 mb-4">
+          <Input
+            value={newTaskText}
+            onChange={(e) => setNewTaskText(e.target.value)}
+            placeholder="Digite uma nova tarefa"
+            onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+          />
+          <Button onClick={handleAddTask} className="shrink-0">
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar
+          </Button>
+        </div>
+        
         <ul className="space-y-3">
-          {tasks.map((task) => (
+          {sortedTasks.map((task) => (
             <li 
               key={task.id} 
               className="flex items-start gap-2 p-3 border rounded-md hover:bg-gray-50 group"
@@ -142,19 +162,6 @@ export const TasksTab: React.FC = () => {
             </li>
           ))}
         </ul>
-      </div>
-      
-      <div className="flex gap-2">
-        <Input
-          value={newTaskText}
-          onChange={(e) => setNewTaskText(e.target.value)}
-          placeholder="Digite uma nova tarefa"
-          onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
-        />
-        <Button onClick={handleAddTask} className="shrink-0">
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar
-        </Button>
       </div>
     </div>
   );
