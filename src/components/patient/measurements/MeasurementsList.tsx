@@ -7,6 +7,7 @@ import { CalculatedMeasurement } from "@/types/measurement";
 import { MEASUREMENT_DISPLAY_NAMES, getBMIClassification } from "./constants";
 import { MeasurementDialog } from "./MeasurementDialog";
 import { saveMeasurement } from "@/services/measurements-service";
+import { toast } from "@/components/ui/use-toast";
 
 interface MeasurementsListProps {
   measurements: CalculatedMeasurement[];
@@ -30,10 +31,24 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
   };
 
   const handleSaveMeasurement = async () => {
-    if (!selectedMeasurement || !patientId) return;
+    if (!selectedMeasurement || !patientId) {
+      toast({
+        title: "Erro",
+        description: "Dados inválidos para salvar",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const numValue = parseFloat(editValue);
-    if (isNaN(numValue)) return;
+    if (isNaN(numValue)) {
+      toast({
+        title: "Erro",
+        description: "O valor deve ser um número válido",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const success = await saveMeasurement(
       patientId,

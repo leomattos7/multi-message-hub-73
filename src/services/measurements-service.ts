@@ -47,6 +47,18 @@ export const saveMeasurement = async (
   }
 
   try {
+    // Get the authenticated user to ensure we have auth context
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
     // First check if this measurement already exists
     const { data: existingMeasurement, error: fetchError } = await supabase
       .from("measurements")

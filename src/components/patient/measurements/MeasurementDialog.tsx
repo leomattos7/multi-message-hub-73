@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 interface MeasurementDialogProps {
@@ -31,6 +32,17 @@ export const MeasurementDialog = ({
   onSave,
   isReadOnly = false,
 }: MeasurementDialogProps) => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -38,6 +50,11 @@ export const MeasurementDialog = ({
           <DialogTitle>
             {isReadOnly ? "Visualizar" : "Editar"} Medição
           </DialogTitle>
+          <DialogDescription>
+            {isReadOnly 
+              ? "Esta medição é calculada automaticamente e não pode ser editada."
+              : "Atualize o valor da medição abaixo."}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div>
@@ -77,8 +94,8 @@ export const MeasurementDialog = ({
         </div>
         {!isReadOnly && (
           <DialogFooter>
-            <Button onClick={onSave}>
-              Salvar
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         )}
