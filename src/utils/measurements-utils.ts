@@ -8,13 +8,19 @@ import { MEASUREMENT_DISPLAY_NAMES, MEASUREMENT_NAMES, MEASUREMENT_UNITS } from 
  * @returns Calculated BMI value or null if inputs are invalid
  */
 export const calculateBMI = (weight: number | null, height: number | null): number | null => {
-  if (weight && height && height > 0) {
-    // Convert height from cm to m
-    const heightInMeters = height / 100;
-    const bmiValue = weight / (heightInMeters * heightInMeters);
-    return parseFloat(bmiValue.toFixed(1)); // Display with 1 decimal place
+  // Make sure we have valid values
+  if (!weight || !height || height <= 0 || weight <= 0) {
+    return null;
   }
-  return null;
+  
+  console.log("Calculating BMI with:", { weight, height });
+  
+  // Convert height from cm to m
+  const heightInMeters = height / 100;
+  const bmiValue = weight / (heightInMeters * heightInMeters);
+  
+  // Limit to 1 decimal place
+  return parseFloat(bmiValue.toFixed(1));
 };
 
 /**
@@ -27,6 +33,14 @@ export const formatAllMeasurements = (
   bmi: number | null,
   customMeasurements: { name: string; value: number | string; unit: string }[]
 ) => {
+  console.log("Formatting measurements:", { 
+    weight, 
+    height, 
+    abdominalCircumference, 
+    bmi, 
+    customMeasurements 
+  });
+  
   const standardMeasurements = [
     { 
       name: MEASUREMENT_NAMES.WEIGHT, 

@@ -20,7 +20,10 @@ export const usePatientMeasurements = (patientId?: string) => {
   });
 
   // Calculate BMI using the utility function
-  const bmi = useMemo(() => calculateBMI(weight, height), [weight, height]);
+  const bmi = useMemo(() => {
+    console.log("BMI calculation triggered with:", { weight, height });
+    return calculateBMI(weight, height);
+  }, [weight, height]);
 
   // Fetch measurements
   const { data: measurements, isLoading, refetch } = useQuery({
@@ -32,12 +35,14 @@ export const usePatientMeasurements = (patientId?: string) => {
   // Initialize state from measurements data
   useEffect(() => {
     if (measurements && measurements.length > 0) {
+      console.log("Measurements loaded:", measurements);
+      
       // Find standard measurements
       const weightMeasurement = measurements.find(m => m.name === MEASUREMENT_NAMES.WEIGHT);
       const heightMeasurement = measurements.find(m => m.name === MEASUREMENT_NAMES.HEIGHT);
       const abdominalMeasurement = measurements.find(m => m.name === MEASUREMENT_NAMES.ABDOMINAL);
       
-      // Set standard measurements
+      // Set standard measurements - ensure they're parsed as numbers
       if (weightMeasurement) setWeight(Number(weightMeasurement.value));
       if (heightMeasurement) setHeight(Number(heightMeasurement.value));
       if (abdominalMeasurement) setAbdominalCircumference(Number(abdominalMeasurement.value));
@@ -70,6 +75,7 @@ export const usePatientMeasurements = (patientId?: string) => {
       return;
     }
     
+    console.log("Updating measurement:", { name, value, unit });
     const success = await saveMeasurement(patientId, name, value, unit);
     if (success) {
       await refetch();
@@ -112,9 +118,11 @@ export const usePatientMeasurements = (patientId?: string) => {
   };
 
   // All measurements combined for display
-  const allMeasurements = useMemo(() => 
-    formatAllMeasurements(weight, height, abdominalCircumference, bmi, customMeasurements),
-  [weight, height, abdominalCircumference, bmi, customMeasurements]);
+  const allMeasurements = useMemo(() => {
+    const result = formatAllMeasurements(weight, height, abdominalCircumference, bmi, customMeasurements);
+    console.log("All measurements formatted:", result);
+    return result;
+  }, [weight, height, abdominalCircumference, bmi, customMeasurements]);
 
   return {
     weight,
@@ -125,16 +133,25 @@ export const usePatientMeasurements = (patientId?: string) => {
     allMeasurements,
     isLoading,
     setWeight: (value: number | null) => {
-      setWeight(value);
-      if (value !== null) updateMeasurement(MEASUREMENT_NAMES.WEIGHT, value, MEASUREMENT_UNITS.WEIGHT);
+      const numericValue = value !== null ? Number(value) : null;
+      setWeight(numericValue);
+      if (numericValue !== null) {
+        updateMeasurement(MEASUREMENT_NAMES.WEIGHT, numericValue, MEASUREMENT_UNITS.WEIGHT);
+      }
     },
     setHeight: (value: number | null) => {
-      setHeight(value);
-      if (value !== null) updateMeasurement(MEASUREMENT_NAMES.HEIGHT, value, MEASUREMENT_UNITS.HEIGHT);
+      const numericValue = value !== null ? Number(value) : null;
+      setHeight(numericValue);
+      if (numericValue !== null) {
+        updateMeasurement(MEASUREMENT_NAMES.HEIGHT, numericValue, MEASUREMENT_UNITS.HEIGHT);
+      }
     },
     setAbdominalCircumference: (value: number | null) => {
-      setAbdominalCircumference(value);
-      if (value !== null) updateMeasurement(MEASUREMENT_NAMES.ABDOMINAL, value, MEASUREMENT_UNITS.ABDOMINAL);
+      const numericValue = value !== null ? Number(value) : null;
+      setAbdominalCircumference(numericValue);
+      if (numericValue !== null) {
+        updateMeasurement(MEASUREMENT_NAMES.ABDOMINAL, numericValue, MEASUREMENT_UNITS.ABDOMINAL);
+      }
     },
     isAddingMeasurement,
     setIsAddingMeasurement,

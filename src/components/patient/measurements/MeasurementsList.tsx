@@ -27,6 +27,7 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
 
   const handleEditClick = (measurement: CalculatedMeasurement) => {
     setSelectedMeasurement(measurement);
+    // Convert value to string for the dialog input
     setEditValue(measurement.value.toString());
     setIsDialogOpen(true);
   };
@@ -59,6 +60,13 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
     
     setIsSaving(true);
     try {
+      console.log("Saving measurement from dialog:", {
+        patientId,
+        name: selectedMeasurement.name,
+        value: numValue,
+        unit: selectedMeasurement.unit
+      });
+      
       const success = await saveMeasurement(
         patientId,
         selectedMeasurement.name,

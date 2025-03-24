@@ -69,6 +69,14 @@ export const saveMeasurement = async (
       return false;
     }
     
+    console.log("Saving measurement:", {
+      patientId,
+      name,
+      value,
+      unit,
+      doctorId: user.id
+    });
+    
     // First check if this measurement already exists
     const { data: existingMeasurement, error: fetchError } = await supabase
       .from("measurements")
@@ -92,6 +100,7 @@ export const saveMeasurement = async (
           value: value,
           unit: unit,
           date: new Date().toISOString(),
+          doctor_id: user.id // Add doctor_id to update
         })
         .eq("id", existingMeasurement.id);
     } else {
@@ -105,6 +114,7 @@ export const saveMeasurement = async (
             value: value,
             unit: unit,
             date: new Date().toISOString(),
+            doctor_id: user.id // Add doctor_id to insert
           }
         ]);
     }
