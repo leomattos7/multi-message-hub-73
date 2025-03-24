@@ -23,13 +23,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Create example data to be added when a doctor signs up
 const createExampleData = () => {
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
   
-  // Example patient for contacts and inbox
   const examplePatient = {
     id: "example-patient-1",
     name: "Maria Oliveira (Exemplo)",
@@ -40,7 +38,6 @@ const createExampleData = () => {
     birth_date: "1985-06-15"
   };
   
-  // Example appointment
   const exampleAppointment = {
     id: "example-appointment-1",
     patientId: examplePatient.id,
@@ -52,7 +49,6 @@ const createExampleData = () => {
     notes: "Primeira consulta - PACIENTE DE EXEMPLO"
   };
   
-  // Example conversation
   const exampleConversation = {
     id: "example-conversation-1",
     contact: {
@@ -100,10 +96,8 @@ export default function SignUp() {
     setIsLoading(true);
     
     try {
-      // Create example data for the new doctor
       const exampleData = createExampleData();
       
-      // Store user in localStorage
       const user = {
         id: "user-" + Math.random().toString(36).substr(2, 9),
         email: data.email || "",
@@ -114,7 +108,6 @@ export default function SignUp() {
       
       localStorage.setItem("user", JSON.stringify(user));
       
-      // Store example data in localStorage
       const existingPatients = JSON.parse(localStorage.getItem("patients") || "[]");
       existingPatients.push(exampleData.patient);
       localStorage.setItem("patients", JSON.stringify(existingPatients));
@@ -128,7 +121,7 @@ export default function SignUp() {
       localStorage.setItem("conversations", JSON.stringify(existingConversations));
       
       toast.success("Conta criada com sucesso! Um paciente de exemplo foi adicionado para demonstração.");
-      navigate("/secretaria");
+      navigate("/");
     } catch (error) {
       console.error("Registration error:", error);
       toast.error("Erro ao criar conta. Tente novamente.");

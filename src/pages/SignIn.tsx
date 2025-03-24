@@ -48,7 +48,7 @@ export default function SignIn() {
         }));
         
         toast.success("Login realizado com sucesso!");
-        navigate("/secretaria");
+        navigate("/"); // Changed from /secretaria to / (index page)
       }, 1000);
     } catch (error) {
       console.error("Login error:", error);
