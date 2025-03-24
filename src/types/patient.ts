@@ -10,6 +10,10 @@ export interface Patient {
   biological_sex?: string;
   gender_identity?: string;
   cpf?: string;
+  payment_method?: string;
+  insurance_name?: string;
+  lastMessageDate?: Date | null;
+  lastAppointmentDate?: Date | null;
 }
 
 export interface MedicalRecord {
