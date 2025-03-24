@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { SectionType, useCollapsibleSections } from "@/hooks/use-collapsible-sections";
@@ -14,6 +14,32 @@ export function CollapsibleSectionsContainer({
   renderSectionContent
 }: CollapsibleSectionsContainerProps) {
   const { sections, expandedSections, toggleSection, reorderSections } = useCollapsibleSections(patientId);
+
+  // Force refresh of localStorage data
+  useEffect(() => {
+    if (patientId) {
+      const storedSections = localStorage.getItem(`patient-${patientId}-sections-order`);
+      if (storedSections) {
+        try {
+          const parsedSections = JSON.parse(storedSections);
+          // Update any old "Medicações Atuais" title to "Medições"
+          const updatedSections = parsedSections.map((section: any) => {
+            if (section.id === "medicoes" && section.title !== "Medições") {
+              return { ...section, title: "Medições" };
+            }
+            return section;
+          });
+          
+          // Only update if changes were made
+          if (JSON.stringify(parsedSections) !== JSON.stringify(updatedSections)) {
+            localStorage.setItem(`patient-${patientId}-sections-order`, JSON.stringify(updatedSections));
+          }
+        } catch (error) {
+          console.error("Erro ao processar ordem das seções:", error);
+        }
+      }
+    }
+  }, [patientId]);
 
   const handleDragEnd = (result: DropResult) => {
     // Descarta resultados onde não há destino
