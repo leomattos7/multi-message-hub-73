@@ -45,11 +45,32 @@ export const RecordContent: React.FC<RecordContentProps> = ({
 
     // Extract subsections from the Plan section if they exist
     const planSection = sections[3];
-    const planSubsections = [];
     
+    // First, check if there are general plan notes before any subsection
+    let generalPlanNotes = "";
     const subSectionTitles = ["**Receitas:**", "**Atestados:**", "**Orientações:**", "**Tarefas:**", "**Exames:**"];
     
-    if (planSection.content.includes(subSectionTitles[0])) {
+    // Find the first subsection marker if it exists
+    const firstSubsectionIdx = subSectionTitles.reduce((minIdx, title) => {
+      const idx = planSection.content.indexOf(title);
+      if (idx === -1) return minIdx;
+      return minIdx === -1 || idx < minIdx ? idx : minIdx;
+    }, -1);
+    
+    // Extract general plan notes if they exist
+    if (firstSubsectionIdx !== -1) {
+      generalPlanNotes = planSection.content.substring(0, firstSubsectionIdx).trim();
+      planSection.content = planSection.content.substring(firstSubsectionIdx);
+    }
+    
+    const planSubsections = [];
+    
+    if (planSection.content.includes(subSectionTitles[0]) || 
+        planSection.content.includes(subSectionTitles[1]) || 
+        planSection.content.includes(subSectionTitles[2]) || 
+        planSection.content.includes(subSectionTitles[3]) || 
+        planSection.content.includes(subSectionTitles[4])) {
+      
       for (let i = 0; i < subSectionTitles.length; i++) {
         const currentSubsection = subSectionTitles[i];
         const nextSubsection = i < subSectionTitles.length - 1 ? subSectionTitles[i + 1] : null;
@@ -83,6 +104,11 @@ export const RecordContent: React.FC<RecordContentProps> = ({
         <Card className="overflow-hidden">
           <div className="bg-gray-100 px-4 py-2 font-medium">Plano</div>
           <CardContent className="pt-4">
+            {/* Display general plan notes if they exist */}
+            {generalPlanNotes && (
+              <div className="whitespace-pre-wrap mb-4">{generalPlanNotes}</div>
+            )}
+            
             {planSubsections.length > 0 ? (
               <div className="space-y-4">
                 {planSubsections.map((subsection) => (
@@ -93,7 +119,7 @@ export const RecordContent: React.FC<RecordContentProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="whitespace-pre-wrap">{sections[3].content || "Não informado"}</div>
+              !generalPlanNotes && <div className="whitespace-pre-wrap">{sections[3].content || "Não informado"}</div>
             )}
           </CardContent>
         </Card>

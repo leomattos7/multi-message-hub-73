@@ -14,6 +14,7 @@ interface PlanTabsSectionProps {
     tasks: string;
     exams: string;
   };
+  planNotes: string; // Added this field
   onChange: (field: string, value: any) => void;
   activePlanTab: string;
   setActivePlanTab: (tab: string) => void;
@@ -21,6 +22,7 @@ interface PlanTabsSectionProps {
 
 export const PlanTabsSection: React.FC<PlanTabsSectionProps> = ({
   plan,
+  planNotes, // Use this field
   onChange,
   activePlanTab,
   setActivePlanTab,
@@ -30,6 +32,16 @@ export const PlanTabsSection: React.FC<PlanTabsSectionProps> = ({
       <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-1">
         Plano
       </label>
+      
+      {/* Add the general plan notes field */}
+      <Textarea
+        id="plan-notes"
+        placeholder="Anotações gerais do plano..."
+        value={planNotes}
+        onChange={(e) => onChange("planNotes", e.target.value)}
+        className="min-h-[80px] w-full mb-4"
+      />
+      
       <Tabs value={activePlanTab} onValueChange={setActivePlanTab} className="w-full">
         <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="prescriptions" className="flex items-center gap-1">

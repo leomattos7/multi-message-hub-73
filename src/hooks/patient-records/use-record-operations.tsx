@@ -52,6 +52,7 @@ export const useRecordOperations = (patientId?: string, activeTab: string = "tod
         : "";
         
       const planContent = [
+        notes.planNotes && notes.planNotes, // Add the general plan notes to the content
         prescriptionsContent,
         notes.plan.certificates && `**Atestados:**\n${notes.plan.certificates}`,
         notes.plan.guidance && `**Orientações:**\n${notes.plan.guidance}`,

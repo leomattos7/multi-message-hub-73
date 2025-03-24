@@ -11,6 +11,7 @@ export interface SoapNotes {
   subjective: string;
   objective: string;
   assessment: string;
+  planNotes: string; // Added this new field for general plan notes
   plan: {
     prescriptions: Prescription[];
     certificates: string;

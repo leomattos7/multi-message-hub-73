@@ -15,6 +15,7 @@ export const SoapNotesForm: React.FC<SoapNotesFormProps> = ({
     subjective: "",
     objective: "",
     assessment: "",
+    planNotes: "", // Added new field with empty default
     plan: {
       prescriptions: [],
       certificates: "",
@@ -33,14 +34,21 @@ export const SoapNotesForm: React.FC<SoapNotesFormProps> = ({
     }));
   };
 
-  const handlePlanChange = (subfield: keyof SoapNotes["plan"], value: any) => {
-    setNotes(prev => ({
-      ...prev,
-      plan: {
-        ...prev.plan,
-        [subfield]: value
-      }
-    }));
+  const handlePlanChange = (subfield: keyof SoapNotes["plan"] | "planNotes", value: any) => {
+    if (subfield === "planNotes") {
+      setNotes(prev => ({
+        ...prev,
+        planNotes: value
+      }));
+    } else {
+      setNotes(prev => ({
+        ...prev,
+        plan: {
+          ...prev.plan,
+          [subfield]: value
+        }
+      }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,7 +61,8 @@ export const SoapNotesForm: React.FC<SoapNotesFormProps> = ({
     return (
       notes.subjective.trim() !== "" || 
       notes.objective.trim() !== "" || 
-      notes.assessment.trim() !== "" || 
+      notes.assessment.trim() !== "" ||
+      notes.planNotes.trim() !== "" || // Added new field check
       notes.plan.prescriptions.length > 0 ||
       notes.plan.certificates.trim() !== "" ||
       notes.plan.guidance.trim() !== "" ||
@@ -90,7 +99,8 @@ export const SoapNotesForm: React.FC<SoapNotesFormProps> = ({
       
       <PlanTabsSection
         plan={notes.plan}
-        onChange={(field, value) => handlePlanChange(field as keyof SoapNotes["plan"], value)}
+        planNotes={notes.planNotes} // Pass the new field
+        onChange={(field, value) => handlePlanChange(field as keyof SoapNotes["plan"] | "planNotes", value)}
         activePlanTab={activePlanTab}
         setActivePlanTab={setActivePlanTab}
       />
