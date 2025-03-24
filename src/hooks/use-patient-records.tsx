@@ -7,7 +7,7 @@ import { renderPatientSectionContent } from "@/utils/patientSectionContent";
 import { Patient } from "@/types/patient";
 
 export const usePatientRecords = (patientId?: string) => {
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("today");
   const [isNewRecordOpen, setIsNewRecordOpen] = useState(false);
   const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [editPatientData, setEditPatientData] = useState<Patient | null>(null);
@@ -22,7 +22,7 @@ export const usePatientRecords = (patientId?: string) => {
     records, 
     recordsLoading, 
     createRecord 
-  } = usePatientRecordsData(patientId, activeTab);
+  } = usePatientRecordsData(patientId, activeTab === "today" ? "" : "");
 
   const handleEditPatient = () => {
     if (patient) {
@@ -40,6 +40,8 @@ export const usePatientRecords = (patientId?: string) => {
         description: "O prontuário foi criado com sucesso.",
       });
       
+      // Switch to today tab when creating a new record
+      setActiveTab("today");
       setIsNewRecordOpen(false);
     } catch (error) {
       console.error("Error creating record:", error);
