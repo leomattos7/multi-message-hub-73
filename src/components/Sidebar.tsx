@@ -8,6 +8,7 @@ import {
   User,
   Briefcase,
   ClipboardList,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,11 @@ const sidebarItems = [
     name: "Prontuários",
     href: "/prontuarios",
     icon: <ClipboardList />,
+  },
+  {
+    name: "Agenda",
+    href: "/agenda",
+    icon: <Calendar />,
   },
   {
     name: "Funcionários",
