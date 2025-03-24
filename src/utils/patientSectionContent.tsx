@@ -5,6 +5,7 @@ import { MedicationsSection } from "@/components/patient/medications/Medications
 import { ProblemsSection } from "@/components/patient/problems/ProblemsSection";
 import { MedicalHistorySection } from "@/components/patient/medicalHistory/MedicalHistorySection";
 import { LabExamsSection } from "@/components/patient/labExams/LabExamsSection";
+import { MeasurementsSection } from "@/components/patient/measurements/MeasurementsSection";
 
 export const renderPatientSectionContent = (sectionId: SectionType, patientId?: string) => {
   switch (sectionId) {
@@ -15,7 +16,7 @@ export const renderPatientSectionContent = (sectionId: SectionType, patientId?: 
     case "exames":
       return <LabExamsSection patientId={patientId} />;
     case "medicoes":
-      return <p>Medições do paciente</p>;
+      return <MeasurementsSection patientId={patientId} />;
     case "antecedente_pessoal":
       return <MedicalHistorySection patientId={patientId} />;
     case "historico_familiar":
