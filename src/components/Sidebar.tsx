@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Inbox,
   Menu,
@@ -9,10 +9,11 @@ import {
   Briefcase,
   ClipboardList,
   Calendar,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
+import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 // Default navigation items
@@ -47,11 +48,24 @@ const sidebarItems = [
 export function Sidebar() {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(!isMobile);
 
   // Toggle the sidebar on mobile
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    // Remove user data from localStorage
+    localStorage.removeItem("user");
+    
+    // Show success message
+    toast.success("Você saiu com sucesso");
+    
+    // Redirect to login page
+    navigate("/login");
   };
 
   return (
@@ -105,19 +119,16 @@ export function Sidebar() {
             ))}
           </ul>
 
-          {/* Profile */}
+          {/* Logout Button */}
           <div className="pt-4 mt-4 border-t border-gray-200">
-            <div className="px-2 py-3">
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium">Meu Perfil</p>
-                  <p className="text-xs text-gray-500">Ver detalhes</p>
-                </div>
-              </div>
-            </div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start px-2 py-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Sair
+            </Button>
           </div>
         </div>
       </aside>
