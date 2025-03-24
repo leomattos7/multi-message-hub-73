@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowRight, LucideStethoscope } from "lucide-react";
+import { LucideStethoscope } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
@@ -22,60 +23,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-const createExampleData = () => {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  const examplePatient = {
-    id: "example-patient-1",
-    name: "Maria Oliveira (Exemplo)",
-    email: "maria.exemplo@email.com",
-    phone: "(11) 99999-8888",
-    avatar: "https://i.pravatar.cc/150?img=5",
-    cpf: "123.456.789-00",
-    birth_date: "1985-06-15"
-  };
-  
-  const exampleAppointment = {
-    id: "example-appointment-1",
-    patientId: examplePatient.id,
-    patientName: examplePatient.name,
-    time: "14:30",
-    type: "consulta",
-    status: "aguardando",
-    date: tomorrow.toISOString().split('T')[0],
-    notes: "Primeira consulta - PACIENTE DE EXEMPLO"
-  };
-  
-  const exampleConversation = {
-    id: "example-conversation-1",
-    contact: {
-      id: examplePatient.id,
-      name: examplePatient.name,
-      avatar: examplePatient.avatar,
-    },
-    channel: "whatsapp",
-    unread: 1,
-    lastActivity: new Date(),
-    messages: [
-      {
-        id: "msg-1",
-        content: "Olá, gostaria de confirmar minha consulta para amanhã às 14:30. (MENSAGEM DE EXEMPLO)",
-        timestamp: new Date(),
-        isOutgoing: false,
-        status: "delivered",
-      }
-    ]
-  };
-  
-  return {
-    patient: examplePatient,
-    appointment: exampleAppointment,
-    conversation: exampleConversation
-  };
-};
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -96,8 +43,7 @@ export default function SignUp() {
     setIsLoading(true);
     
     try {
-      const exampleData = createExampleData();
-      
+      // Create a new user account without example data
       const user = {
         id: "user-" + Math.random().toString(36).substr(2, 9),
         email: data.email || "",
@@ -106,21 +52,15 @@ export default function SignUp() {
         phone: data.phone || "",
       };
       
+      // Store user in localStorage
       localStorage.setItem("user", JSON.stringify(user));
       
-      const existingPatients = JSON.parse(localStorage.getItem("patients") || "[]");
-      existingPatients.push(exampleData.patient);
-      localStorage.setItem("patients", JSON.stringify(existingPatients));
+      // Initialize empty collections
+      localStorage.setItem("patients", JSON.stringify([]));
+      localStorage.setItem("appointments", JSON.stringify([]));
+      localStorage.setItem("conversations", JSON.stringify([]));
       
-      const existingAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
-      existingAppointments.push(exampleData.appointment);
-      localStorage.setItem("appointments", JSON.stringify(existingAppointments));
-      
-      const existingConversations = JSON.parse(localStorage.getItem("conversations") || "[]");
-      existingConversations.push(exampleData.conversation);
-      localStorage.setItem("conversations", JSON.stringify(existingConversations));
-      
-      toast.success("Conta criada com sucesso! Um paciente de exemplo foi adicionado para demonstração.");
+      toast.success("Conta criada com sucesso!");
       navigate("/");
     } catch (error) {
       console.error("Registration error:", error);
