@@ -13,6 +13,6 @@ export interface SoapNotes {
 }
 
 export interface SoapNotesFormProps {
-  onSave: (notes: SoapNotes) => void;
+  onSave: (notes: SoapNotes) => Promise<boolean> | void;
   isLoading?: boolean;
 }

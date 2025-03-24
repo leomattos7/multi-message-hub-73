@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SoapNotes } from "./SoapNotesForm";
+import { SoapNotes } from "./soap/SoapNotesForm";
 import { RecordsListDisplay } from "./RecordsListDisplay";
 import { TodayConsultationTab } from "./TodayConsultationTab";
 import { TasksTab } from "./TasksTab";
@@ -23,7 +23,7 @@ interface RecordsListProps {
   isLoading: boolean;
   activeTab: string;
   onTabChange: (value: string) => void;
-  onSaveConsultation?: (notes: SoapNotes) => Promise<void>;
+  onSaveConsultation?: (notes: SoapNotes) => Promise<boolean>;
   isSaving?: boolean;
 }
 
