@@ -1,69 +1,76 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
-interface Patient {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  birth_date?: string;
-  biological_sex?: string;
-  gender_identity?: string;
-}
-
-interface MedicalRecord {
+export interface MedicalRecordWithPatient {
   id: string;
   patient_id: string;
-  patient?: Patient;
   record_date: string;
   record_type: string;
   content: string;
   created_at: string;
   updated_at: string;
+  patient: {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+  };
 }
 
 export const useMedicalRecord = (recordId?: string) => {
-  const navigate = useNavigate();
+  const [record, setRecord] = useState<MedicalRecordWithPatient | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState("");
+  const navigate = useNavigate();
 
-  const { data: record, isLoading, refetch } = useQuery({
-    queryKey: ["medical-record", recordId],
-    queryFn: async () => {
-      if (!recordId) throw new Error("Record ID is required");
+  useEffect(() => {
+    const fetchRecord = async () => {
+      if (!recordId) {
+        setIsLoading(false);
+        return;
+      }
 
-      const { data: recordData, error: recordError } = await supabase
-        .from("patient_records")
-        .select("*")
-        .eq("id", recordId)
-        .single();
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("patient_records")
+          .select(`
+            *,
+            patient:patient_id (
+              id,
+              name,
+              email,
+              phone
+            )
+          `)
+          .eq("id", recordId)
+          .single();
 
-      if (recordError) throw recordError;
-      
-      const { data: patientData, error: patientError } = await supabase
-        .from("patients")
-        .select("id, name, email, phone, birth_date, biological_sex, gender_identity")
-        .eq("id", recordData.patient_id)
-        .single();
+        if (error) throw error;
+        
+        setRecord(data as MedicalRecordWithPatient);
+        setEditedContent(data.content);
+      } catch (error) {
+        console.error("Error fetching record:", error);
+        toast({
+          title: "Erro ao carregar prontuário",
+          description: "Não foi possível carregar os dados do prontuário.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      if (patientError) throw patientError;
-      
-      setEditedContent(recordData.content);
-      
-      return {
-        ...recordData,
-        patient: patientData
-      } as MedicalRecord;
-    },
-    enabled: !!recordId
-  });
+    fetchRecord();
+  }, [recordId]);
 
   const handleBackNavigation = () => {
-    if (record && record.patient_id) {
+    if (record) {
       navigate(`/prontuarios/paciente/${record.patient_id}`);
     } else {
       navigate("/prontuarios");
@@ -71,46 +78,49 @@ export const useMedicalRecord = (recordId?: string) => {
   };
 
   const handleSave = async () => {
-    if (!recordId) return;
+    if (!record || !editedContent.trim()) return;
 
     try {
       const { error } = await supabase
         .from("patient_records")
-        .update({
-          content: editedContent,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", recordId);
+        .update({ content: editedContent, updated_at: new Date().toISOString() })
+        .eq("id", record.id);
 
       if (error) throw error;
 
+      setRecord({
+        ...record,
+        content: editedContent,
+        updated_at: new Date().toISOString(),
+      });
+      
       setIsEditing(false);
-      refetch();
       
       toast({
         title: "Prontuário atualizado",
-        description: "O prontuário foi atualizado com sucesso.",
+        description: "As alterações foram salvas com sucesso.",
       });
     } catch (error) {
       console.error("Error updating record:", error);
       toast({
         title: "Erro ao atualizar prontuário",
-        description: "Houve um erro ao atualizar o prontuário. Tente novamente.",
+        description: "Não foi possível salvar as alterações no prontuário.",
         variant: "destructive",
       });
     }
   };
 
   const handleDelete = async () => {
-    if (!recordId || !record) return;
-    
-    const patientId = record.patient_id;
+    if (!record) return;
+
+    const confirmed = window.confirm("Tem certeza que deseja excluir este prontuário? Esta ação não pode ser desfeita.");
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
         .from("patient_records")
         .delete()
-        .eq("id", recordId);
+        .eq("id", record.id);
 
       if (error) throw error;
 
@@ -118,13 +128,13 @@ export const useMedicalRecord = (recordId?: string) => {
         title: "Prontuário excluído",
         description: "O prontuário foi excluído com sucesso.",
       });
-
-      navigate(`/prontuarios/paciente/${patientId}`);
+      
+      handleBackNavigation();
     } catch (error) {
       console.error("Error deleting record:", error);
       toast({
         title: "Erro ao excluir prontuário",
-        description: "Houve um erro ao excluir o prontuário. Tente novamente.",
+        description: "Não foi possível excluir o prontuário.",
         variant: "destructive",
       });
     }

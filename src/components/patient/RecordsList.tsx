@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Calendar } from "lucide-react";
+import { FileText, Calendar, BookOpenText } from "lucide-react";
 import { SoapNotesForm, SoapNotes } from "./SoapNotesForm";
 
 interface MedicalRecord {
@@ -59,6 +59,44 @@ export const RecordsList = ({
     navigate(`/prontuarios/${record.id}`);
   };
 
+  // Extract a summary from SOAP note content
+  const extractSummary = (content: string): string => {
+    if (!content) return '';
+    
+    // For SOAP notes, try to extract the first non-empty section
+    if (content.includes("**Subjetivo:**")) {
+      const sections = [
+        { label: "**Subjetivo:**", value: "" },
+        { label: "**Objetivo:**", value: "" },
+        { label: "**Avaliação:**", value: "" },
+        { label: "**Plano:**", value: "" }
+      ];
+      
+      for (const section of sections) {
+        const startIdx = content.indexOf(section.label) + section.label.length;
+        if (startIdx >= section.label.length) {
+          let endIdx = content.length;
+          for (const nextSection of sections) {
+            if (nextSection.label !== section.label) {
+              const nextIdx = content.indexOf(nextSection.label, startIdx);
+              if (nextIdx > startIdx) {
+                endIdx = Math.min(endIdx, nextIdx);
+              }
+            }
+          }
+          
+          const sectionContent = content.substring(startIdx, endIdx).trim();
+          if (sectionContent && sectionContent !== "Não informado") {
+            return sectionContent.substring(0, 150) + (sectionContent.length > 150 ? "..." : "");
+          }
+        }
+      }
+    }
+    
+    // Default fallback
+    return content.substring(0, 150) + (content.length > 150 ? "..." : "");
+  };
+
   // Empty state for the consulta de hoje tab
   const renderTodayConsultationEmpty = () => (
     <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
@@ -106,7 +144,11 @@ export const RecordsList = ({
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-blue-500" />
+                  {record.record_type === 'soap' ? (
+                    <BookOpenText className="h-5 w-5 text-blue-500" />
+                  ) : (
+                    <FileText className="h-5 w-5 text-blue-500" />
+                  )}
                   <CardTitle className="text-lg">{recordTypeDisplay[record.record_type] || record.record_type}</CardTitle>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -116,7 +158,7 @@ export const RecordsList = ({
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm line-clamp-3">{record.content}</p>
+              <p className="text-sm line-clamp-3">{extractSummary(record.content)}</p>
             </CardContent>
           </Card>
         ))}

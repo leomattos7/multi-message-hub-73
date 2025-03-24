@@ -1,18 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Save, X } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Edit, Save, X, Trash } from "lucide-react";
 
 interface RecordActionsProps {
   isEditing: boolean;
@@ -22,57 +11,32 @@ interface RecordActionsProps {
   onDelete: () => void;
 }
 
-export const RecordActions = ({
+export const RecordActions: React.FC<RecordActionsProps> = ({
   isEditing,
   onEdit,
   onCancel,
   onSave,
   onDelete,
-}: RecordActionsProps) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-
+}) => {
   return (
-    <div className="flex space-x-2">
+    <div className="flex items-center space-x-2">
       {isEditing ? (
         <>
-          <Button variant="ghost" onClick={onCancel}>
-            <X className="h-4 w-4 mr-2" />
-            Cancelar
+          <Button variant="outline" size="sm" onClick={onCancel}>
+            <X className="h-4 w-4 mr-1" /> Cancelar
           </Button>
-          <Button onClick={onSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Salvar
+          <Button size="sm" onClick={onSave}>
+            <Save className="h-4 w-4 mr-1" /> Salvar
           </Button>
         </>
       ) : (
         <>
-          <Button variant="outline" onClick={onEdit}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            <Edit className="h-4 w-4 mr-1" /> Editar
           </Button>
-          
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Excluir prontuário</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Tem certeza que deseja excluir este prontuário? Esta ação não pode ser desfeita.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete} className="bg-red-500 hover:bg-red-600">
-                  Excluir
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button variant="destructive" size="sm" onClick={onDelete}>
+            <Trash className="h-4 w-4 mr-1" /> Excluir
+          </Button>
         </>
       )}
     </div>

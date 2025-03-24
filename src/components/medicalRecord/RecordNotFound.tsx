@@ -1,23 +1,24 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { FileX, ChevronLeft } from "lucide-react";
 
-export const RecordNotFound = () => {
+export const RecordNotFound: React.FC = () => {
   const navigate = useNavigate();
-  
+
   return (
     <div className="container mx-auto p-6">
-      <div className="flex items-center mb-6">
-        <Button variant="ghost" onClick={() => navigate("/prontuarios")} className="mr-2">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
+      <div className="flex flex-col items-center justify-center h-96">
+        <FileX className="h-16 w-16 text-gray-400 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Prontuário não encontrado</h2>
+        <p className="text-gray-500 mb-6 text-center">
+          O prontuário que você está procurando não existe ou foi removido.
+        </p>
+        <Button onClick={() => navigate("/prontuarios")} className="flex items-center">
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Voltar para a lista de prontuários
         </Button>
-      </div>
-      <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
-        <FileText className="h-12 w-12 text-gray-400 mb-3" />
-        <h3 className="text-lg font-medium text-gray-600">Prontuário não encontrado</h3>
       </div>
     </div>
   );
