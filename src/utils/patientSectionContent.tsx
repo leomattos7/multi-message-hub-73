@@ -4,6 +4,7 @@ import { SectionType } from "@/hooks/use-collapsible-sections";
 import { MedicationsSection } from "@/components/patient/medications/MedicationsSection";
 import { ProblemsSection } from "@/components/patient/problems/ProblemsSection";
 import { MedicalHistorySection } from "@/components/patient/medicalHistory/MedicalHistorySection";
+import { FamilyHistorySection } from "@/components/patient/familyHistory/FamilyHistorySection";
 import { LabExamsSection } from "@/components/patient/labExams/LabExamsSection";
 import { MeasurementsSection } from "@/components/patient/measurements/MeasurementsSection";
 
@@ -20,7 +21,7 @@ export const renderPatientSectionContent = (sectionId: SectionType, patientId?: 
     case "antecedente_pessoal":
       return <MedicalHistorySection patientId={patientId} />;
     case "historico_familiar":
-      return <p>Doenças e condições presentes na família do paciente</p>;
+      return <FamilyHistorySection patientId={patientId} />;
     default:
       return <p>Informações não disponíveis</p>;
   }
