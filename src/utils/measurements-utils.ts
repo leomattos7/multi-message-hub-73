@@ -1,4 +1,6 @@
 
+import { MEASUREMENT_DISPLAY_NAMES, MEASUREMENT_NAMES, MEASUREMENT_UNITS } from "@/components/patient/measurements/constants";
+
 /**
  * Calculate BMI (Body Mass Index) from weight and height
  * @param weight Weight in kg
@@ -10,7 +12,7 @@ export const calculateBMI = (weight: number | null, height: number | null): numb
     // Convert height from cm to m
     const heightInMeters = height / 100;
     const bmiValue = weight / (heightInMeters * heightInMeters);
-    return parseFloat(bmiValue.toFixed(2));
+    return parseFloat(bmiValue.toFixed(1)); // Display with 1 decimal place
   }
   return null;
 };
@@ -26,10 +28,26 @@ export const formatAllMeasurements = (
   customMeasurements: { name: string; value: number | string; unit: string }[]
 ) => {
   const standardMeasurements = [
-    { name: "Peso", value: weight ?? "-", unit: "kg" },
-    { name: "Altura", value: height ?? "-", unit: "cm" },
-    { name: "Circunferência Abdominal", value: abdominalCircumference ?? "-", unit: "cm" },
-    { name: "IMC", value: bmi ?? "-", unit: "kg/m²" }
+    { 
+      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.WEIGHT], 
+      value: weight ?? "-", 
+      unit: MEASUREMENT_UNITS.WEIGHT 
+    },
+    { 
+      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.HEIGHT], 
+      value: height ?? "-", 
+      unit: MEASUREMENT_UNITS.HEIGHT 
+    },
+    { 
+      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.ABDOMINAL], 
+      value: abdominalCircumference ?? "-", 
+      unit: MEASUREMENT_UNITS.ABDOMINAL 
+    },
+    { 
+      name: MEASUREMENT_DISPLAY_NAMES["imc"], 
+      value: bmi ?? "-", 
+      unit: MEASUREMENT_UNITS.BMI 
+    }
   ];
 
   const custom = customMeasurements.map(m => ({
