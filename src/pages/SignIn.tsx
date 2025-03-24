@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowRight, LucideStethoscope } from "lucide-react";
+import { LucideStethoscope } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email({ message: "E-mail inválido" }),
@@ -34,22 +34,22 @@ export default function SignIn() {
     setIsLoading(true);
     
     try {
-      // Mock authentication for now
-      // In a real app, this would call an API or auth service
-      console.log("Login attempt:", data);
+      // Create a new empty user account (no mock data)
+      const user = {
+        id: "user-" + Math.random().toString(36).substr(2, 9),
+        email: data.email,
+        role: "doctor",
+        name: "Dr. " + data.email.split('@')[0]
+      };
       
-      // Simulate successful login
-      setTimeout(() => {
-        localStorage.setItem("user", JSON.stringify({
-          id: "user-123",
-          email: data.email,
-          role: "doctor",
-          name: "Dr. Lucas Silva"
-        }));
-        
-        toast.success("Login realizado com sucesso!");
-        navigate("/"); // Changed from /secretaria to / (index page)
-      }, 1000);
+      // Store user in localStorage - starting with empty collections
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("patients", JSON.stringify([]));
+      localStorage.setItem("appointments", JSON.stringify([]));
+      localStorage.setItem("conversations", JSON.stringify([]));
+      
+      toast.success("Login realizado com sucesso!");
+      navigate("/");
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Erro ao fazer login. Verifique suas credenciais.");

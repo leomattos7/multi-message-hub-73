@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Inbox,
@@ -50,6 +50,16 @@ export function Sidebar() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(!isMobile);
+  const [userData, setUserData] = useState<any>(null);
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const userString = localStorage.getItem("user");
+    if (userString) {
+      const user = JSON.parse(userString);
+      setUserData(user);
+    }
+  }, []);
 
   // Toggle the sidebar on mobile
   const toggleSidebar = () => {
@@ -90,13 +100,11 @@ export function Sidebar() {
         <div className="flex flex-col h-full px-3 py-6">
           <div className="flex items-center justify-start mb-8 px-2">
             <Link to="/" className="flex items-center">
-              <img
-                src="https://randomuser.me/api/portraits/women/68.jpg"
-                alt="Dra. Ana Silva"
-                className="w-10 h-10 rounded-full"
-              />
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                {userData?.name?.charAt(0) || "U"}
+              </div>
               <span className="ml-2 text-lg font-semibold">
-                Dra. Ana Silva
+                {userData?.name || "Médico"}
               </span>
             </Link>
           </div>
