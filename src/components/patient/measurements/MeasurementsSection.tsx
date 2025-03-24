@@ -1,7 +1,6 @@
 
 import React from "react";
 import { usePatientMeasurements } from "@/hooks/use-patient-measurements";
-import { StandardMeasurements } from "./StandardMeasurements";
 import { MeasurementsList } from "./MeasurementsList";
 import { AddMeasurementForm } from "./AddMeasurementForm";
 
@@ -11,15 +10,8 @@ interface MeasurementsSectionProps {
 
 export function MeasurementsSection({ patientId }: MeasurementsSectionProps) {
   const {
-    weight,
-    height,
-    abdominalCircumference,
-    bmi,
     allMeasurements,
     isLoading,
-    setWeight,
-    setHeight,
-    setAbdominalCircumference,
     isAddingMeasurement,
     setIsAddingMeasurement,
     newMeasurement,
@@ -34,16 +26,6 @@ export function MeasurementsSection({ patientId }: MeasurementsSectionProps) {
 
   return (
     <div className="space-y-6">
-      <StandardMeasurements
-        weight={weight}
-        height={height}
-        abdominalCircumference={abdominalCircumference}
-        bmi={bmi}
-        setWeight={setWeight}
-        setHeight={setHeight}
-        setAbdominalCircumference={setAbdominalCircumference}
-      />
-      
       <MeasurementsList 
         measurements={allMeasurements} 
         patientId={patientId}

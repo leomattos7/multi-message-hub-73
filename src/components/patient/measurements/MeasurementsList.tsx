@@ -49,15 +49,18 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
   };
 
   return (
-    <div className="mt-6">
+    <div>
       <h4 className="font-medium text-sm mb-2">Todas as Medições</h4>
       <div className="space-y-2">
         {measurements.map((measurement, index) => {
           // Add color for BMI measurement
           let colorClass = "";
+          let isReadOnly = false;
+          
           if (measurement.name === "IMC" && typeof measurement.value === "number") {
             const classification = getBMIClassification(measurement.value);
             colorClass = classification?.color || "";
+            isReadOnly = true; // BMI is calculated and should be read-only
           }
           
           return (
@@ -94,6 +97,7 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
           measurementUnit={selectedMeasurement.unit}
           setMeasurementValue={setEditValue}
           onSave={handleSaveMeasurement}
+          isReadOnly={selectedMeasurement.name === "IMC"} // IMC is calculated and should be read-only
         />
       )}
     </div>
