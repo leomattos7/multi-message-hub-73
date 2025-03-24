@@ -4,11 +4,15 @@ import { format, addDays, startOfWeek, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import AppointmentDialog from "./AppointmentDialog";
-import { useAppointments } from "@/hooks/use-appointments";
+import { useAppointments, Appointment } from "@/hooks/use-appointments";
 import AppointmentIndicator from "./AppointmentIndicator";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface WeeklyViewProps {
   date: Date;
@@ -19,6 +23,10 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const startDate = startOfWeek(date, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
@@ -30,7 +38,8 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
   }
 
   // Get all appointments for the week
-  const { appointments } = useAppointments();
+  const { appointments, isLoading: isLoadingAppointments } = useAppointments();
+  const queryClient = useQueryClient();
 
   // Group appointments by date and time
   const appointmentsByDateAndTime = appointments.reduce((acc, appointment) => {
@@ -50,6 +59,7 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
   const handleCellClick = (day: Date, time: string) => {
     setSelectedDay(day);
     setSelectedTime(time);
+    setSelectedAppointment(null);
     setIsNewAppointmentOpen(true);
     if (onDateSelect) {
       onDateSelect(day);
@@ -58,13 +68,60 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
 
   const handleCloseDialog = () => {
     setIsNewAppointmentOpen(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleEditAppointment = (appointment: Appointment) => {
+    // Find the date for this appointment
+    const appointmentDate = new Date(appointment.date);
+    setSelectedDay(appointmentDate);
+    setSelectedAppointment(appointment);
+    setSelectedTime(null);
+    setIsNewAppointmentOpen(true);
+  };
+
+  const handleDeleteClick = (appointmentId: string) => {
+    setAppointmentToDelete(appointmentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!appointmentToDelete) return;
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: "cancelado" })
+        .eq("id", appointmentToDelete);
+
+      if (error) {
+        toast.error("Erro ao cancelar consulta");
+        console.error("Error canceling appointment:", error);
+      } else {
+        toast.success("Consulta cancelada com sucesso");
+        queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      }
+    } catch (error) {
+      console.error("Error canceling appointment:", error);
+      toast.error("Erro ao cancelar consulta");
+    } finally {
+      setIsLoading(false);
+      setDeleteDialogOpen(false);
+      setAppointmentToDelete(null);
+    }
   };
 
   return (
     <div className="mt-4 overflow-x-auto">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">Semana atual</h3>
-        <Button onClick={() => setIsNewAppointmentOpen(true)} size="sm">
+        <Button onClick={() => {
+          setSelectedDay(new Date());
+          setSelectedTime("08:00");
+          setSelectedAppointment(null);
+          setIsNewAppointmentOpen(true);
+        }} size="sm">
           <Plus className="mr-1 h-4 w-4" />
           Novo Agendamento
         </Button>
@@ -105,16 +162,20 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
                     className="h-24 border-b border-r hover:bg-blue-50 cursor-pointer relative p-1"
                     onClick={() => handleCellClick(day, time)}
                   >
-                    {slotAppointments.length > 0 && (
+                    {isLoadingAppointments ? (
+                      <div className="text-xs text-gray-400">Carregando...</div>
+                    ) : slotAppointments.length > 0 ? (
                       <div className="absolute inset-0 p-1 overflow-y-auto">
                         {slotAppointments.map((appointment) => (
                           <AppointmentIndicator 
                             key={appointment.id} 
                             appointment={appointment}
+                            onEdit={handleEditAppointment}
+                            onDelete={handleDeleteClick}
                           />
                         ))}
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -129,10 +190,32 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
           <AppointmentDialog 
             date={selectedDay} 
             time={selectedTime} 
-            onClose={handleCloseDialog} 
+            onClose={handleCloseDialog}
+            appointment={selectedAppointment || undefined}
           />
         )}
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Consulta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar esta consulta? Esta ação irá marcar a consulta como cancelada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Não, manter agendamento</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isLoading}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isLoading ? "Cancelando..." : "Sim, cancelar consulta"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
