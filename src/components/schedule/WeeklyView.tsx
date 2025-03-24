@@ -12,11 +12,10 @@ const WeeklyView = ({ date }: WeeklyViewProps) => {
   const startDate = startOfWeek(date, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
   
-  // Time slots from 8:00 to 18:00 (30 min intervals)
+  // Time slots from 8:00 to 18:00 (hourly intervals)
   const timeSlots = [];
   for (let hour = 8; hour < 18; hour++) {
     timeSlots.push(`${hour}:00`);
-    timeSlots.push(`${hour}:30`);
   }
 
   return (
@@ -26,7 +25,7 @@ const WeeklyView = ({ date }: WeeklyViewProps) => {
         <div className="col-span-1">
           <div className="h-12"></div> {/* Empty header cell */}
           {timeSlots.map((time) => (
-            <div key={time} className="h-12 border-b border-r px-2 py-1 flex items-center">
+            <div key={time} className="h-24 border-b border-r px-2 py-1 flex items-center">
               {time}
             </div>
           ))}
@@ -47,7 +46,7 @@ const WeeklyView = ({ date }: WeeklyViewProps) => {
             {timeSlots.map((time) => (
               <div 
                 key={`${day}-${time}`} 
-                className="h-12 border-b border-r hover:bg-blue-50 cursor-pointer"
+                className="h-24 border-b border-r hover:bg-blue-50 cursor-pointer"
               ></div>
             ))}
           </div>
