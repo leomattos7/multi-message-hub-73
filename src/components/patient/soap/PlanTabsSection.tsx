@@ -3,16 +3,18 @@ import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, FileCheck, FileOutput, ListTodo, TestTube } from "lucide-react";
+import { PrescriptionForm } from "./PrescriptionForm";
+import { Prescription } from "./types";
 
 interface PlanTabsSectionProps {
   plan: {
-    prescriptions: string;
+    prescriptions: Prescription[];
     certificates: string;
     guidance: string;
     tasks: string;
     exams: string;
   };
-  onChange: (field: string, value: string) => void;
+  onChange: (field: string, value: any) => void;
   activePlanTab: string;
   setActivePlanTab: (tab: string) => void;
 }
@@ -53,12 +55,9 @@ export const PlanTabsSection: React.FC<PlanTabsSectionProps> = ({
         </TabsList>
         
         <TabsContent value="prescriptions">
-          <Textarea
-            id="plan-prescriptions"
-            placeholder="Prescrições médicas, medicamentos, posologia..."
-            value={plan.prescriptions}
-            onChange={(e) => onChange("prescriptions", e.target.value)}
-            className="min-h-[100px] w-full"
+          <PrescriptionForm
+            prescriptions={plan.prescriptions}
+            onChange={(prescriptions) => onChange("prescriptions", prescriptions)}
           />
         </TabsContent>
         

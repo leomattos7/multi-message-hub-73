@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { usePatientRecordsData } from "../use-patient-records-data";
-import { SoapNotes } from "@/components/patient/soap/SoapNotesForm";
+import { SoapNotes, Prescription } from "@/components/patient/soap/types";
 
 export const useRecordOperations = (patientId?: string, activeTab: string = "today") => {
   const [isSavingConsultation, setIsSavingConsultation] = useState(false);
@@ -32,12 +32,27 @@ export const useRecordOperations = (patientId?: string, activeTab: string = "tod
     }
   };
 
+  const formatPrescriptions = (prescriptions: Prescription[]): string => {
+    if (prescriptions.length === 0) return "";
+    
+    return prescriptions.map((prescription, index) => {
+      return `${index + 1}. **${prescription.medication}**
+   - Dose/Concentração: ${prescription.dosage || "Não especificado"}
+   - Via de administração: ${prescription.route || "Não especificado"}
+   - Uso contínuo: ${prescription.continuous ? "Sim" : "Não"}`;
+    }).join('\n\n');
+  };
+
   const saveConsultation = async (notes: SoapNotes) => {
     setIsSavingConsultation(true);
     try {
       // Format the plan section based on the new structure
+      const prescriptionsContent = notes.plan.prescriptions.length > 0 
+        ? `**Receitas:**\n${formatPrescriptions(notes.plan.prescriptions)}`
+        : "";
+        
       const planContent = [
-        notes.plan.prescriptions && `**Receitas:**\n${notes.plan.prescriptions}`,
+        prescriptionsContent,
         notes.plan.certificates && `**Atestados:**\n${notes.plan.certificates}`,
         notes.plan.guidance && `**Orientações:**\n${notes.plan.guidance}`,
         notes.plan.tasks && `**Tarefas:**\n${notes.plan.tasks}`,

@@ -47,15 +47,19 @@ export const RecordContent: React.FC<RecordContentProps> = ({
     const planSection = sections[3];
     const planSubsections = [];
     
-    const subSectionTitles = ["**Receitas:**", "**Atestados:**", "**Orientações:**", "**Tarefas:**"];
+    const subSectionTitles = ["**Receitas:**", "**Atestados:**", "**Orientações:**", "**Tarefas:**", "**Exames:**"];
     
     if (planSection.content.includes(subSectionTitles[0])) {
       for (let i = 0; i < subSectionTitles.length; i++) {
         const currentSubsection = subSectionTitles[i];
         const nextSubsection = i < subSectionTitles.length - 1 ? subSectionTitles[i + 1] : null;
         
+        if (planSection.content.indexOf(currentSubsection) === -1) continue;
+        
         const startIdx = planSection.content.indexOf(currentSubsection) + currentSubsection.length;
-        const endIdx = nextSubsection ? planSection.content.indexOf(nextSubsection) : planSection.content.length;
+        const endIdx = nextSubsection && planSection.content.indexOf(nextSubsection) !== -1 
+          ? planSection.content.indexOf(nextSubsection) 
+          : planSection.content.length;
         
         if (startIdx >= currentSubsection.length) {
           const subContent = planSection.content.substring(startIdx, endIdx).trim();

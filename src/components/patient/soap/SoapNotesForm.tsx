@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SoapSection } from "./SoapSection";
 import { PlanTabsSection } from "./PlanTabsSection";
-import { SoapNotes, SoapNotesFormProps } from "./types";
+import { SoapNotes, SoapNotesFormProps, Prescription } from "./types";
 
 export { type SoapNotes } from "./types";
 
@@ -16,7 +16,7 @@ export const SoapNotesForm: React.FC<SoapNotesFormProps> = ({
     objective: "",
     assessment: "",
     plan: {
-      prescriptions: "",
+      prescriptions: [],
       certificates: "",
       guidance: "",
       tasks: "",
@@ -33,7 +33,7 @@ export const SoapNotesForm: React.FC<SoapNotesFormProps> = ({
     }));
   };
 
-  const handlePlanChange = (subfield: keyof SoapNotes["plan"], value: string) => {
+  const handlePlanChange = (subfield: keyof SoapNotes["plan"], value: any) => {
     setNotes(prev => ({
       ...prev,
       plan: {
@@ -54,7 +54,11 @@ export const SoapNotesForm: React.FC<SoapNotesFormProps> = ({
       notes.subjective.trim() !== "" || 
       notes.objective.trim() !== "" || 
       notes.assessment.trim() !== "" || 
-      Object.values(notes.plan).some(value => value.trim() !== "")
+      notes.plan.prescriptions.length > 0 ||
+      notes.plan.certificates.trim() !== "" ||
+      notes.plan.guidance.trim() !== "" ||
+      notes.plan.tasks.trim() !== "" ||
+      notes.plan.exams.trim() !== ""
     );
   };
 
