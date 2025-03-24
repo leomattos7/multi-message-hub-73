@@ -16,6 +16,7 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({
   prescriptions,
   onChange,
 }) => {
+  const [showForm, setShowForm] = useState(false);
   const [currentPrescription, setCurrentPrescription] = useState<Omit<Prescription, "id">>({
     medication: "",
     dosage: "",
@@ -47,6 +48,8 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({
       route: "",
       continuous: false,
     });
+    // Hide the form after adding medication
+    setShowForm(false);
 
     toast({
       title: "Medicação adicionada",
@@ -67,73 +70,75 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="p-4 border rounded-md bg-gray-50">
-        <div className="space-y-3">
-          <div>
-            <label htmlFor="medication" className="block text-xs font-medium text-gray-700 mb-1">
-              Nome da medicação
-            </label>
-            <Input
-              id="medication"
-              value={currentPrescription.medication}
-              onChange={(e) => handleInputChange("medication", e.target.value)}
-              placeholder="Nome da medicação"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="dosage" className="block text-xs font-medium text-gray-700 mb-1">
-              Dose/Concentração
-            </label>
-            <Input
-              id="dosage"
-              value={currentPrescription.dosage}
-              onChange={(e) => handleInputChange("dosage", e.target.value)}
-              placeholder="Ex: 500mg, 10mg/ml"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="route" className="block text-xs font-medium text-gray-700 mb-1">
-              Via de administração
-            </label>
-            <Input
-              id="route"
-              value={currentPrescription.route}
-              onChange={(e) => handleInputChange("route", e.target.value)}
-              placeholder="Ex: Oral, Intravenosa, Subcutânea"
-            />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="continuous"
-                checked={currentPrescription.continuous}
-                onCheckedChange={(checked) => 
-                  handleInputChange("continuous", checked === true)
-                }
-              />
-              <label
-                htmlFor="continuous"
-                className="text-xs font-medium text-gray-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Uso contínuo
+      {showForm && (
+        <div className="p-4 border rounded-md bg-gray-50">
+          <div className="space-y-3">
+            <div>
+              <label htmlFor="medication" className="block text-xs font-medium text-gray-700 mb-1">
+                Nome da medicação
               </label>
+              <Input
+                id="medication"
+                value={currentPrescription.medication}
+                onChange={(e) => handleInputChange("medication", e.target.value)}
+                placeholder="Nome da medicação"
+              />
             </div>
             
-            <Button 
-              type="button" 
-              size="sm"
-              className="ml-2 bg-green-500 hover:bg-green-600" 
-              onClick={addPrescription}
-            >
-              <CheckCircle className="mr-1 h-4 w-4" />
-              Adicionar
-            </Button>
+            <div>
+              <label htmlFor="dosage" className="block text-xs font-medium text-gray-700 mb-1">
+                Dose/Concentração
+              </label>
+              <Input
+                id="dosage"
+                value={currentPrescription.dosage}
+                onChange={(e) => handleInputChange("dosage", e.target.value)}
+                placeholder="Ex: 500mg, 10mg/ml"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="route" className="block text-xs font-medium text-gray-700 mb-1">
+                Via de administração
+              </label>
+              <Input
+                id="route"
+                value={currentPrescription.route}
+                onChange={(e) => handleInputChange("route", e.target.value)}
+                placeholder="Ex: Oral, Intravenosa, Subcutânea"
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="continuous"
+                  checked={currentPrescription.continuous}
+                  onCheckedChange={(checked) => 
+                    handleInputChange("continuous", checked === true)
+                  }
+                />
+                <label
+                  htmlFor="continuous"
+                  className="text-xs font-medium text-gray-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Uso contínuo
+                </label>
+              </div>
+              
+              <Button 
+                type="button" 
+                size="sm"
+                className="ml-2 bg-green-500 hover:bg-green-600" 
+                onClick={addPrescription}
+              >
+                <CheckCircle className="mr-1 h-4 w-4" />
+                Adicionar
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {prescriptions.length > 0 && (
         <div className="space-y-3">
@@ -174,13 +179,17 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({
         variant="outline" 
         className="w-full flex items-center justify-center"
         onClick={() => {
-          // Reset current prescription form
-          setCurrentPrescription({
-            medication: "",
-            dosage: "",
-            route: "",
-            continuous: false,
-          });
+          // Toggle the form visibility
+          setShowForm(true);
+          // Reset current prescription form if it was hidden
+          if (!showForm) {
+            setCurrentPrescription({
+              medication: "",
+              dosage: "",
+              route: "",
+              continuous: false,
+            });
+          }
         }}
       >
         <Plus className="mr-1 h-4 w-4" />
