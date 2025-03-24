@@ -380,6 +380,44 @@ export type Database = {
           },
         ]
       }
+      measurements: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          name: string
+          patient_id: string
+          unit: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          name: string
+          patient_id: string
+          unit: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          name?: string
+          patient_id?: string
+          unit?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measurements_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
