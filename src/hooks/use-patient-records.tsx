@@ -29,11 +29,11 @@ export const usePatientRecords = (patientId?: string) => {
     saveConsultation
   } = useRecordOperations(patientId, activeTab);
 
-  // Records data - fetch all records for history tab
+  // Records data
   const { 
     records, 
     recordsLoading
-  } = usePatientRecordsData(patientId, "all");
+  } = usePatientRecordsData(patientId, activeTab === "today" ? "" : "");
 
   return {
     // Patient data

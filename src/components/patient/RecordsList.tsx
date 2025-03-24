@@ -43,7 +43,7 @@ export const RecordsList = ({
 
   // Filter records for today's consultation
   const todayRecords = records?.filter(record => isToday(record.created_at));
-  
+
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="w-full flex overflow-x-auto mb-6">
