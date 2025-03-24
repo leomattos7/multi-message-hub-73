@@ -29,23 +29,17 @@ export const useMedicalRecords = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const navigate = useNavigate();
-  
-  // Get current user
-  const userString = localStorage.getItem("user");
-  const user = userString ? JSON.parse(userString) : null;
-  const doctorId = user?.id;
 
   const { 
     data: patients, 
     isLoading: patientsLoading, 
     refetch: refetchPatients 
   } = useQuery({
-    queryKey: ["patients", searchQuery, doctorId],
+    queryKey: ["patients", searchQuery],
     queryFn: async () => {
       let query = supabase
         .from("patients")
-        .select("id, name, email, phone, address, notes, payment_method, insurance_name, birth_date, biological_sex, gender_identity")
-        .eq("doctor_id", doctorId);
+        .select("id, name, email, phone, address, notes, payment_method, insurance_name, birth_date, biological_sex, gender_identity");
       
       if (searchQuery) {
         query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
@@ -53,10 +47,7 @@ export const useMedicalRecords = () => {
       
       const { data: patientsData, error: patientsError } = await query.order("name");
       
-      if (patientsError) {
-        console.error("Error fetching patients:", patientsError);
-        throw patientsError;
-      }
+      if (patientsError) throw patientsError;
       
       const patientsWithRecordCounts = await Promise.all(patientsData.map(async (patient) => {
         const { count, error: countError } = await supabase
@@ -73,35 +64,15 @@ export const useMedicalRecords = () => {
       }));
       
       return patientsWithRecordCounts as Patient[];
-    },
-    enabled: !!doctorId
+    }
   });
 
   const { data: recordSummary } = useQuery({
-    queryKey: ["record-summary", doctorId],
+    queryKey: ["record-summary"],
     queryFn: async () => {
-      // First get all patients for this doctor
-      const { data: doctorPatients, error: patientError } = await supabase
-        .from("patients")
-        .select("id")
-        .eq("doctor_id", doctorId);
-        
-      if (patientError) {
-        console.error("Error fetching doctor patients:", patientError);
-        throw patientError;
-      }
-      
-      // Use the patient IDs to filter records
-      const patientIds = doctorPatients.map(p => p.id);
-      
-      if (patientIds.length === 0) {
-        return [];
-      }
-      
       const { data, error } = await supabase
         .from("patient_records")
-        .select("record_type")
-        .in("patient_id", patientIds);
+        .select("record_type");
         
       if (error) throw error;
       
@@ -114,8 +85,7 @@ export const useMedicalRecords = () => {
         record_type,
         count
       })) as RecordSummary[];
-    },
-    enabled: !!doctorId
+    }
   });
 
   const viewPatientRecords = (patient: Patient) => {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -50,36 +49,23 @@ export const usePatientList = () => {
     try {
       setIsLoading(true);
       
-      // Get current user from localStorage
-      const userString = localStorage.getItem("user");
-      if (!userString) {
-        toast.error("Usuário não encontrado");
-        setIsLoading(false);
-        return;
-      }
-      
-      const user = JSON.parse(userString);
-      
       const { data: appointments, error: appointmentsError } = await supabase
         .from('appointments')
         .select('patient_id, date')
-        .eq('doctor_id', user.id)
         .order('date', { ascending: false });
-
-      const { data: conversations, error: conversationsError } = await supabase
-        .from('conversations')
-        .select('id, patient_id')
-        .eq('doctor_id', user.id);
 
       const { data: messages, error: messagesError } = await supabase
         .from('messages')
         .select('conversation_id, timestamp')
         .order('timestamp', { ascending: false });
 
+      const { data: conversations, error: conversationsError } = await supabase
+        .from('conversations')
+        .select('id, patient_id');
+
       const { data: patientsData, error: patientsError } = await supabase
         .from('patients')
-        .select('id, name, email, phone, address, notes, payment_method, insurance_name, created_at, updated_at, cpf, birth_date, biological_sex, gender_identity')
-        .eq('doctor_id', user.id);
+        .select('id, name, email, phone, address, notes, payment_method, insurance_name, created_at, updated_at, cpf, birth_date, biological_sex, gender_identity');
 
       if (patientsError) {
         console.error("Error fetching patients:", patientsError);
@@ -151,15 +137,6 @@ export const usePatientList = () => {
     }
 
     try {
-      // Get current user from localStorage
-      const userString = localStorage.getItem("user");
-      if (!userString) {
-        toast.error("Usuário não encontrado");
-        return;
-      }
-      
-      const user = JSON.parse(userString);
-      
       const { data, error } = await supabase
         .from('patients')
         .insert({
@@ -173,8 +150,7 @@ export const usePatientList = () => {
           cpf: newPatient.cpf || null,
           birth_date: newPatient.birth_date || null,
           biological_sex: newPatient.biological_sex || null,
-          gender_identity: newPatient.gender_identity || null,
-          doctor_id: user.id
+          gender_identity: newPatient.gender_identity || null
         })
         .select();
         

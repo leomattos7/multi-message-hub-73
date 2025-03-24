@@ -8,19 +8,13 @@ import { MEASUREMENT_DISPLAY_NAMES, MEASUREMENT_NAMES, MEASUREMENT_UNITS } from 
  * @returns Calculated BMI value or null if inputs are invalid
  */
 export const calculateBMI = (weight: number | null, height: number | null): number | null => {
-  // Make sure we have valid values
-  if (!weight || !height || height <= 0 || weight <= 0) {
-    return null;
+  if (weight && height && height > 0) {
+    // Convert height from cm to m
+    const heightInMeters = height / 100;
+    const bmiValue = weight / (heightInMeters * heightInMeters);
+    return parseFloat(bmiValue.toFixed(1)); // Display with 1 decimal place
   }
-  
-  console.log("Calculating BMI with:", { weight, height });
-  
-  // Convert height from cm to m
-  const heightInMeters = height / 100;
-  const bmiValue = weight / (heightInMeters * heightInMeters);
-  
-  // Limit to 1 decimal place
-  return parseFloat(bmiValue.toFixed(1));
+  return null;
 };
 
 /**
@@ -33,32 +27,24 @@ export const formatAllMeasurements = (
   bmi: number | null,
   customMeasurements: { name: string; value: number | string; unit: string }[]
 ) => {
-  console.log("Formatting measurements:", { 
-    weight, 
-    height, 
-    abdominalCircumference, 
-    bmi, 
-    customMeasurements 
-  });
-  
   const standardMeasurements = [
     { 
-      name: MEASUREMENT_NAMES.WEIGHT, 
+      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.WEIGHT], 
       value: weight ?? "-", 
       unit: MEASUREMENT_UNITS.WEIGHT 
     },
     { 
-      name: MEASUREMENT_NAMES.HEIGHT, 
+      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.HEIGHT], 
       value: height ?? "-", 
       unit: MEASUREMENT_UNITS.HEIGHT 
     },
     { 
-      name: MEASUREMENT_NAMES.ABDOMINAL, 
+      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.ABDOMINAL], 
       value: abdominalCircumference ?? "-", 
       unit: MEASUREMENT_UNITS.ABDOMINAL 
     },
     { 
-      name: "imc", 
+      name: MEASUREMENT_DISPLAY_NAMES["imc"], 
       value: bmi ?? "-", 
       unit: MEASUREMENT_UNITS.BMI 
     }
