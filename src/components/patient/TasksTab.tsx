@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { FileText, Plus, Square, SquareCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,6 +67,7 @@ export const TasksTab: React.FC = () => {
         value={newTaskText}
         onChange={(e) => setNewTaskText(e.target.value)}
         placeholder="Digite uma nova tarefa"
+        className="w-full"
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             handleAddTask();
@@ -75,10 +75,6 @@ export const TasksTab: React.FC = () => {
           }
         }}
       />
-      <Button onClick={handleAddTask} className="shrink-0">
-        <Plus className="h-4 w-4 mr-2" />
-        Adicionar
-      </Button>
     </div>
   );
 
