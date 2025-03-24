@@ -67,6 +67,8 @@ interface Patient {
   insurance_name?: string;
   lastMessageDate: Date | null;
   lastAppointmentDate: Date | null;
+  cpf?: string;
+  birth_date?: string;
 }
 
 export default function PatientCRM() {
@@ -87,6 +89,8 @@ export default function PatientCRM() {
     notes: "",
     payment_method: "particular",
     insurance_name: "",
+    cpf: "",
+    birth_date: ""
   });
   const [editingPatient, setEditingPatient] = useState({
     id: "",
@@ -97,6 +101,8 @@ export default function PatientCRM() {
     notes: "",
     payment_method: "particular",
     insurance_name: "",
+    cpf: "",
+    birth_date: ""
   });
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [patientFilters, setPatientFilters] = useState<PatientFilters>({
@@ -138,7 +144,7 @@ export default function PatientCRM() {
 
       const { data: patientsData, error: patientsError } = await supabase
         .from('patients')
-        .select('id, name, email, phone, address, notes, payment_method, insurance_name, created_at, updated_at');
+        .select('id, name, email, phone, address, notes, payment_method, insurance_name, created_at, updated_at, cpf, birth_date');
 
       if (patientsError) {
         console.error("Error fetching patients:", patientsError);
@@ -187,6 +193,8 @@ export default function PatientCRM() {
           insurance_name: patient.insurance_name ?? "",
           lastMessageDate: patientMessages.has(patient.id) ? new Date(patientMessages.get(patient.id)) : null,
           lastAppointmentDate: patientAppointments.has(patient.id) ? new Date(patientAppointments.get(patient.id)) : null,
+          cpf: patient.cpf ?? "",
+          birth_date: patient.birth_date ?? ""
         }));
 
         setPatients(formattedPatients);
@@ -289,8 +297,6 @@ export default function PatientCRM() {
     return filtered;
   };
 
-  const filteredPatients = applyFilters(patients);
-
   const handleAddPatient = async () => {
     if (!newPatient.name) {
       toast.error("Por favor, preencha o nome do contato");
@@ -307,7 +313,9 @@ export default function PatientCRM() {
           address: newPatient.address || null,
           notes: newPatient.notes || null,
           payment_method: newPatient.payment_method || "particular",
-          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null
+          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
+          cpf: newPatient.cpf || null,
+          birth_date: newPatient.birth_date || null
         })
         .select();
         
@@ -329,6 +337,8 @@ export default function PatientCRM() {
           insurance_name: data[0].insurance_name || "",
           lastMessageDate: null,
           lastAppointmentDate: null,
+          cpf: data[0].cpf || "",
+          birth_date: data[0].birth_date || ""
         };
 
         setPatients([...patients, newPatientObj]);
@@ -339,7 +349,9 @@ export default function PatientCRM() {
           address: "", 
           notes: "", 
           payment_method: "particular", 
-          insurance_name: "" 
+          insurance_name: "",
+          cpf: "",
+          birth_date: ""
         });
         setIsAddPatientOpen(false);
         toast.success("Paciente adicionado com sucesso!");
@@ -360,7 +372,9 @@ export default function PatientCRM() {
       address: patient.address || "",
       notes: patient.notes || "",
       payment_method: patient.payment_method || "particular",
-      insurance_name: patient.payment_method === "convenio" ? patient.insurance_name || "" : "",
+      insurance_name: patient.payment_method === "convenio" ? patient.insurance_name || "",
+      cpf: patient.cpf || "",
+      birth_date: patient.birth_date || ""
     });
     setIsEditPatientOpen(true);
   };
@@ -381,7 +395,9 @@ export default function PatientCRM() {
           address: editingPatient.address || null,
           notes: editingPatient.notes || null,
           payment_method: editingPatient.payment_method || "particular",
-          insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name || null : null
+          insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name || null : null,
+          cpf: editingPatient.cpf || null,
+          birth_date: editingPatient.birth_date || null
         })
         .eq('id', editingPatient.id);
         
@@ -402,6 +418,8 @@ export default function PatientCRM() {
             notes: editingPatient.notes,
             payment_method: editingPatient.payment_method,
             insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name : "",
+            cpf: editingPatient.cpf,
+            birth_date: editingPatient.birth_date
           };
         }
         return patient;
@@ -419,6 +437,8 @@ export default function PatientCRM() {
           notes: editingPatient.notes,
           payment_method: editingPatient.payment_method,
           insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name : "",
+          cpf: editingPatient.cpf,
+          birth_date: editingPatient.birth_date
         });
       }
       
@@ -743,6 +763,26 @@ export default function PatientCRM() {
             </div>
             
             <div className="grid gap-2">
+              <Label htmlFor="cpf">CPF</Label>
+              <Input
+                id="cpf"
+                value={newPatient.cpf}
+                onChange={(e) => setNewPatient({...newPatient, cpf: e.target.value})}
+                placeholder="Digite o CPF do paciente"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="birth_date">Data de Nascimento</Label>
+              <Input
+                id="birth_date"
+                type="date"
+                value={newPatient.birth_date}
+                onChange={(e) => setNewPatient({...newPatient, birth_date: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -838,6 +878,26 @@ export default function PatientCRM() {
             </div>
             
             <div className="grid gap-2">
+              <Label htmlFor="edit-cpf">CPF</Label>
+              <Input
+                id="edit-cpf"
+                value={editingPatient.cpf}
+                onChange={(e) => setEditingPatient({...editingPatient, cpf: e.target.value})}
+                placeholder="Digite o CPF do paciente"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="edit-birth_date">Data de Nascimento</Label>
+              <Input
+                id="edit-birth_date"
+                type="date"
+                value={editingPatient.birth_date ? editingPatient.birth_date.split('T')[0] : ''}
+                onChange={(e) => setEditingPatient({...editingPatient, birth_date: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
               <Label htmlFor="edit-email">Email</Label>
               <Input
                 id="edit-email"
@@ -876,76 +936,3 @@ export default function PatientCRM() {
                   <RadioGroupItem value="particular" id="edit-particular" />
                   <Label htmlFor="edit-particular">Particular</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="convenio" id="edit-convenio" />
-                  <Label htmlFor="edit-convenio">Convênio</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            {editingPatient.payment_method === "convenio" && (
-              <div className="grid gap-2">
-                <Label htmlFor="edit-insurance_name">Nome do Convênio</Label>
-                <Input
-                  id="edit-insurance_name"
-                  value={editingPatient.insurance_name}
-                  onChange={(e) => setEditingPatient({...editingPatient, insurance_name: e.target.value})}
-                  placeholder="Digite o nome do convênio"
-                />
-              </div>
-            )}
-            
-            <div className="grid gap-2">
-              <Label htmlFor="edit-notes">Anotações</Label>
-              <Textarea
-                id="edit-notes"
-                value={editingPatient.notes}
-                onChange={(e) => setEditingPatient({...editingPatient, notes: e.target.value})}
-                placeholder="Informações adicionais sobre o contato..."
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditPatientOpen(false)}>
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdatePatient}>
-              <Save className="h-4 w-4 mr-2" />
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso excluirá permanentemente o contato
-              <strong> {patientToDelete?.name}</strong> e todos os dados associados.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPatientToDelete(null)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDeletePatient}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <ContactFilters 
-        open={isFilterDialogOpen}
-        onOpenChange={setIsFilterDialogOpen}
-        filters={patientFilters}
-        onFiltersChange={setPatientFilters}
-        onApplyFilters={() => setIsFilterDialogOpen(false)}
-        onResetFilters={handleResetFilters}
-      />
-    </div>
-  );
-}

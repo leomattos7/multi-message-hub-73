@@ -24,6 +24,7 @@ interface Patient {
   birth_date?: string;
   biological_sex?: string;
   gender_identity?: string;
+  cpf?: string;
 }
 
 interface EditPatientDialogProps {
@@ -59,6 +60,16 @@ export const EditPatientDialog = ({
               value={patientData?.name || ''}
               onChange={(e) => onPatientChange(patientData ? {...patientData, name: e.target.value} : null)}
               placeholder="Digite o nome do paciente"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="cpf">CPF</Label>
+            <Input
+              id="cpf"
+              value={patientData?.cpf || ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, cpf: e.target.value} : null)}
+              placeholder="Digite o CPF do paciente"
             />
           </div>
           

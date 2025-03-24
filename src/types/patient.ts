@@ -9,6 +9,7 @@ export interface Patient {
   birth_date?: string;
   biological_sex?: string;
   gender_identity?: string;
+  cpf?: string;
 }
 
 export interface MedicalRecord {

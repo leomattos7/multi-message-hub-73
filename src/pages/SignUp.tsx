@@ -35,7 +35,9 @@ const createExampleData = () => {
     name: "Maria Oliveira (Exemplo)",
     email: "maria.exemplo@email.com",
     phone: "(11) 99999-8888",
-    avatar: "https://i.pravatar.cc/150?img=5"
+    avatar: "https://i.pravatar.cc/150?img=5",
+    cpf: "123.456.789-00",
+    birth_date: "1985-06-15"
   };
   
   // Example appointment

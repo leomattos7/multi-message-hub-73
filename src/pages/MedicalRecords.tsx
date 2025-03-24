@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -32,7 +31,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Define patient interface
 interface Patient {
   id: string;
   name: string;
@@ -46,9 +44,9 @@ interface Patient {
   birth_date?: string;
   biological_sex?: string;
   gender_identity?: string;
+  cpf?: string;
 }
 
-// Define record summary interface
 interface RecordSummary {
   record_type: string;
   count: number;
@@ -67,20 +65,18 @@ export default function MedicalRecords() {
     insurance_name: "",
     birth_date: "",
     biological_sex: "",
-    gender_identity: ""
+    gender_identity: "",
+    cpf: ""
   });
   const navigate = useNavigate();
 
-  // Fetch patients with record counts
   const { data: patients, isLoading: patientsLoading, refetch: refetchPatients } = useQuery({
     queryKey: ["patients", searchQuery],
     queryFn: async () => {
-      // First get all patients
       let query = supabase
         .from("patients")
         .select("id, name, email, phone, address, notes, payment_method, insurance_name, birth_date, biological_sex, gender_identity");
       
-      // Apply search filter if provided
       if (searchQuery) {
         query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
       }
@@ -89,7 +85,6 @@ export default function MedicalRecords() {
       
       if (patientsError) throw patientsError;
       
-      // For each patient, get their record counts
       const patientsWithRecordCounts = await Promise.all(patientsData.map(async (patient) => {
         const { count, error: countError } = await supabase
           .from("patient_records")
@@ -108,7 +103,6 @@ export default function MedicalRecords() {
     }
   });
 
-  // Get record type summary
   const { data: recordSummary } = useQuery({
     queryKey: ["record-summary"],
     queryFn: async () => {
@@ -118,13 +112,11 @@ export default function MedicalRecords() {
         
       if (error) throw error;
       
-      // Count occurrences of each record type
       const counts: Record<string, number> = {};
       data.forEach(record => {
         counts[record.record_type] = (counts[record.record_type] || 0) + 1;
       });
       
-      // Convert to array
       return Object.entries(counts).map(([record_type, count]) => ({
         record_type,
         count
@@ -132,7 +124,6 @@ export default function MedicalRecords() {
     }
   });
 
-  // Handle creating a new patient
   const handleAddPatient = async () => {
     if (!newPatient.name) {
       toast({
@@ -156,7 +147,8 @@ export default function MedicalRecords() {
           insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
           birth_date: newPatient.birth_date || null,
           biological_sex: newPatient.biological_sex || null,
-          gender_identity: newPatient.gender_identity || null
+          gender_identity: newPatient.gender_identity || null,
+          cpf: newPatient.cpf || null
         })
         .select();
 
@@ -167,7 +159,6 @@ export default function MedicalRecords() {
         description: "O paciente foi adicionado com sucesso.",
       });
 
-      // Reset form and close dialog
       setNewPatient({
         name: "",
         email: "",
@@ -178,14 +169,13 @@ export default function MedicalRecords() {
         insurance_name: "",
         birth_date: "",
         biological_sex: "",
-        gender_identity: ""
+        gender_identity: "",
+        cpf: ""
       });
       setIsAddPatientOpen(false);
       
-      // Refetch patients to update the list
       refetchPatients();
       
-      // Navigate to the new patient's record page
       if (data && data.length > 0) {
         navigate(`/prontuarios/paciente/${data[0].id}`);
       }
@@ -199,25 +189,21 @@ export default function MedicalRecords() {
     }
   };
 
-  // Function to view a patient's records
   const viewPatientRecords = (patient: Patient) => {
     navigate(`/prontuarios/paciente/${patient.id}`);
   };
 
-  // Get count of a specific record type
   const getRecordTypeCount = (type: string): number => {
     if (!recordSummary) return 0;
     const found = recordSummary.find(r => r.record_type === type);
     return found ? found.count : 0;
   };
 
-  // Get total record count
   const getTotalRecordCount = (): number => {
     if (!recordSummary) return 0;
     return recordSummary.reduce((sum, r) => sum + r.count, 0);
   };
 
-  // Calculate age from birth date
   const calculateAge = (birthDate: string | undefined): number => {
     if (!birthDate) return 0;
     
@@ -239,12 +225,6 @@ export default function MedicalRecords() {
         <h1 className="text-2xl font-bold">Prontuário Eletrônico</h1>
         
         <Dialog open={isAddPatientOpen} onOpenChange={setIsAddPatientOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Paciente
-            </Button>
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Adicionar Novo Paciente</DialogTitle>
@@ -261,6 +241,16 @@ export default function MedicalRecords() {
                   value={newPatient.name}
                   onChange={(e) => setNewPatient({...newPatient, name: e.target.value})}
                   placeholder="Digite o nome do paciente"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="cpf">CPF</Label>
+                <Input
+                  id="cpf"
+                  value={newPatient.cpf || ''}
+                  onChange={(e) => setNewPatient({...newPatient, cpf: e.target.value})}
+                  placeholder="Digite o CPF do paciente"
                 />
               </div>
               

@@ -40,7 +40,8 @@ export const usePatientData = (patientId?: string) => {
         notes: updatedPatient.notes || null,
         birth_date: updatedPatient.birth_date || null,
         biological_sex: updatedPatient.biological_sex || null,
-        gender_identity: updatedPatient.gender_identity || null
+        gender_identity: updatedPatient.gender_identity || null,
+        cpf: updatedPatient.cpf || null
       })
       .eq("id", patientId);
 
