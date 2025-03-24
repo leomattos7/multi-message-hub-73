@@ -130,7 +130,7 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
       <div className="grid grid-cols-7 gap-2">
         {/* Weekday headers */}
         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((weekday) => (
-          <div key={weekday} className="text-center font-semibold p-2 text-gray-600">
+          <div key={weekday} className="text-center font-semibold p-1 text-gray-600 text-xs">
             {weekday}
           </div>
         ))}
@@ -146,15 +146,15 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
             <div
               key={idx}
               className={cn(
-                "h-28 p-1 border rounded-xl overflow-hidden transition-all",
+                "h-24 p-1 border rounded-xl overflow-hidden transition-all",
                 !inCurrentMonth ? "bg-gray-50 text-gray-400 border-gray-100" : "border-gray-200",
-                isCurrentDay ? "ring-2 ring-blue-500 ring-offset-2 shadow-sm" : "",
+                isCurrentDay ? "ring-2 ring-blue-500 ring-offset-1 shadow-sm" : "",
                 inCurrentMonth && "hover:bg-blue-50/50 cursor-pointer shadow-sm hover:shadow"
               )}
               onClick={() => handleDayClick(day)}
             >
               <div className={cn(
-                "text-right p-1 font-semibold",
+                "text-right p-1 font-semibold text-xs",
                 isCurrentDay && inCurrentMonth && "text-blue-700 bg-blue-100/50 rounded-lg"
               )}>
                 {format(day, 'd')}
@@ -162,9 +162,9 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
               
               {inCurrentMonth && (
                 isLoadingAppointments ? (
-                  <div className="text-xs text-gray-400 animate-pulse">Carregando...</div>
+                  <div className="text-[10px] text-gray-400 animate-pulse">Carregando...</div>
                 ) : dayAppointments.length > 0 && (
-                  <div className="text-xs mt-1 space-y-1 overflow-y-auto max-h-[80px] pr-1">
+                  <div className="text-[10px] mt-1 space-y-1 overflow-y-auto max-h-[60px] pr-1">
                     {dayAppointments.slice(0, 3).map((appointment) => (
                       <div key={appointment.id} className="flex items-center space-x-1 group relative">
                         <AppointmentIndicator 
@@ -204,7 +204,7 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
                       </div>
                     ))}
                     {dayAppointments.length > 3 && (
-                      <div className="text-xs text-blue-500 font-medium">
+                      <div className="text-[10px] text-blue-500 font-medium">
                         +{dayAppointments.length - 3} mais
                       </div>
                     )}

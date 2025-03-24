@@ -121,7 +121,7 @@ const DailyView = ({ date }: DailyViewProps) => {
                 className="border-b last:border-b-0 hover:bg-blue-50/50 transition-colors cursor-pointer group"
                 onClick={() => handleSlotClick(time)}
               >
-                <div className="flex justify-between items-center p-3">
+                <div className="flex justify-between items-center p-2">
                   <span className="font-medium text-gray-700 group-hover:text-blue-700 transition-colors">{time}</span>
                   <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-600">
                     <Plus className="h-4 w-4 mr-1" />
@@ -130,7 +130,7 @@ const DailyView = ({ date }: DailyViewProps) => {
                 </div>
                 
                 {slotAppointments.length > 0 ? (
-                  <div className="px-3 pb-3 space-y-1">
+                  <div className="px-3 pb-2 space-y-1">
                     {slotAppointments.map((appointment) => (
                       <AppointmentIndicator 
                         key={appointment.id} 
@@ -141,7 +141,7 @@ const DailyView = ({ date }: DailyViewProps) => {
                     ))}
                   </div>
                 ) : (
-                  <div className="px-3 pb-3 text-gray-400 text-sm italic">Nenhuma consulta agendada</div>
+                  <div className="px-3 pb-2 text-gray-400 text-xs italic">Nenhuma consulta agendada</div>
                 )}
               </div>
             );

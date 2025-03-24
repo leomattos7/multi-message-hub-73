@@ -134,11 +134,11 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
       <div className="grid grid-cols-8 min-w-[800px] rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
         {/* Time column */}
         <div className="col-span-1 bg-gray-50">
-          <div className="h-12 border-b border-r border-gray-200 flex items-center justify-center font-semibold text-gray-500 text-sm">
+          <div className="h-10 border-b border-r border-gray-200 flex items-center justify-center font-semibold text-gray-500 text-sm">
             Horário
           </div>
           {timeSlots.map((time) => (
-            <div key={time} className="h-24 border-b border-r border-gray-200 px-2 py-1 flex items-center justify-center text-gray-700">
+            <div key={time} className="h-16 border-b border-r border-gray-200 px-2 py-1 flex items-center justify-center text-gray-700">
               {time}
             </div>
           ))}
@@ -153,13 +153,13 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
             <div key={day.toString()} className="col-span-1">
               <div 
                 className={cn(
-                  "h-12 border-b border-r border-gray-200 px-2 py-1 text-center font-semibold",
+                  "h-10 border-b border-r border-gray-200 px-2 py-1 text-center font-semibold",
                   isCurrentDay ? "bg-blue-100 text-blue-800" : "bg-gray-50 text-gray-700"
                 )}
               >
-                <div className="text-sm uppercase">{format(day, "EEE", { locale: ptBR })}</div>
+                <div className="text-xs uppercase">{format(day, "EEE", { locale: ptBR })}</div>
                 <div className={cn(
-                  "text-lg leading-none mt-1",
+                  "text-sm leading-none mt-1",
                   isCurrentDay && "text-blue-700"
                 )}>
                   {format(day, "dd", { locale: ptBR })}
@@ -173,7 +173,7 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
                   <div 
                     key={`${day}-${time}`} 
                     className={cn(
-                      "h-24 border-b border-r border-gray-200 hover:bg-blue-50/50 transition-colors cursor-pointer relative p-1",
+                      "h-16 border-b border-r border-gray-200 hover:bg-blue-50/50 transition-colors cursor-pointer relative p-1",
                       isCurrentDay && "bg-blue-50/30"
                     )}
                     onClick={() => handleCellClick(day, time)}

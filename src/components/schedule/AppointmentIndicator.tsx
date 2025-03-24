@@ -72,17 +72,17 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
   return (
     <div 
       className={cn(
-        "px-3 py-2 rounded-lg text-sm border shadow-sm transition-all duration-200 mb-1.5 group relative",
+        "px-2 py-1.5 rounded-lg text-xs border shadow-sm transition-all duration-200 mb-1 group relative",
         gradient, 
         appointment.status === 'cancelado' ? "opacity-70" : "hover:shadow-md"
       )}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center space-x-2">
-        <StatusIcon className="h-4 w-4 flex-shrink-0" />
+        <StatusIcon className="h-3.5 w-3.5 flex-shrink-0" />
         <div className="flex-1 overflow-hidden">
           <div className="font-medium truncate">{appointment.patient?.name}</div>
-          <div className="text-xs flex items-center gap-1">
+          <div className="text-[10px] flex items-center gap-1">
             <span className="font-medium">{appointment.time}</span> 
             <span className="opacity-60">•</span> 
             <span>{appointment.type}</span>
@@ -95,20 +95,20 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-7 w-7 rounded-full hover:bg-white/50" 
+                className="h-6 w-6 rounded-full hover:bg-white/50" 
                 onClick={() => onEdit(appointment)}
               >
-                <Edit className="h-3.5 w-3.5" />
+                <Edit className="h-3 w-3" />
               </Button>
             )}
             {onDelete && (
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-7 w-7 rounded-full hover:bg-white/50 text-red-500 hover:text-red-600" 
+                className="h-6 w-6 rounded-full hover:bg-white/50 text-red-500 hover:text-red-600" 
                 onClick={() => onDelete(appointment.id)}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-3 w-3" />
               </Button>
             )}
           </div>
