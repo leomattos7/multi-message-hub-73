@@ -110,23 +110,27 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
   return (
     <div className="mt-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-semibold">
           {format(date, "MMMM 'de' yyyy", { locale: ptBR })}
         </h3>
-        <Button onClick={() => {
-          setSelectedDay(new Date());
-          setSelectedAppointment(null);
-          setIsDialogOpen(true);
-        }} size="sm">
+        <Button 
+          onClick={() => {
+            setSelectedDay(new Date());
+            setSelectedAppointment(null);
+            setIsDialogOpen(true);
+          }} 
+          size="sm"
+          className="bg-blue-500 hover:bg-blue-600"
+        >
           <Plus className="mr-1 h-4 w-4" />
           Novo Agendamento
         </Button>
       </div>
       
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-2">
         {/* Weekday headers */}
         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((weekday) => (
-          <div key={weekday} className="text-center font-medium p-2">
+          <div key={weekday} className="text-center font-semibold p-2 text-gray-600">
             {weekday}
           </div>
         ))}
@@ -135,37 +139,45 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
         {daysArray.map((day, idx) => {
           const dateStr = format(day, 'yyyy-MM-dd');
           const dayAppointments = appointmentsByDate[dateStr] || [];
+          const inCurrentMonth = isSameMonth(day, date);
+          const isCurrentDay = isToday(day);
           
           return (
             <div
               key={idx}
               className={cn(
-                "h-24 p-1 border rounded-md overflow-hidden",
-                !isSameMonth(day, date) ? "bg-gray-100 text-gray-400" : "",
-                isToday(day) ? "bg-blue-50 border-blue-300" : "",
-                "hover:bg-blue-50 cursor-pointer"
+                "h-28 p-1 border rounded-xl overflow-hidden transition-all",
+                !inCurrentMonth ? "bg-gray-50 text-gray-400 border-gray-100" : "border-gray-200",
+                isCurrentDay ? "ring-2 ring-blue-500 ring-offset-2 shadow-sm" : "",
+                inCurrentMonth && "hover:bg-blue-50/50 cursor-pointer shadow-sm hover:shadow"
               )}
               onClick={() => handleDayClick(day)}
             >
-              <div className="text-right p-1">{format(day, 'd')}</div>
-              {isSameMonth(day, date) && (
+              <div className={cn(
+                "text-right p-1 font-semibold",
+                isCurrentDay && inCurrentMonth && "text-blue-700 bg-blue-100/50 rounded-lg"
+              )}>
+                {format(day, 'd')}
+              </div>
+              
+              {inCurrentMonth && (
                 isLoadingAppointments ? (
-                  <div className="text-xs text-gray-400">Carregando...</div>
+                  <div className="text-xs text-gray-400 animate-pulse">Carregando...</div>
                 ) : dayAppointments.length > 0 && (
-                  <div className="text-xs mt-1 space-y-1">
+                  <div className="text-xs mt-1 space-y-1 overflow-y-auto max-h-[80px] pr-1">
                     {dayAppointments.slice(0, 3).map((appointment) => (
                       <div key={appointment.id} className="flex items-center space-x-1 group relative">
                         <AppointmentIndicator 
                           appointment={appointment} 
                           compact 
                         />
-                        <span className="truncate">{appointment.time.substring(0, 5)} - {appointment.patient?.name}</span>
+                        <span className="truncate text-gray-700">{appointment.time.substring(0, 5)} - {appointment.patient?.name}</span>
                         
                         <div className="hidden group-hover:flex items-center gap-1 absolute right-0">
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-4 w-4" 
+                            className="h-4 w-4 rounded-full hover:bg-white/80" 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditAppointment(appointment);
@@ -178,7 +190,7 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-4 w-4 text-red-500" 
+                              className="h-4 w-4 rounded-full hover:bg-white/80 text-red-500" 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteClick(appointment.id);

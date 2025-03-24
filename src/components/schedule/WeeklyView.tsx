@@ -115,24 +115,30 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
   return (
     <div className="mt-4 overflow-x-auto">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">Semana atual</h3>
-        <Button onClick={() => {
-          setSelectedDay(new Date());
-          setSelectedTime("08:00");
-          setSelectedAppointment(null);
-          setIsNewAppointmentOpen(true);
-        }} size="sm">
+        <h3 className="text-lg font-semibold">Semana atual</h3>
+        <Button 
+          onClick={() => {
+            setSelectedDay(new Date());
+            setSelectedTime("08:00");
+            setSelectedAppointment(null);
+            setIsNewAppointmentOpen(true);
+          }} 
+          size="sm"
+          className="bg-blue-500 hover:bg-blue-600"
+        >
           <Plus className="mr-1 h-4 w-4" />
           Novo Agendamento
         </Button>
       </div>
       
-      <div className="grid grid-cols-8 min-w-[800px]">
+      <div className="grid grid-cols-8 min-w-[800px] rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
         {/* Time column */}
-        <div className="col-span-1">
-          <div className="h-12"></div> {/* Empty header cell */}
+        <div className="col-span-1 bg-gray-50">
+          <div className="h-12 border-b border-r border-gray-200 flex items-center justify-center font-semibold text-gray-500 text-sm">
+            Horário
+          </div>
           {timeSlots.map((time) => (
-            <div key={time} className="h-24 border-b border-r px-2 py-1 flex items-center">
+            <div key={time} className="h-24 border-b border-r border-gray-200 px-2 py-1 flex items-center justify-center text-gray-700">
               {time}
             </div>
           ))}
@@ -141,29 +147,39 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
         {/* Day columns */}
         {weekDays.map((day) => {
           const dateStr = format(day, 'yyyy-MM-dd');
+          const isCurrentDay = isToday(day);
           
           return (
             <div key={day.toString()} className="col-span-1">
               <div 
                 className={cn(
-                  "h-12 border-b border-r px-2 py-1 text-center font-semibold",
-                  isToday(day) ? "bg-blue-100" : ""
+                  "h-12 border-b border-r border-gray-200 px-2 py-1 text-center font-semibold",
+                  isCurrentDay ? "bg-blue-100 text-blue-800" : "bg-gray-50 text-gray-700"
                 )}
               >
-                <div>{format(day, "EEE", { locale: ptBR })}</div>
-                <div>{format(day, "dd", { locale: ptBR })}</div>
+                <div className="text-sm uppercase">{format(day, "EEE", { locale: ptBR })}</div>
+                <div className={cn(
+                  "text-lg leading-none mt-1",
+                  isCurrentDay && "text-blue-700"
+                )}>
+                  {format(day, "dd", { locale: ptBR })}
+                </div>
               </div>
+              
               {timeSlots.map((time) => {
                 const slotAppointments = appointmentsByDateAndTime[dateStr]?.[time] || [];
                 
                 return (
                   <div 
                     key={`${day}-${time}`} 
-                    className="h-24 border-b border-r hover:bg-blue-50 cursor-pointer relative p-1"
+                    className={cn(
+                      "h-24 border-b border-r border-gray-200 hover:bg-blue-50/50 transition-colors cursor-pointer relative p-1",
+                      isCurrentDay && "bg-blue-50/30"
+                    )}
                     onClick={() => handleCellClick(day, time)}
                   >
                     {isLoadingAppointments ? (
-                      <div className="text-xs text-gray-400">Carregando...</div>
+                      <div className="text-xs text-gray-400 animate-pulse">Carregando...</div>
                     ) : slotAppointments.length > 0 ? (
                       <div className="absolute inset-0 p-1 overflow-y-auto">
                         {slotAppointments.map((appointment) => (

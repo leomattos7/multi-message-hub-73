@@ -101,36 +101,36 @@ const DailyView = ({ date }: DailyViewProps) => {
   return (
     <div className="mt-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-semibold">
           {format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
         </h3>
-        <Button onClick={() => handleSlotClick("08:00")} size="sm">
+        <Button onClick={() => handleSlotClick("08:00")} size="sm" className="bg-blue-500 hover:bg-blue-600">
           <Plus className="mr-1 h-4 w-4" />
           Novo Agendamento
         </Button>
       </div>
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-xl shadow overflow-hidden border border-gray-100">
         {isLoadingAppointments ? (
-          <div className="p-4 text-center text-gray-500">Carregando agendamentos...</div>
+          <div className="p-4 text-center text-gray-500 animate-pulse">Carregando agendamentos...</div>
         ) : (
           timeSlots.map((time) => {
             const slotAppointments = appointmentsByTime[time] || [];
             return (
               <div 
                 key={time} 
-                className="border-b p-3 hover:bg-blue-50 cursor-pointer"
+                className="border-b last:border-b-0 hover:bg-blue-50/50 transition-colors cursor-pointer group"
                 onClick={() => handleSlotClick(time)}
               >
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-medium">{time}</span>
-                  <Button size="sm" variant="ghost">
+                <div className="flex justify-between items-center p-3">
+                  <span className="font-medium text-gray-700 group-hover:text-blue-700 transition-colors">{time}</span>
+                  <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-600">
                     <Plus className="h-4 w-4 mr-1" />
                     Agendar
                   </Button>
                 </div>
                 
                 {slotAppointments.length > 0 ? (
-                  <div className="mt-2 space-y-1">
+                  <div className="px-3 pb-3 space-y-1">
                     {slotAppointments.map((appointment) => (
                       <AppointmentIndicator 
                         key={appointment.id} 
@@ -141,7 +141,7 @@ const DailyView = ({ date }: DailyViewProps) => {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-gray-400 text-sm mt-1">Nenhuma consulta agendada</div>
+                  <div className="px-3 pb-3 text-gray-400 text-sm italic">Nenhuma consulta agendada</div>
                 )}
               </div>
             );
