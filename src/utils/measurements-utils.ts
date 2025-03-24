@@ -29,22 +29,22 @@ export const formatAllMeasurements = (
 ) => {
   const standardMeasurements = [
     { 
-      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.WEIGHT], 
+      name: MEASUREMENT_NAMES.WEIGHT, 
       value: weight ?? "-", 
       unit: MEASUREMENT_UNITS.WEIGHT 
     },
     { 
-      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.HEIGHT], 
+      name: MEASUREMENT_NAMES.HEIGHT, 
       value: height ?? "-", 
       unit: MEASUREMENT_UNITS.HEIGHT 
     },
     { 
-      name: MEASUREMENT_DISPLAY_NAMES[MEASUREMENT_NAMES.ABDOMINAL], 
+      name: MEASUREMENT_NAMES.ABDOMINAL, 
       value: abdominalCircumference ?? "-", 
       unit: MEASUREMENT_UNITS.ABDOMINAL 
     },
     { 
-      name: MEASUREMENT_DISPLAY_NAMES["imc"], 
+      name: "imc", 
       value: bmi ?? "-", 
       unit: MEASUREMENT_UNITS.BMI 
     }

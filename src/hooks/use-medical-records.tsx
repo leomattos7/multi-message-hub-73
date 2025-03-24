@@ -53,7 +53,10 @@ export const useMedicalRecords = () => {
       
       const { data: patientsData, error: patientsError } = await query.order("name");
       
-      if (patientsError) throw patientsError;
+      if (patientsError) {
+        console.error("Error fetching patients:", patientsError);
+        throw patientsError;
+      }
       
       const patientsWithRecordCounts = await Promise.all(patientsData.map(async (patient) => {
         const { count, error: countError } = await supabase
@@ -83,7 +86,10 @@ export const useMedicalRecords = () => {
         .select("id")
         .eq("doctor_id", doctorId);
         
-      if (patientError) throw patientError;
+      if (patientError) {
+        console.error("Error fetching doctor patients:", patientError);
+        throw patientError;
+      }
       
       // Use the patient IDs to filter records
       const patientIds = doctorPatients.map(p => p.id);

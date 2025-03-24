@@ -5,6 +5,7 @@ import { MeasurementForm } from "@/types/measurement";
 import { fetchPatientMeasurements, saveMeasurement } from "@/services/measurements-service";
 import { calculateBMI, formatAllMeasurements } from "@/utils/measurements-utils";
 import { MEASUREMENT_NAMES, MEASUREMENT_UNITS } from "@/components/patient/measurements/constants";
+import { toast } from "@/components/ui/use-toast";
 
 export const usePatientMeasurements = (patientId?: string) => {
   const [weight, setWeight] = useState<number | null>(null);
@@ -37,9 +38,9 @@ export const usePatientMeasurements = (patientId?: string) => {
       const abdominalMeasurement = measurements.find(m => m.name === MEASUREMENT_NAMES.ABDOMINAL);
       
       // Set standard measurements
-      if (weightMeasurement) setWeight(weightMeasurement.value);
-      if (heightMeasurement) setHeight(heightMeasurement.value);
-      if (abdominalMeasurement) setAbdominalCircumference(abdominalMeasurement.value);
+      if (weightMeasurement) setWeight(Number(weightMeasurement.value));
+      if (heightMeasurement) setHeight(Number(heightMeasurement.value));
+      if (abdominalMeasurement) setAbdominalCircumference(Number(abdominalMeasurement.value));
       
       // Set custom measurements
       const otherMeasurements = measurements.filter(m => 
@@ -60,24 +61,44 @@ export const usePatientMeasurements = (patientId?: string) => {
 
   // Update a standard measurement
   const updateMeasurement = async (name: string, value: number | null, unit: string) => {
-    if (value === null) return;
-    const success = await saveMeasurement(patientId!, name, value, unit);
-    if (success) await refetch();
+    if (!patientId || value === null) {
+      toast({
+        title: "Erro",
+        description: "Dados incompletos para salvar a medição",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const success = await saveMeasurement(patientId, name, value, unit);
+    if (success) {
+      await refetch();
+    }
   };
 
   // Add a new custom measurement
   const addCustomMeasurement = async () => {
-    if (!newMeasurement.name || !newMeasurement.value) {
+    if (!patientId || !newMeasurement.name || !newMeasurement.value) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos da medição",
+        variant: "destructive",
+      });
       return;
     }
 
     const value = Number(newMeasurement.value);
     if (isNaN(value)) {
+      toast({
+        title: "Erro",
+        description: "O valor da medição deve ser um número válido",
+        variant: "destructive",
+      });
       return;
     }
 
     const success = await saveMeasurement(
-      patientId!,
+      patientId,
       newMeasurement.name,
       value,
       newMeasurement.unit

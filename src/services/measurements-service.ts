@@ -9,14 +9,23 @@ import { toast } from "@/components/ui/use-toast";
 export const fetchPatientMeasurements = async (patientId: string): Promise<Measurement[]> => {
   if (!patientId) throw new Error("Patient ID is required");
   
-  const { data, error } = await supabase
-    .from("measurements")
-    .select("*")
-    .eq("patient_id", patientId)
-    .order("created_at", { ascending: false });
-  
-  if (error) throw error;
-  return data as Measurement[];
+  try {
+    const { data, error } = await supabase
+      .from("measurements")
+      .select("*")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching measurements:", error);
+      throw error;
+    }
+    
+    return data as Measurement[];
+  } catch (error) {
+    console.error("Failed to fetch measurements:", error);
+    return [];
+  }
 };
 
 /**
@@ -47,8 +56,18 @@ export const saveMeasurement = async (
   }
 
   try {
-    // For patient measurements, we're bypassing auth requirements since this is an admin functionality
-    // where doctors or healthcare providers are adding measurements for patients
+    // Get user ID for the measurement
+    const userString = localStorage.getItem("user");
+    const user = userString ? JSON.parse(userString) : null;
+    
+    if (!user?.id) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado",
+        variant: "destructive",
+      });
+      return false;
+    }
     
     // First check if this measurement already exists
     const { data: existingMeasurement, error: fetchError } = await supabase

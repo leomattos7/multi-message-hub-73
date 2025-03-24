@@ -41,6 +41,12 @@ export function MeasurementsList({ measurements, patientId, onMeasurementUpdated
       return;
     }
     
+    // Skip saving for BMI as it's calculated
+    if (selectedMeasurement.name === "imc") {
+      setIsDialogOpen(false);
+      return;
+    }
+    
     const numValue = parseFloat(editValue);
     if (isNaN(numValue)) {
       toast({
