@@ -41,7 +41,7 @@ export const MedicalRecordStats: React.FC<MedicalRecordStatsProps> = ({
       <Card className="col-span-1 p-4 flex flex-col space-y-2">
         <div className="flex items-center">
           <FileText className="h-5 w-5 mr-2 text-green-500" />
-          <h3 className="font-medium">Total de Registros</h3>
+          <h3 className="font-medium">Total de Agendamentos</h3>
         </div>
         <p className="text-2xl font-bold">{getTotalRecordCount()}</p>
       </Card>
@@ -49,7 +49,7 @@ export const MedicalRecordStats: React.FC<MedicalRecordStatsProps> = ({
       <Card className="col-span-1 p-4 flex flex-col space-y-2">
         <div className="flex items-center">
           <FileText className="h-5 w-5 mr-2 text-orange-500" />
-          <h3 className="font-medium">Anamneses</h3>
+          <h3 className="font-medium">Tarefas</h3>
         </div>
         <p className="text-2xl font-bold">{getRecordTypeCount('anamnesis')}</p>
       </Card>
