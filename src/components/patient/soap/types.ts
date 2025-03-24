@@ -8,6 +8,7 @@ export interface SoapNotes {
     certificates: string;
     guidance: string;
     tasks: string;
+    exams: string;
   };
 }
 

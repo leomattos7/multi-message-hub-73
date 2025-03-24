@@ -5,7 +5,7 @@ import { usePatientData } from "./use-patient-data";
 import { usePatientRecordsData } from "./use-patient-records-data";
 import { renderPatientSectionContent } from "@/utils/patientSectionContent";
 import { Patient } from "@/types/patient";
-import { SoapNotes } from "@/components/patient/SoapNotesForm";
+import { SoapNotes } from "@/components/patient/soap/SoapNotesForm";
 
 export const usePatientRecords = (patientId?: string) => {
   const [activeTab, setActiveTab] = useState<string>("today");
@@ -63,7 +63,8 @@ export const usePatientRecords = (patientId?: string) => {
         notes.plan.prescriptions && `**Receitas:**\n${notes.plan.prescriptions}`,
         notes.plan.certificates && `**Atestados:**\n${notes.plan.certificates}`,
         notes.plan.guidance && `**Orientações:**\n${notes.plan.guidance}`,
-        notes.plan.tasks && `**Tarefas:**\n${notes.plan.tasks}`
+        notes.plan.tasks && `**Tarefas:**\n${notes.plan.tasks}`,
+        notes.plan.exams && `**Exames:**\n${notes.plan.exams}`
       ].filter(Boolean).join('\n\n');
 
       const formattedContent = `

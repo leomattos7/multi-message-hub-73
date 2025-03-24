@@ -19,7 +19,8 @@ export const SoapNotesForm: React.FC<SoapNotesFormProps> = ({
       prescriptions: "",
       certificates: "",
       guidance: "",
-      tasks: ""
+      tasks: "",
+      exams: ""
     }
   });
 

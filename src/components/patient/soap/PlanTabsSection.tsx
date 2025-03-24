@@ -2,7 +2,7 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, FileCheck, FileOutput, ListTodo } from "lucide-react";
+import { FileText, FileCheck, FileOutput, ListTodo, TestTube } from "lucide-react";
 
 interface PlanTabsSectionProps {
   plan: {
@@ -10,6 +10,7 @@ interface PlanTabsSectionProps {
     certificates: string;
     guidance: string;
     tasks: string;
+    exams: string;
   };
   onChange: (field: string, value: string) => void;
   activePlanTab: string;
@@ -28,7 +29,7 @@ export const PlanTabsSection: React.FC<PlanTabsSectionProps> = ({
         Plano
       </label>
       <Tabs value={activePlanTab} onValueChange={setActivePlanTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-4">
+        <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="prescriptions" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Receitas</span>
@@ -44,6 +45,10 @@ export const PlanTabsSection: React.FC<PlanTabsSectionProps> = ({
           <TabsTrigger value="tasks" className="flex items-center gap-1">
             <ListTodo className="h-4 w-4" />
             <span className="hidden sm:inline">Tarefas</span>
+          </TabsTrigger>
+          <TabsTrigger value="exams" className="flex items-center gap-1">
+            <TestTube className="h-4 w-4" />
+            <span className="hidden sm:inline">Exames</span>
           </TabsTrigger>
         </TabsList>
         
@@ -83,6 +88,16 @@ export const PlanTabsSection: React.FC<PlanTabsSectionProps> = ({
             placeholder="Tarefas a serem realizadas, acompanhamentos, retornos..."
             value={plan.tasks}
             onChange={(e) => onChange("tasks", e.target.value)}
+            className="min-h-[100px] w-full"
+          />
+        </TabsContent>
+        
+        <TabsContent value="exams">
+          <Textarea
+            id="plan-exams"
+            placeholder="Exames laboratoriais, de imagem, procedimentos diagnósticos..."
+            value={plan.exams}
+            onChange={(e) => onChange("exams", e.target.value)}
             className="min-h-[100px] w-full"
           />
         </TabsContent>
