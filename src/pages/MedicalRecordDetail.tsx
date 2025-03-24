@@ -8,6 +8,7 @@ import { RecordActions } from "@/components/medicalRecord/RecordActions";
 import { RecordNotFound } from "@/components/medicalRecord/RecordNotFound";
 import { CollapsibleSectionsContainer } from "@/components/patient/CollapsibleSectionsContainer";
 import { renderPatientSectionContent } from "@/utils/patientSectionContent";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function MedicalRecordDetail() {
   const { id } = useParams<{ id: string }>();
@@ -58,19 +59,23 @@ export default function MedicalRecordDetail() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <CollapsibleSectionsContainer 
-            patientId={record?.patient_id}
-            renderSectionContent={renderPatientSectionContent} 
-          />
+          <ScrollArea className="h-[calc(100vh-180px)]">
+            <CollapsibleSectionsContainer 
+              patientId={record?.patient_id}
+              renderSectionContent={renderPatientSectionContent} 
+            />
+          </ScrollArea>
         </div>
         
         <div className="md:col-span-2">
-          <RecordContent 
-            content={record.content}
-            isEditing={isEditing}
-            editedContent={editedContent}
-            onContentChange={setEditedContent}
-          />
+          <ScrollArea className="h-[calc(100vh-180px)]">
+            <RecordContent 
+              content={record.content}
+              isEditing={isEditing}
+              editedContent={editedContent}
+              onContentChange={setEditedContent}
+            />
+          </ScrollArea>
         </div>
       </div>
     </div>

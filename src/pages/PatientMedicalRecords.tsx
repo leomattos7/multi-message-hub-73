@@ -8,6 +8,7 @@ import { RecordsList } from "@/components/patient/RecordsList";
 import { NewRecordDialog } from "@/components/patient/NewRecordDialog";
 import { EditPatientDialog } from "@/components/patient/EditPatientDialog";
 import { PatientNotFound } from "@/components/patient/PatientNotFound";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function PatientMedicalRecords() {
   const { patientId } = useParams<{ patientId: string }>();
@@ -70,21 +71,25 @@ export default function PatientMedicalRecords() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <CollapsibleSectionsContainer 
-            patientId={patientId} 
-            renderSectionContent={renderSectionContent} 
-          />
+          <ScrollArea className="h-[calc(100vh-180px)]">
+            <CollapsibleSectionsContainer 
+              patientId={patientId} 
+              renderSectionContent={renderSectionContent} 
+            />
+          </ScrollArea>
         </div>
         
         <div className="md:col-span-2">
-          <RecordsList
-            records={records}
-            isLoading={recordsLoading}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            onSaveConsultation={saveConsultation}
-            isSaving={isSavingConsultation}
-          />
+          <ScrollArea className="h-[calc(100vh-180px)]">
+            <RecordsList
+              records={records}
+              isLoading={recordsLoading}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onSaveConsultation={saveConsultation}
+              isSaving={isSavingConsultation}
+            />
+          </ScrollArea>
         </div>
       </div>
     </div>
