@@ -19,10 +19,10 @@ interface Patient {
 
 interface PatientInfoProps {
   patient?: Patient;
-  onNewRecord: () => void;
+  onNewRecord?: () => void; // Keeping the prop type to avoid interface breaking changes
 }
 
-export const PatientInfo = ({ patient, onNewRecord }: PatientInfoProps) => {
+export const PatientInfo = ({ patient }: PatientInfoProps) => {
   const navigate = useNavigate();
   
   const calculateAge = (birthDate: string | undefined): number => {
@@ -99,11 +99,6 @@ export const PatientInfo = ({ patient, onNewRecord }: PatientInfoProps) => {
           </HoverCard>
         </div>
       </div>
-      
-      <Button onClick={onNewRecord}>
-        <span className="h-4 w-4 mr-2">+</span>
-        Novo Registro
-      </Button>
     </div>
   );
 };
