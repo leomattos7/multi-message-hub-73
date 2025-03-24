@@ -1,12 +1,12 @@
 
-import React, { useState } from "react";
-import { Plus } from "lucide-react";
+import React, { useState, KeyboardEvent } from "react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { usePatientRecordsData } from "@/hooks/use-patient-records-data";
 import { MedicationItem } from "@/types/medication";
 import { MedicationCard } from "./MedicationCard";
-import { MedicationDialog } from "./MedicationDialog";
 import { DeleteMedicationDialog } from "./DeleteMedicationDialog";
 
 interface MedicationsSectionProps {
@@ -14,7 +14,7 @@ interface MedicationsSectionProps {
 }
 
 export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [newMedication, setNewMedication] = useState("");
   const [medDosage, setMedDosage] = useState("");
   const [medInstructions, setMedInstructions] = useState("");
@@ -26,6 +26,12 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
     createRecord, 
     deleteRecord 
   } = usePatientRecordsData(patientId, "medicacao");
+
+  const resetForm = () => {
+    setNewMedication("");
+    setMedDosage("");
+    setMedInstructions("");
+  };
 
   const handleAddMedication = async () => {
     if (!newMedication.trim()) {
@@ -45,10 +51,7 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
 
     try {
       await createRecord(JSON.stringify(medicationData), "medicacao");
-      setNewMedication("");
-      setMedDosage("");
-      setMedInstructions("");
-      setIsDialogOpen(false);
+      resetForm();
       
       toast({
         title: "Medicação adicionada",
@@ -61,6 +64,13 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
         description: "Houve um erro ao adicionar a medicação. Tente novamente.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddMedication();
     }
   };
 
@@ -132,29 +142,74 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
         )}
       </div>
 
-      {/* Add Medication Button */}
-      <div className="flex justify-center">
-        <Button 
-          onClick={() => setIsDialogOpen(true)} 
-          size="sm"
-          className="rounded-full h-10 w-10 p-0 bg-blue-500 hover:bg-blue-600"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
-      </div>
-
-      {/* Add Medication Dialog */}
-      <MedicationDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        newMedication={newMedication}
-        setNewMedication={setNewMedication}
-        medDosage={medDosage}
-        setMedDosage={setMedDosage}
-        medInstructions={medInstructions}
-        setMedInstructions={setMedInstructions}
-        onAdd={handleAddMedication}
-      />
+      {/* Inline Add Medication Form */}
+      {showForm ? (
+        <div className="space-y-2 border rounded-lg p-3 bg-gray-50">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="text-sm font-medium">Nova medicação</h4>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0 rounded-full"
+              onClick={() => setShowForm(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="space-y-2">
+            <Input 
+              placeholder="Nome da medicação" 
+              value={newMedication}
+              onChange={(e) => setNewMedication(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="text-sm"
+              autoFocus
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Input 
+                placeholder="Dosagem (opcional)" 
+                value={medDosage}
+                onChange={(e) => setMedDosage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="text-sm"
+              />
+              <Input 
+                placeholder="Posologia (opcional)" 
+                value={medInstructions}
+                onChange={(e) => setMedInstructions(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowForm(false)}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                size="sm"
+                onClick={handleAddMedication}
+                disabled={!newMedication.trim()}
+              >
+                Adicionar
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex justify-center">
+          <Button 
+            onClick={() => setShowForm(true)} 
+            size="sm"
+            className="rounded-full h-10 w-10 p-0 bg-blue-500 hover:bg-blue-600"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <DeleteMedicationDialog

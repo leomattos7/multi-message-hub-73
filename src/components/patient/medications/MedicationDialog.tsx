@@ -33,6 +33,13 @@ export const MedicationDialog = ({
   setMedInstructions,
   onAdd,
 }: MedicationDialogProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && newMedication.trim()) {
+      e.preventDefault();
+      onAdd();
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -44,6 +51,8 @@ export const MedicationDialog = ({
             placeholder="Nome da medicação" 
             value={newMedication}
             onChange={(e) => setNewMedication(e.target.value)}
+            onKeyDown={handleKeyDown}
+            autoFocus
           />
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -51,6 +60,7 @@ export const MedicationDialog = ({
                 placeholder="Dosagem (opcional)" 
                 value={medDosage}
                 onChange={(e) => setMedDosage(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
             </div>
             <div>
@@ -58,12 +68,13 @@ export const MedicationDialog = ({
                 placeholder="Posologia (opcional)" 
                 value={medInstructions}
                 onChange={(e) => setMedInstructions(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={onAdd}>
+          <Button onClick={onAdd} disabled={!newMedication.trim()}>
             Adicionar
           </Button>
         </DialogFooter>
