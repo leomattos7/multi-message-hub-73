@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   Table, 
@@ -372,7 +373,7 @@ export default function PatientCRM() {
       address: patient.address || "",
       notes: patient.notes || "",
       payment_method: patient.payment_method || "particular",
-      insurance_name: patient.payment_method === "convenio" ? patient.insurance_name || "",
+      insurance_name: patient.insurance_name || "",
       cpf: patient.cpf || "",
       birth_date: patient.birth_date || ""
     });
@@ -549,6 +550,8 @@ export default function PatientCRM() {
       notes: ""
     });
   };
+
+  const filteredPatients = applyFilters(patients);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -936,3 +939,78 @@ export default function PatientCRM() {
                   <RadioGroupItem value="particular" id="edit-particular" />
                   <Label htmlFor="edit-particular">Particular</Label>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="convenio" id="edit-convenio" />
+                  <Label htmlFor="edit-convenio">Convênio</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {editingPatient.payment_method === "convenio" && (
+              <div className="grid gap-2">
+                <Label htmlFor="edit-insurance_name">Nome do Convênio</Label>
+                <Input
+                  id="edit-insurance_name"
+                  value={editingPatient.insurance_name}
+                  onChange={(e) => setEditingPatient({...editingPatient, insurance_name: e.target.value})}
+                  placeholder="Digite o nome do convênio"
+                />
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <Label htmlFor="edit-notes">Anotações</Label>
+              <Textarea
+                id="edit-notes"
+                value={editingPatient.notes}
+                onChange={(e) => setEditingPatient({...editingPatient, notes: e.target.value})}
+                placeholder="Informações adicionais sobre o contato..."
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditPatientOpen(false)}>Cancelar</Button>
+            <Button onClick={handleUpdatePatient}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem certeza que deseja excluir este contato? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePatient}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Filtrar Contatos</DialogTitle>
+            <DialogDescription>
+              Defina os critérios para filtrar a lista de contatos.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ContactFilters 
+            filters={patientFilters}
+            onChange={setPatientFilters}
+          />
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={handleResetFilters}>Limpar Filtros</Button>
+            <Button onClick={() => setIsFilterDialogOpen(false)}>Aplicar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
