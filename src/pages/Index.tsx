@@ -1,20 +1,55 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageCircle, Inbox } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Index() {
   const isMobile = useIsMobile();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showConversation, setShowConversation] = useState(!isMobile);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Get conversations from localStorage instead of using mock data
-  const conversationsFromStorage = JSON.parse(localStorage.getItem("conversations") || "[]");
-  const conversations = conversationsFromStorage;
-  const isLoading = false;
-  const error = null;
+  // Get current user
+  const userString = localStorage.getItem("user");
+  const user = userString ? JSON.parse(userString) : null;
+  const doctorId = user?.id;
+  
+  useEffect(() => {
+    async function fetchConversations() {
+      if (!doctorId) {
+        setConversations([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('*')
+          .eq('doctor_id', doctorId);
+          
+        if (error) {
+          throw error;
+        }
+        
+        setConversations(data || []);
+        setError(null);
+      } catch (err: any) {
+        console.error("Error fetching conversations:", err);
+        setError("Error loading conversations");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchConversations();
+  }, [doctorId]);
 
   const selectedConversation = selectedConversationId 
     ? conversations.find((c: any) => c.id === selectedConversationId) || null
@@ -60,7 +95,7 @@ export default function Index() {
               onSelectConversation={handleSelectConversation}
               selectedConversationId={selectedConversationId}
               className="flex-1"
-              useMockData={false} // Set to false to use real data from localStorage
+              useMockData={false} // Set to false to use real data from Supabase
             />
           </div>
         )}

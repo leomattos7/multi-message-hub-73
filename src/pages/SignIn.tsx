@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { LucideStethoscope } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   email: z.string().email({ message: "E-mail inválido" }),
@@ -34,19 +35,28 @@ export default function SignIn() {
     setIsLoading(true);
     
     try {
-      // Create a new empty user account (no mock data)
-      const user = {
-        id: "user-" + Math.random().toString(36).substr(2, 9),
+      // We'll use the supabase client here to properly handle authentication
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
+        password: data.password,
+      });
+      
+      if (error) throw error;
+      
+      const user = {
+        id: authData.user.id,
+        email: authData.user.email,
         role: "doctor",
         name: "Dr. " + data.email.split('@')[0]
       };
       
-      // Store user in localStorage - starting with empty collections
+      // Store user in localStorage
       localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("patients", JSON.stringify([]));
-      localStorage.setItem("appointments", JSON.stringify([]));
-      localStorage.setItem("conversations", JSON.stringify([]));
+      
+      // Initialize empty collections if they don't exist
+      if (!localStorage.getItem("patients")) localStorage.setItem("patients", JSON.stringify([]));
+      if (!localStorage.getItem("appointments")) localStorage.setItem("appointments", JSON.stringify([]));
+      if (!localStorage.getItem("conversations")) localStorage.setItem("conversations", JSON.stringify([]));
       
       toast.success("Login realizado com sucesso!");
       navigate("/");

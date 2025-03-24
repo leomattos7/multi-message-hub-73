@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { LucideStethoscope } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
@@ -43,13 +44,27 @@ export default function SignUp() {
     setIsLoading(true);
     
     try {
-      // Create a new user account without example data
+      // Create Supabase account
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email || "",
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            phone: data.phone || "",
+            role: "doctor"
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Create a user account with proper ID
       const user = {
-        id: "user-" + Math.random().toString(36).substr(2, 9),
+        id: authData.user?.id,
         email: data.email || "",
         role: "doctor",
-        name: data.name,
-        phone: data.phone || "",
+        name: data.name
       };
       
       // Store user in localStorage
