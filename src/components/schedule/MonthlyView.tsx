@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import AppointmentDialog from "./AppointmentDialog";
+import { useAppointments } from "@/hooks/use-appointments";
+import AppointmentIndicator from "./AppointmentIndicator";
 
 interface MonthlyViewProps {
   date: Date;
@@ -29,6 +31,18 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
     daysArray.push(day);
     day = addDays(day, 1);
   }
+
+  // Get appointments
+  const { appointments } = useAppointments();
+
+  // Group appointments by date
+  const appointmentsByDate = appointments.reduce((acc, appointment) => {
+    if (!acc[appointment.date]) {
+      acc[appointment.date] = [];
+    }
+    acc[appointment.date].push(appointment);
+    return acc;
+  }, {} as Record<string, typeof appointments>);
 
   const handleDayClick = (day: Date) => {
     setSelectedDay(day);
@@ -63,25 +77,43 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
         ))}
         
         {/* Calendar days */}
-        {daysArray.map((day, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              "h-24 p-1 border rounded-md overflow-hidden",
-              !isSameMonth(day, date) ? "bg-gray-100 text-gray-400" : "",
-              isToday(day) ? "bg-blue-50 border-blue-300" : "",
-              "hover:bg-blue-50 cursor-pointer"
-            )}
-            onClick={() => handleDayClick(day)}
-          >
-            <div className="text-right p-1">{format(day, 'd')}</div>
-            {isSameMonth(day, date) && (
-              <div className="text-xs mt-1">
-                {/* Here you could display appointment indicators */}
-              </div>
-            )}
-          </div>
-        ))}
+        {daysArray.map((day, idx) => {
+          const dateStr = format(day, 'yyyy-MM-dd');
+          const dayAppointments = appointmentsByDate[dateStr] || [];
+          
+          return (
+            <div
+              key={idx}
+              className={cn(
+                "h-24 p-1 border rounded-md overflow-hidden",
+                !isSameMonth(day, date) ? "bg-gray-100 text-gray-400" : "",
+                isToday(day) ? "bg-blue-50 border-blue-300" : "",
+                "hover:bg-blue-50 cursor-pointer"
+              )}
+              onClick={() => handleDayClick(day)}
+            >
+              <div className="text-right p-1">{format(day, 'd')}</div>
+              {isSameMonth(day, date) && dayAppointments.length > 0 && (
+                <div className="text-xs mt-1 space-y-1">
+                  {dayAppointments.slice(0, 3).map((appointment) => (
+                    <div key={appointment.id} className="flex items-center space-x-1">
+                      <AppointmentIndicator 
+                        appointment={appointment} 
+                        compact 
+                      />
+                      <span className="truncate">{appointment.time.substring(0, 5)}</span>
+                    </div>
+                  ))}
+                  {dayAppointments.length > 3 && (
+                    <div className="text-xs text-blue-500 font-medium">
+                      +{dayAppointments.length - 3} mais
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
