@@ -58,6 +58,14 @@ export const usePatientRecords = (patientId?: string) => {
   const saveConsultation = async (notes: SoapNotes) => {
     setIsSavingConsultation(true);
     try {
+      // Format the plan section based on the new structure
+      const planContent = [
+        notes.plan.prescriptions && `**Receitas:**\n${notes.plan.prescriptions}`,
+        notes.plan.certificates && `**Atestados:**\n${notes.plan.certificates}`,
+        notes.plan.guidance && `**Orientações:**\n${notes.plan.guidance}`,
+        notes.plan.tasks && `**Tarefas:**\n${notes.plan.tasks}`
+      ].filter(Boolean).join('\n\n');
+
       const formattedContent = `
 **Subjetivo:**
 ${notes.subjective || "Não informado"}
@@ -69,7 +77,7 @@ ${notes.objective || "Não informado"}
 ${notes.assessment || "Não informado"}
 
 **Plano:**
-${notes.plan || "Não informado"}
+${planContent || "Não informado"}
       `.trim();
 
       await createRecord(formattedContent, "soap");
