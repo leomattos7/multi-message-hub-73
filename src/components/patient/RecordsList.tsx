@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Calendar } from "lucide-react";
+import { SoapNotesForm, SoapNotes } from "./SoapNotesForm";
 
 interface MedicalRecord {
   id: string;
@@ -20,6 +21,8 @@ interface RecordsListProps {
   isLoading: boolean;
   activeTab: string;
   onTabChange: (value: string) => void;
+  onSaveConsultation?: (notes: SoapNotes) => Promise<void>;
+  isSaving?: boolean;
 }
 
 export const RecordsList = ({
@@ -27,6 +30,8 @@ export const RecordsList = ({
   isLoading,
   activeTab,
   onTabChange,
+  onSaveConsultation,
+  isSaving = false,
 }: RecordsListProps) => {
   const navigate = useNavigate();
 
@@ -47,6 +52,7 @@ export const RecordsList = ({
     exam: "Exame",
     prescription: "Receita",
     evolution: "Evolução",
+    soap: "Consulta SOAP",
   };
 
   const viewRecordDetails = (record: MedicalRecord) => {
@@ -101,7 +107,7 @@ export const RecordsList = ({
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
                   <FileText className="h-5 w-5 text-blue-500" />
-                  <CardTitle className="text-lg">{recordTypeDisplay[record.record_type]}</CardTitle>
+                  <CardTitle className="text-lg">{recordTypeDisplay[record.record_type] || record.record_type}</CardTitle>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <Calendar className="h-4 w-4" />
@@ -144,9 +150,19 @@ export const RecordsList = ({
             <p>Carregando registros...</p>
           </div>
         ) : (
-          todayRecords && todayRecords.length > 0 
-            ? renderRecordsList(todayRecords)
-            : renderTodayConsultationEmpty()
+          todayRecords && todayRecords.length > 0 ? (
+            renderRecordsList(todayRecords)
+          ) : (
+            <div className="space-y-6">
+              <div className="rounded-lg border p-4">
+                <h3 className="text-lg font-medium mb-4">Nova Consulta</h3>
+                <SoapNotesForm 
+                  onSave={onSaveConsultation || (() => {})} 
+                  isLoading={isSaving}
+                />
+              </div>
+            </div>
+          )
         )}
       </TabsContent>
 

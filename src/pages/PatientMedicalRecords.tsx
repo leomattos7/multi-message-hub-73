@@ -26,6 +26,8 @@ export default function PatientMedicalRecords() {
     editPatientData,
     setEditPatientData,
     createNewRecord,
+    saveConsultation,
+    isSavingConsultation,
     updatePatient,
     renderSectionContent
   } = usePatientRecords(patientId);
@@ -80,6 +82,8 @@ export default function PatientMedicalRecords() {
             isLoading={recordsLoading}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            onSaveConsultation={saveConsultation}
+            isSaving={isSavingConsultation}
           />
         </div>
       </div>

@@ -5,12 +5,14 @@ import { usePatientData } from "./use-patient-data";
 import { usePatientRecordsData } from "./use-patient-records-data";
 import { renderPatientSectionContent } from "@/utils/patientSectionContent";
 import { Patient } from "@/types/patient";
+import { SoapNotes } from "@/components/patient/SoapNotesForm";
 
 export const usePatientRecords = (patientId?: string) => {
   const [activeTab, setActiveTab] = useState<string>("today");
   const [isNewRecordOpen, setIsNewRecordOpen] = useState(false);
   const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [editPatientData, setEditPatientData] = useState<Patient | null>(null);
+  const [isSavingConsultation, setIsSavingConsultation] = useState(false);
 
   const { 
     patient, 
@@ -50,6 +52,44 @@ export const usePatientRecords = (patientId?: string) => {
         description: "Houve um erro ao criar o prontuário. Tente novamente.",
         variant: "destructive",
       });
+    }
+  };
+
+  const saveConsultation = async (notes: SoapNotes) => {
+    setIsSavingConsultation(true);
+    try {
+      const formattedContent = `
+**Subjetivo:**
+${notes.subjective || "Não informado"}
+
+**Objetivo:**
+${notes.objective || "Não informado"}
+
+**Avaliação:**
+${notes.assessment || "Não informado"}
+
+**Plano:**
+${notes.plan || "Não informado"}
+      `.trim();
+
+      await createRecord(formattedContent, "soap");
+      
+      toast({
+        title: "Consulta salva",
+        description: "A consulta SOAP foi salva com sucesso.",
+      });
+      
+      // Switch to history tab after saving
+      setActiveTab("history");
+    } catch (error) {
+      console.error("Error saving consultation:", error);
+      toast({
+        title: "Erro ao salvar consulta",
+        description: "Houve um erro ao salvar a consulta SOAP. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingConsultation(false);
     }
   };
 
@@ -97,6 +137,8 @@ export const usePatientRecords = (patientId?: string) => {
     setEditPatientData,
     handleEditPatient,
     createNewRecord,
+    saveConsultation,
+    isSavingConsultation,
     updatePatient,
     renderSectionContent: (sectionId, patientId) => renderPatientSectionContent(sectionId, patientId)
   };
