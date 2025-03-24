@@ -24,7 +24,8 @@ export function MeasurementsSection({ patientId }: MeasurementsSectionProps) {
     setIsAddingMeasurement,
     newMeasurement,
     setNewMeasurement,
-    addCustomMeasurement
+    addCustomMeasurement,
+    refetchMeasurements
   } = usePatientMeasurements(patientId);
 
   if (isLoading) {
@@ -43,7 +44,11 @@ export function MeasurementsSection({ patientId }: MeasurementsSectionProps) {
         setAbdominalCircumference={setAbdominalCircumference}
       />
       
-      <MeasurementsList measurements={allMeasurements} />
+      <MeasurementsList 
+        measurements={allMeasurements} 
+        patientId={patientId}
+        onMeasurementUpdated={refetchMeasurements}
+      />
       
       <AddMeasurementForm
         isAddingMeasurement={isAddingMeasurement}

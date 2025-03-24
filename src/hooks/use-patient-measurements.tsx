@@ -119,6 +119,7 @@ export const usePatientMeasurements = (patientId?: string) => {
     setIsAddingMeasurement,
     newMeasurement,
     setNewMeasurement,
-    addCustomMeasurement
+    addCustomMeasurement,
+    refetchMeasurements: () => refetch()
   };
 };

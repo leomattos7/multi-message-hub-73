@@ -1,17 +1,52 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Edit2 } from "lucide-react";
 import { CalculatedMeasurement } from "@/types/measurement";
 import { MEASUREMENT_DISPLAY_NAMES, getBMIClassification } from "./constants";
+import { MeasurementDialog } from "./MeasurementDialog";
+import { saveMeasurement } from "@/services/measurements-service";
 
 interface MeasurementsListProps {
   measurements: CalculatedMeasurement[];
+  patientId?: string;
+  onMeasurementUpdated: () => void;
 }
 
-export function MeasurementsList({ measurements }: MeasurementsListProps) {
+export function MeasurementsList({ measurements, patientId, onMeasurementUpdated }: MeasurementsListProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedMeasurement, setSelectedMeasurement] = useState<CalculatedMeasurement | null>(null);
+  const [editValue, setEditValue] = useState("");
+  
   if (measurements.length === 0) {
     return null;
   }
+
+  const handleEditClick = (measurement: CalculatedMeasurement) => {
+    setSelectedMeasurement(measurement);
+    setEditValue(measurement.value.toString());
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveMeasurement = async () => {
+    if (!selectedMeasurement || !patientId) return;
+    
+    const numValue = parseFloat(editValue);
+    if (isNaN(numValue)) return;
+    
+    const success = await saveMeasurement(
+      patientId,
+      selectedMeasurement.name,
+      numValue,
+      selectedMeasurement.unit
+    );
+    
+    if (success) {
+      setIsDialogOpen(false);
+      onMeasurementUpdated();
+    }
+  };
 
   return (
     <div className="mt-6">
@@ -30,15 +65,37 @@ export function MeasurementsList({ measurements }: MeasurementsListProps) {
               <CardContent className="p-4">
                 <div className="flex justify-between items-center">
                   <span className="font-medium">{measurement.name}</span>
-                  <span className={colorClass}>
-                    {measurement.value} {measurement.unit}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className={colorClass}>
+                      {measurement.value} {measurement.unit}
+                    </span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0" 
+                      onClick={() => handleEditClick(measurement)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
+
+      {selectedMeasurement && (
+        <MeasurementDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          measurementName={selectedMeasurement.name}
+          measurementValue={editValue}
+          measurementUnit={selectedMeasurement.unit}
+          setMeasurementValue={setEditValue}
+          onSave={handleSaveMeasurement}
+        />
+      )}
     </div>
   );
 }
