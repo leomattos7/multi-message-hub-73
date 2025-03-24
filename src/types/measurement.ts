@@ -14,3 +14,9 @@ export interface CalculatedMeasurement {
   value: number | string;
   unit: string;
 }
+
+export interface MeasurementForm {
+  name: string;
+  value: number | string;
+  unit: string;
+}
