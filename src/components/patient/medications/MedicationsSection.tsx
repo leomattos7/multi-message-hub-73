@@ -16,8 +16,6 @@ interface MedicationsSectionProps {
 export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
   const [showForm, setShowForm] = useState(false);
   const [newMedication, setNewMedication] = useState("");
-  const [medDosage, setMedDosage] = useState("");
-  const [medInstructions, setMedInstructions] = useState("");
   const [medicationToDelete, setMedicationToDelete] = useState<string | null>(null);
   
   const { 
@@ -29,8 +27,6 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
 
   const resetForm = () => {
     setNewMedication("");
-    setMedDosage("");
-    setMedInstructions("");
   };
 
   const handleAddMedication = async () => {
@@ -44,9 +40,7 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
     }
 
     const medicationData = {
-      name: newMedication,
-      dosage: medDosage,
-      instructions: medInstructions
+      name: newMedication
     };
 
     try {
@@ -165,22 +159,6 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
               className="text-sm"
               autoFocus
             />
-            <div className="grid grid-cols-2 gap-2">
-              <Input 
-                placeholder="Dosagem (opcional)" 
-                value={medDosage}
-                onChange={(e) => setMedDosage(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="text-sm"
-              />
-              <Input 
-                placeholder="Posologia (opcional)" 
-                value={medInstructions}
-                onChange={(e) => setMedInstructions(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="text-sm"
-              />
-            </div>
             <div className="flex justify-end gap-2">
               <Button 
                 variant="outline" 

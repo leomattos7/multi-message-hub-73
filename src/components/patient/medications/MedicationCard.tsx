@@ -23,12 +23,6 @@ export const MedicationCard = ({ medication, onDelete }: MedicationCardProps) =>
           <Trash2 className="h-4 w-4" />
         </Button>
         <div className="font-medium pr-6">{medication.name}</div>
-        {medication.dosage && (
-          <div className="text-sm text-gray-600">Dosagem: {medication.dosage}</div>
-        )}
-        {medication.instructions && (
-          <div className="text-sm text-gray-600">Posologia: {medication.instructions}</div>
-        )}
       </CardContent>
     </Card>
   );
