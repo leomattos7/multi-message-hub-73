@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,7 +36,9 @@ export const usePatientList = () => {
     payment_method: "particular",
     insurance_name: "",
     cpf: "",
-    birth_date: ""
+    birth_date: "",
+    biological_sex: "",
+    gender_identity: ""
   });
 
   useEffect(() => {
@@ -64,7 +65,7 @@ export const usePatientList = () => {
 
       const { data: patientsData, error: patientsError } = await supabase
         .from('patients')
-        .select('id, name, email, phone, address, notes, payment_method, insurance_name, created_at, updated_at, cpf, birth_date');
+        .select('id, name, email, phone, address, notes, payment_method, insurance_name, created_at, updated_at, cpf, birth_date, biological_sex, gender_identity');
 
       if (patientsError) {
         console.error("Error fetching patients:", patientsError);
@@ -114,7 +115,9 @@ export const usePatientList = () => {
           lastMessageDate: patientMessages.has(patient.id) ? new Date(patientMessages.get(patient.id)) : null,
           lastAppointmentDate: patientAppointments.has(patient.id) ? new Date(patientAppointments.get(patient.id)) : null,
           cpf: patient.cpf ?? "",
-          birth_date: patient.birth_date ?? ""
+          birth_date: patient.birth_date ?? "",
+          biological_sex: patient.biological_sex ?? "",
+          gender_identity: patient.gender_identity ?? ""
         }));
 
         setPatients(formattedPatients);
@@ -145,7 +148,9 @@ export const usePatientList = () => {
           payment_method: newPatient.payment_method || "particular",
           insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
           cpf: newPatient.cpf || null,
-          birth_date: newPatient.birth_date || null
+          birth_date: newPatient.birth_date || null,
+          biological_sex: newPatient.biological_sex || null,
+          gender_identity: newPatient.gender_identity || null
         })
         .select();
         
@@ -168,7 +173,9 @@ export const usePatientList = () => {
           lastMessageDate: null,
           lastAppointmentDate: null,
           cpf: data[0].cpf || "",
-          birth_date: data[0].birth_date || ""
+          birth_date: data[0].birth_date || "",
+          biological_sex: data[0].biological_sex || "",
+          gender_identity: data[0].gender_identity || ""
         };
 
         setPatients([...patients, newPatientObj]);
@@ -186,14 +193,16 @@ export const usePatientList = () => {
     setEditingPatient({
       id: patient.id,
       name: patient.name,
-      email: patient.email,
-      phone: patient.phone,
+      email: patient.email || "",
+      phone: patient.phone || "",
       address: patient.address || "",
       notes: patient.notes || "",
       payment_method: patient.payment_method || "particular",
       insurance_name: patient.insurance_name || "",
       cpf: patient.cpf || "",
-      birth_date: patient.birth_date || ""
+      birth_date: patient.birth_date || "",
+      biological_sex: patient.biological_sex || "",
+      gender_identity: patient.gender_identity || ""
     });
     setIsEditPatientOpen(true);
   };
@@ -216,7 +225,9 @@ export const usePatientList = () => {
           payment_method: editingPatient.payment_method || "particular",
           insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name || null : null,
           cpf: editingPatient.cpf || null,
-          birth_date: editingPatient.birth_date || null
+          birth_date: editingPatient.birth_date || null,
+          biological_sex: editingPatient.biological_sex || null,
+          gender_identity: editingPatient.gender_identity || null
         })
         .eq('id', editingPatient.id);
         
@@ -238,7 +249,9 @@ export const usePatientList = () => {
             payment_method: editingPatient.payment_method,
             insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name : "",
             cpf: editingPatient.cpf,
-            birth_date: editingPatient.birth_date
+            birth_date: editingPatient.birth_date,
+            biological_sex: editingPatient.biological_sex,
+            gender_identity: editingPatient.gender_identity
           };
         }
         return patient;
@@ -257,7 +270,9 @@ export const usePatientList = () => {
           payment_method: editingPatient.payment_method,
           insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name : "",
           cpf: editingPatient.cpf,
-          birth_date: editingPatient.birth_date
+          birth_date: editingPatient.birth_date,
+          biological_sex: editingPatient.biological_sex,
+          gender_identity: editingPatient.gender_identity
         });
       }
       

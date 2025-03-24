@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,9 @@ export const AddPatientDialog = ({
     payment_method: "particular",
     insurance_name: "",
     cpf: "",
-    birth_date: ""
+    birth_date: "",
+    biological_sex: "",
+    gender_identity: ""
   });
 
   const handleSubmit = () => {
@@ -48,7 +51,9 @@ export const AddPatientDialog = ({
       payment_method: "particular",
       insurance_name: "",
       cpf: "",
-      birth_date: ""
+      birth_date: "",
+      biological_sex: "",
+      gender_identity: ""
     });
   };
 
@@ -90,6 +95,43 @@ export const AddPatientDialog = ({
               value={newPatient.birth_date}
               onChange={(e) => setNewPatient({...newPatient, birth_date: e.target.value})}
             />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="biological_sex">Sexo Biológico</Label>
+            <Select
+              value={newPatient.biological_sex}
+              onValueChange={(value) => setNewPatient({...newPatient, biological_sex: value})}
+            >
+              <SelectTrigger id="biological_sex">
+                <SelectValue placeholder="Selecione o sexo biológico" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Masculino</SelectItem>
+                <SelectItem value="female">Feminino</SelectItem>
+                <SelectItem value="intersex">Intersexo</SelectItem>
+                <SelectItem value="not_informed">Não Informado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="gender_identity">Identidade de Gênero</Label>
+            <Select
+              value={newPatient.gender_identity}
+              onValueChange={(value) => setNewPatient({...newPatient, gender_identity: value})}
+            >
+              <SelectTrigger id="gender_identity">
+                <SelectValue placeholder="Selecione a identidade de gênero" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="man">Homem</SelectItem>
+                <SelectItem value="woman">Mulher</SelectItem>
+                <SelectItem value="non_binary">Não-Binário</SelectItem>
+                <SelectItem value="other">Outro</SelectItem>
+                <SelectItem value="not_informed">Não Informado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="grid gap-2">
