@@ -29,7 +29,7 @@ export const usePatientRecords = (patientId?: string) => {
     saveConsultation
   } = useRecordOperations(patientId, activeTab);
 
-  // Records data - get all records regardless of the active tab
+  // Records data - fetch all records for history tab
   const { 
     records, 
     recordsLoading

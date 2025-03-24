@@ -44,9 +44,6 @@ export const RecordsList = ({
   // Filter records for today's consultation
   const todayRecords = records?.filter(record => isToday(record.created_at));
   
-  // Get historical records (all records)
-  const historicalRecords = records;
-
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="w-full flex overflow-x-auto mb-6">
@@ -67,7 +64,7 @@ export const RecordsList = ({
 
       <TabsContent value="history" className="mt-0">
         <RecordsListDisplay
-          records={historicalRecords}
+          records={records}
           isLoading={isLoading}
           recordTypeDisplay={recordTypeDisplay}
           formatDate={formatDate}
