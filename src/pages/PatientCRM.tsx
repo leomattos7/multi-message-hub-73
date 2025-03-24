@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Table, 
@@ -1001,8 +1000,12 @@ export default function PatientCRM() {
           </DialogHeader>
           
           <ContactFilters 
+            open={isFilterDialogOpen}
+            onOpenChange={setIsFilterDialogOpen}
             filters={patientFilters}
-            onChange={setPatientFilters}
+            onFiltersChange={setPatientFilters}
+            onApplyFilters={() => setIsFilterDialogOpen(false)}
+            onResetFilters={handleResetFilters}
           />
           
           <DialogFooter>

@@ -497,6 +497,7 @@ export type Database = {
           avatar_url: string | null
           biological_sex: string | null
           birth_date: string | null
+          cpf: string | null
           created_at: string
           doctor_id: string | null
           email: string | null
@@ -514,6 +515,7 @@ export type Database = {
           avatar_url?: string | null
           biological_sex?: string | null
           birth_date?: string | null
+          cpf?: string | null
           created_at?: string
           doctor_id?: string | null
           email?: string | null
@@ -531,6 +533,7 @@ export type Database = {
           avatar_url?: string | null
           biological_sex?: string | null
           birth_date?: string | null
+          cpf?: string | null
           created_at?: string
           doctor_id?: string | null
           email?: string | null
