@@ -37,7 +37,9 @@ export const RecordCard: React.FC<RecordCardProps> = ({
             ) : (
               <FileText className="h-5 w-5 text-blue-500" />
             )}
-            <CardTitle className="text-lg">{recordTypeDisplay[record.record_type] || record.record_type}</CardTitle>
+            <CardTitle className="text-lg">
+              {recordTypeDisplay[record.record_type] || record.record_type}
+            </CardTitle>
           </div>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <Calendar className="h-4 w-4" />
