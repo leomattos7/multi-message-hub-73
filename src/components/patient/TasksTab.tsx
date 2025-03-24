@@ -57,20 +57,23 @@ export const TasksTab: React.FC = () => {
     });
   };
 
-  // Sort tasks: incomplete first, completed last
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.completed === b.completed) return 0;
     return a.completed ? 1 : -1;
   });
 
-  // Task input field component
   const TaskInputField = () => (
     <div className="flex gap-2 mb-4">
       <Input
         value={newTaskText}
         onChange={(e) => setNewTaskText(e.target.value)}
         placeholder="Digite uma nova tarefa"
-        onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleAddTask();
+            e.preventDefault(); // Prevents default Enter key behavior
+          }
+        }}
       />
       <Button onClick={handleAddTask} className="shrink-0">
         <Plus className="h-4 w-4 mr-2" />
@@ -92,7 +95,6 @@ export const TasksTab: React.FC = () => {
       <div className="space-y-4">
         <h3 className="font-medium text-lg">Tarefas do paciente</h3>
         
-        {/* Input field at the top of the list */}
         <TaskInputField />
         
         <ul className="space-y-3">
