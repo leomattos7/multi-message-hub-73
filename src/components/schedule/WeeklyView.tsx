@@ -4,15 +4,16 @@ import { format, addDays, startOfWeek, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { Plus } from "lucide-react";
+import { Dialog } from "@/components/ui/dialog";
+import AppointmentDialog from "./AppointmentDialog";
 
 interface WeeklyViewProps {
   date: Date;
+  onDateSelect?: (date: Date) => void;
 }
 
-const WeeklyView = ({ date }: WeeklyViewProps) => {
+const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -30,14 +31,13 @@ const WeeklyView = ({ date }: WeeklyViewProps) => {
     setSelectedDay(day);
     setSelectedTime(time);
     setIsNewAppointmentOpen(true);
+    if (onDateSelect) {
+      onDateSelect(day);
+    }
   };
 
-  const handleCreateAppointment = () => {
-    if (selectedDay && selectedTime) {
-      const formattedDate = format(selectedDay, "dd/MM/yyyy", { locale: ptBR });
-      toast.success(`Agendamento criado para ${formattedDate} às ${selectedTime}`);
-      setIsNewAppointmentOpen(false);
-    }
+  const handleCloseDialog = () => {
+    setIsNewAppointmentOpen(false);
   };
 
   return (
@@ -86,34 +86,13 @@ const WeeklyView = ({ date }: WeeklyViewProps) => {
 
       {/* Dialog for new appointment */}
       <Dialog open={isNewAppointmentOpen} onOpenChange={setIsNewAppointmentOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Novo Agendamento</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div>
-              <p className="font-medium mb-1">Data:</p>
-              <p>{selectedDay ? format(selectedDay, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}</p>
-            </div>
-            <div>
-              <p className="font-medium mb-1">Horário:</p>
-              <p>{selectedTime || 'Selecione um horário'}</p>
-            </div>
-            <div>
-              <label htmlFor="patientName" className="font-medium mb-1 block">Nome do Paciente:</label>
-              <input 
-                id="patientName"
-                type="text" 
-                className="w-full p-2 border rounded"
-                placeholder="Digite o nome do paciente"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsNewAppointmentOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreateAppointment}>Salvar</Button>
-          </div>
-        </DialogContent>
+        {selectedDay && (
+          <AppointmentDialog 
+            date={selectedDay} 
+            time={selectedTime} 
+            onClose={handleCloseDialog} 
+          />
+        )}
       </Dialog>
     </div>
   );

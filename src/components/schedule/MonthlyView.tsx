@@ -1,13 +1,22 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, addDays, isSameMonth, isToday } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { Dialog } from "@/components/ui/dialog";
+import AppointmentDialog from "./AppointmentDialog";
 
 interface MonthlyViewProps {
   date: Date;
+  onDateSelect?: (date: Date) => void;
 }
 
-const MonthlyView = ({ date }: MonthlyViewProps) => {
+const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  
   const monthStart = startOfMonth(date);
   const monthEnd = endOfMonth(date);
   const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -21,8 +30,30 @@ const MonthlyView = ({ date }: MonthlyViewProps) => {
     day = addDays(day, 1);
   }
 
+  const handleDayClick = (day: Date) => {
+    setSelectedDay(day);
+    setIsDialogOpen(true);
+    if (onDateSelect) {
+      onDateSelect(day);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+  };
+
   return (
     <div className="mt-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">
+          {format(date, "MMMM 'de' yyyy", { locale: ptBR })}
+        </h3>
+        <Button onClick={() => setIsDialogOpen(true)} size="sm">
+          <Plus className="mr-1 h-4 w-4" />
+          Novo Agendamento
+        </Button>
+      </div>
+      
       <div className="grid grid-cols-7 gap-1">
         {/* Weekday headers */}
         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((weekday) => (
@@ -41,6 +72,7 @@ const MonthlyView = ({ date }: MonthlyViewProps) => {
               isToday(day) ? "bg-blue-50 border-blue-300" : "",
               "hover:bg-blue-50 cursor-pointer"
             )}
+            onClick={() => handleDayClick(day)}
           >
             <div className="text-right p-1">{format(day, 'd')}</div>
             {isSameMonth(day, date) && (
@@ -51,6 +83,16 @@ const MonthlyView = ({ date }: MonthlyViewProps) => {
           </div>
         ))}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {selectedDay && (
+          <AppointmentDialog 
+            date={selectedDay} 
+            time="08:00" // Default time, could be made more flexible
+            onClose={handleCloseDialog} 
+          />
+        )}
+      </Dialog>
     </div>
   );
 };
