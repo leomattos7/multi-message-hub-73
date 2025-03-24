@@ -47,21 +47,44 @@ export const saveMeasurement = async (
   }
 
   try {
-    const { error } = await supabase
+    // First check if this measurement already exists
+    const { data: existingMeasurement, error: fetchError } = await supabase
       .from("measurements")
-      .upsert([
-        {
-          patient_id: patientId,
-          name: name.toLowerCase(),
+      .select("*")
+      .eq("patient_id", patientId)
+      .eq("name", name.toLowerCase())
+      .maybeSingle();
+    
+    if (fetchError) throw fetchError;
+    
+    let result;
+    
+    if (existingMeasurement) {
+      // Update existing measurement
+      result = await supabase
+        .from("measurements")
+        .update({
           value: value,
           unit: unit,
           date: new Date().toISOString(),
-        }
-      ], {
-        onConflict: 'patient_id,name'
-      });
+        })
+        .eq("id", existingMeasurement.id);
+    } else {
+      // Insert new measurement
+      result = await supabase
+        .from("measurements")
+        .insert([
+          {
+            patient_id: patientId,
+            name: name.toLowerCase(),
+            value: value,
+            unit: unit,
+            date: new Date().toISOString(),
+          }
+        ]);
+    }
 
-    if (error) throw error;
+    if (result.error) throw result.error;
     
     toast({
       title: "Sucesso",
