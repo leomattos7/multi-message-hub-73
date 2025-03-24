@@ -22,7 +22,7 @@ export const FamilyHistoryCard = ({ familyHistory, onDelete }: FamilyHistoryCard
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-        <div className="font-medium pr-6">{familyHistory.description}</div>
+        <div className="font-medium text-xs pr-6">{familyHistory.description}</div>
         <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-gray-500">
           {familyHistory.relationship && (
             <span className="font-medium">Parentesco: {familyHistory.relationship}</span>
@@ -37,4 +37,4 @@ export const FamilyHistoryCard = ({ familyHistory, onDelete }: FamilyHistoryCard
       </CardContent>
     </Card>
   );
-};
+}
