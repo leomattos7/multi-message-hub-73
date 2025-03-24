@@ -1,6 +1,6 @@
 
 import React from "react";
-import { SoapNotesForm, SoapNotes } from "./SoapNotesForm";
+import { SoapNotesForm, SoapNotes } from "./soap/SoapNotesForm";
 import { RecordsListDisplay } from "./RecordsListDisplay";
 import { EmptyStateDisplay } from "./EmptyStateDisplay";
 import { formatDate, extractSummary, recordTypeDisplay } from "@/utils/records-utils";
