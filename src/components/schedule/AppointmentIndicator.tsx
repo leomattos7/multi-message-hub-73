@@ -1,7 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Clock, CheckCircle2, XCircle, AlertCircle, Edit, Trash2 } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertCircle, Edit, Trash2, User } from "lucide-react";
 import { Appointment } from "@/hooks/use-appointments";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -63,7 +63,8 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
             )} />
           </TooltipTrigger>
           <TooltipContent side="right" className="bg-white/95 backdrop-blur-sm border shadow-lg rounded-lg p-2">
-            <p className="font-medium">{timeDisplay} - {appointment.patient?.name}</p>
+            <p className="font-medium">{timeDisplay}</p>
+            <p className="font-medium">{appointment.patient?.name || "Paciente não identificado"}</p>
             <div className="flex items-center gap-1 mt-1">
               <StatusIcon className="h-3 w-3" />
               <p className="text-xs capitalize">{appointment.status}</p>
@@ -77,25 +78,31 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
   return (
     <div 
       className={cn(
-        "px-2 py-1.5 rounded-lg text-xs border shadow-sm transition-all duration-200 mb-1 group relative",
+        "h-full w-full px-2 py-1.5 rounded-lg text-xs border shadow-sm transition-all duration-200 group relative overflow-hidden",
         gradient, 
         appointment.status === 'cancelado' ? "opacity-70" : "hover:shadow-md"
       )}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center space-x-2">
-        <StatusIcon className="h-3.5 w-3.5 flex-shrink-0" />
-        <div className="flex-1 overflow-hidden">
-          <div className="font-medium truncate">{appointment.patient?.name}</div>
-          <div className="text-[10px] flex items-center gap-1">
-            <span className="font-medium">{timeDisplay}</span> 
-            <span className="opacity-60">•</span> 
-            <span>{appointment.type}</span>
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-2 mb-1">
+          <StatusIcon className="h-3.5 w-3.5 flex-shrink-0" />
+          <span className="font-medium">{timeDisplay}</span>
+        </div>
+        
+        <div className="flex items-center gap-1.5 mb-1">
+          <User className="h-3.5 w-3.5 flex-shrink-0" />
+          <div className="font-medium truncate flex-grow">
+            {appointment.patient?.name || "Paciente não identificado"}
           </div>
         </div>
         
+        <div className="text-[10px] opacity-80 truncate">
+          {appointment.type}
+        </div>
+        
         {appointment.status !== 'cancelado' && (onEdit || onDelete) && (
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
             {onEdit && (
               <Button 
                 variant="ghost" 

@@ -17,9 +17,21 @@ export const generateTimeSlots = (appointments: Appointment[] = []) => {
       let appointmentEndHour = endHour;
       if (appointment.end_time) {
         appointmentEndHour = parseInt(appointment.end_time.split(':')[0], 10);
-        // Account for appointments that end in the next hour
-        if (parseInt(appointment.end_time.split(':')[1], 10) > 0) {
+        // Account for appointments that end exactly at the hour
+        const appointmentEndMinutes = parseInt(appointment.end_time.split(':')[1], 10);
+        if (appointmentEndMinutes === 0 && appointmentEndHour > 0) {
+          // If appointment ends at HH:00, we don't need to include the next hour
+        } else {
+          // If appointment ends at HH:MM (MM > 0), we need to include the next hour
           appointmentEndHour += 1;
+        }
+      } else {
+        // If no end time specified, assume 30 minutes duration
+        const startMinutes = parseInt(appointment.time.split(':')[1], 10);
+        if (startMinutes + 30 >= 60) {
+          appointmentEndHour = appointmentStartHour + 1;
+        } else {
+          appointmentEndHour = appointmentStartHour;
         }
       }
       
@@ -38,7 +50,7 @@ export const generateTimeSlots = (appointments: Appointment[] = []) => {
   const slots = [];
   for (let hour = startHour; hour <= endHour; hour++) {
     slots.push(`${hour.toString().padStart(2, '0')}:00`);
-    // Optionally add half-hour slots
+    // Add half-hour slots
     if (hour < endHour) {
       slots.push(`${hour.toString().padStart(2, '0')}:30`);
     }

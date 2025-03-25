@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { useAppointments } from "@/hooks/use-appointments";
 import AppointmentDialog from "./AppointmentDialog";
 import AppointmentIndicator from "./AppointmentIndicator";
@@ -53,15 +53,50 @@ const DailyView = ({ date }: DailyViewProps) => {
     setIsDialogOpen(true);
   };
 
-  // Group appointments by time
-  const appointmentsByTime = appointments.reduce((acc, appointment) => {
+  // Function to determine if an appointment should appear in this time slot
+  // and calculate its height based on duration
+  const getAppointmentHeight = (appointment: any, timeSlot: string) => {
+    const appointmentStart = appointment.time.substring(0, 5); // "HH:MM" format
+    if (appointmentStart !== timeSlot) return 0; // Not starting in this slot
+    
+    const endTime = appointment.end_time?.substring(0, 5);
+    if (!endTime) return 1; // Default height if no end time
+    
+    // Calculate number of slots this appointment spans
+    const startIndex = timeSlots.indexOf(appointmentStart);
+    const endIndex = timeSlots.indexOf(endTime);
+    
+    if (startIndex === -1) return 1;
+    if (endIndex === -1) {
+      // If end time not in slots, calculate based on last slot
+      return timeSlots.length - startIndex;
+    }
+    
+    return Math.max(1, endIndex - startIndex);
+  };
+
+  // Group appointments by time and calculate their visual properties
+  const appointmentsWithMetadata = useMemo(() => {
+    return appointments.map(appointment => {
+      const startTime = appointment.time.substring(0, 5);
+      const slotHeight = getAppointmentHeight(appointment, startTime);
+      
+      return {
+        ...appointment,
+        slotHeight
+      };
+    });
+  }, [appointments, timeSlots]);
+
+  // Re-group by start time
+  const appointmentsByStartTime = appointmentsWithMetadata.reduce((acc, appointment) => {
     const time = appointment.time.substring(0, 5); // Get just the hour:minute part
     if (!acc[time]) {
       acc[time] = [];
     }
     acc[time].push(appointment);
     return acc;
-  }, {} as Record<string, typeof appointments>);
+  }, {} as Record<string, typeof appointmentsWithMetadata>);
 
   return (
     <div className="mt-4">
@@ -78,12 +113,14 @@ const DailyView = ({ date }: DailyViewProps) => {
         {isLoadingAppointments ? (
           <div className="p-4 text-center text-gray-500 animate-pulse">Carregando agendamentos...</div>
         ) : (
-          timeSlots.map((time) => {
-            const slotAppointments = appointmentsByTime[time] || [];
+          timeSlots.map((time, index) => {
+            const slotAppointments = appointmentsByStartTime[time] || [];
+            const renderNextSlot = index < timeSlots.length - 1;
+            
             return (
               <div 
                 key={time} 
-                className="border-b last:border-b-0 hover:bg-blue-50/50 transition-colors cursor-pointer group"
+                className="border-b last:border-b-0 hover:bg-blue-50/50 transition-colors cursor-pointer group relative"
                 onClick={() => handleSlotClick(time)}
               >
                 <div className="flex justify-between items-center p-2">
@@ -97,12 +134,23 @@ const DailyView = ({ date }: DailyViewProps) => {
                 {slotAppointments.length > 0 ? (
                   <div className="px-3 pb-2 space-y-1">
                     {slotAppointments.map((appointment) => (
-                      <AppointmentIndicator 
-                        key={appointment.id} 
-                        appointment={appointment}
-                        onEdit={handleEditAppointment}
-                        onDelete={handleDeleteClick}
-                      />
+                      <div 
+                        key={appointment.id}
+                        style={{ 
+                          height: appointment.slotHeight > 1 
+                            ? `${(appointment.slotHeight * 64) - 8}px` // Adjust height based on slots
+                            : 'auto',
+                          zIndex: 10,
+                          position: appointment.slotHeight > 1 ? 'relative' : 'static',
+                        }}
+                      >
+                        <AppointmentIndicator 
+                          key={appointment.id} 
+                          appointment={appointment}
+                          onEdit={handleEditAppointment}
+                          onDelete={handleDeleteClick}
+                        />
+                      </div>
                     ))}
                   </div>
                 ) : (
