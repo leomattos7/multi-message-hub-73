@@ -1,22 +1,21 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DateTimeBlockSelector, TimeBlock } from "@/components/DateTimeBlockSelector";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { 
   Plus, 
   Trash2, 
   CalendarClock, 
   ListChecks, 
-  Clock 
+  Clock,
+  X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define the consultation type interface
 interface ConsultationType {
   id?: string;
   name: string;
@@ -24,24 +23,33 @@ interface ConsultationType {
   doctor_id: string;
 }
 
+interface WeeklyTimeSlot {
+  id: string;
+  day: number;
+  startTime: string;
+  endTime: string;
+}
+
 const ScheduleSettings = () => {
   const [activeTab, setActiveTab] = useState<string>("availability");
-  const [blockedTimes, setBlockedTimes] = useState<TimeBlock[]>([]);
-  const [availableTimes, setAvailableTimes] = useState<TimeBlock[]>([]);
+  const [blockedTimes, setBlockedTimes] = useState<any[]>([]);
+  const [weeklyAvailability, setWeeklyAvailability] = useState<WeeklyTimeSlot[]>([]);
   const [consultationTypes, setConsultationTypes] = useState<ConsultationType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [newTypeName, setNewTypeName] = useState<string>("");
   const [newTypeDuration, setNewTypeDuration] = useState<number>(30);
 
-  // Temporary doctor ID for demonstration (in a real app, this would come from auth)
+  const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [startTime, setStartTime] = useState<string>("08:00");
+  const [endTime, setEndTime] = useState<string>("17:00");
+
   const doctorId = "00000000-0000-0000-0000-000000000000";
 
-  // Fetch consultation types on component mount
   useEffect(() => {
     fetchConsultationTypes();
+    fetchWeeklyAvailability();
   }, []);
 
-  // Function to fetch consultation types from the database
   const fetchConsultationTypes = async () => {
     setIsLoading(true);
     try {
@@ -64,7 +72,34 @@ const ScheduleSettings = () => {
     }
   };
 
-  // Function to add a new consultation type
+  const fetchWeeklyAvailability = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('doctor_availability')
+        .select('*')
+        .eq('doctor_id', doctorId);
+
+      if (error) {
+        console.error("Error fetching weekly availability:", error);
+        toast.error("Erro ao carregar disponibilidade semanal");
+      } else if (data) {
+        const transformedData = data.map(slot => ({
+          id: slot.id,
+          day: slot.day_of_week,
+          startTime: slot.start_time,
+          endTime: slot.end_time
+        }));
+        setWeeklyAvailability(transformedData);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erro ao carregar disponibilidade semanal");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const addConsultationType = async () => {
     if (!newTypeName.trim()) {
       toast.error("Nome da consulta é obrigatório");
@@ -106,7 +141,6 @@ const ScheduleSettings = () => {
     }
   };
 
-  // Function to delete a consultation type
   const deleteConsultationType = async (id: string) => {
     setIsLoading(true);
     try {
@@ -130,19 +164,97 @@ const ScheduleSettings = () => {
     }
   };
 
-  // Function to handle changes to blocked times
-  const handleBlockedTimesChange = (blocks: TimeBlock[]) => {
-    setBlockedTimes(blocks);
-    // In a real implementation, you would save these to your database
-    toast.success(`${blocks.length} bloqueios de agenda configurados`);
+  const addWeeklyAvailability = async () => {
+    if (startTime >= endTime) {
+      toast.error("O horário inicial deve ser anterior ao horário final");
+      return;
+    }
+
+    const hasOverlap = weeklyAvailability.some(slot => 
+      slot.day === selectedDay &&
+      ((startTime >= slot.startTime && startTime < slot.endTime) ||
+       (endTime > slot.startTime && endTime <= slot.endTime) ||
+       (startTime <= slot.startTime && endTime >= slot.endTime))
+    );
+
+    if (hasOverlap) {
+      toast.error("Este horário se sobrepõe a um já existente para este dia");
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('doctor_availability')
+        .insert({
+          doctor_id: doctorId,
+          day_of_week: selectedDay,
+          start_time: startTime,
+          end_time: endTime,
+          is_available: true
+        })
+        .select();
+      
+      if (error) {
+        console.error("Error adding weekly availability:", error);
+        toast.error("Erro ao adicionar disponibilidade");
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const newSlot = {
+          id: data[0].id,
+          day: data[0].day_of_week,
+          startTime: data[0].start_time,
+          endTime: data[0].end_time
+        };
+        
+        setWeeklyAvailability([...weeklyAvailability, newSlot]);
+        toast.success("Disponibilidade adicionada com sucesso");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erro ao adicionar disponibilidade");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Function to handle changes to available times
-  const handleAvailableTimesChange = (blocks: TimeBlock[]) => {
-    setAvailableTimes(blocks);
-    // In a real implementation, you would save these to your database
-    toast.success(`${blocks.length} horários disponíveis configurados`);
+  const removeWeeklyAvailability = async (id: string) => {
+    setIsLoading(true);
+    
+    try {
+      const { error } = await supabase
+        .from('doctor_availability')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error("Error removing weekly availability:", error);
+        toast.error("Erro ao remover disponibilidade");
+        return;
+      }
+      
+      setWeeklyAvailability(weeklyAvailability.filter(slot => slot.id !== id));
+      toast.success("Disponibilidade removida com sucesso");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erro ao remover disponibilidade");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const getDayName = (day: number): string => {
+    const days = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    return days[day];
+  };
+
+  const TIME_SLOTS = [
+    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
+  ];
 
   return (
     <div className="mt-6 space-y-6">
@@ -171,11 +283,125 @@ const ScheduleSettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DateTimeBlockSelector 
-                blocks={availableTimes}
-                onChange={handleAvailableTimesChange}
-                mode="available"
-              />
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Adicionar novo horário disponível</h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="day-select">Dia da semana</Label>
+                      <Select 
+                        value={selectedDay.toString()} 
+                        onValueChange={(value) => setSelectedDay(parseInt(value))}
+                      >
+                        <SelectTrigger id="day-select">
+                          <SelectValue placeholder="Selecione o dia" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Segunda-feira</SelectItem>
+                          <SelectItem value="2">Terça-feira</SelectItem>
+                          <SelectItem value="3">Quarta-feira</SelectItem>
+                          <SelectItem value="4">Quinta-feira</SelectItem>
+                          <SelectItem value="5">Sexta-feira</SelectItem>
+                          <SelectItem value="6">Sábado</SelectItem>
+                          <SelectItem value="0">Domingo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="start-time">Horário inicial</Label>
+                      <Select value={startTime} onValueChange={setStartTime}>
+                        <SelectTrigger id="start-time">
+                          <SelectValue placeholder="Início" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_SLOTS.map(time => (
+                            <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="end-time">Horário final</Label>
+                      <Select value={endTime} onValueChange={setEndTime}>
+                        <SelectTrigger id="end-time">
+                          <SelectValue placeholder="Fim" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_SLOTS.map(time => (
+                            <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={addWeeklyAvailability} 
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
+                    disabled={isLoading}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Adicionar disponibilidade
+                  </Button>
+                </div>
+                
+                <div className="mt-6">
+                  <h3 className="text-lg font-medium mb-4">Horários semanais configurados</h3>
+                  
+                  {isLoading && weeklyAvailability.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      Carregando disponibilidade...
+                    </div>
+                  ) : weeklyAvailability.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 border rounded-md">
+                      <Clock className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                      <p>Nenhum horário de disponibilidade configurado</p>
+                      <p className="text-sm mt-1">Adicione horários para que os pacientes possam agendar consultas</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {[0, 1, 2, 3, 4, 5, 6].map(day => {
+                        const daySlots = weeklyAvailability.filter(slot => slot.day === day);
+                        if (daySlots.length === 0) return null;
+                        
+                        return (
+                          <div key={day} className="border rounded-md p-4">
+                            <h4 className="font-medium mb-2">{getDayName(day)}</h4>
+                            <div className="space-y-2">
+                              {daySlots.map((slot) => (
+                                <div 
+                                  key={slot.id} 
+                                  className="flex justify-between items-center bg-green-50 p-3 rounded-md border border-green-100"
+                                >
+                                  <span className="font-medium text-green-800">
+                                    {slot.startTime} - {slot.endTime}
+                                  </span>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => removeWeeklyAvailability(slot.id)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    disabled={isLoading}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-500 mt-6">
+                (GMT-03:00) Horário Padrão de Brasília - São Paulo
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -189,11 +415,11 @@ const ScheduleSettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DateTimeBlockSelector 
-                blocks={blockedTimes}
-                onChange={handleBlockedTimesChange}
-                mode="block"
-              />
+              <div className="text-center py-8 text-gray-500 border rounded-md">
+                <Clock className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                <p>Funcionalidade de bloqueios em desenvolvimento</p>
+                <p className="text-sm mt-1">Em breve você poderá adicionar bloqueios específicos à sua agenda</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
