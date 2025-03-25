@@ -22,6 +22,8 @@ interface ConsultationType {
   name: string;
   duration: number;
   doctor_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const ScheduleSettings = () => {
@@ -54,7 +56,7 @@ const ScheduleSettings = () => {
         console.error("Error fetching consultation types:", error);
         toast.error("Erro ao carregar tipos de consulta");
       } else if (data) {
-        setConsultationTypes(data);
+        setConsultationTypes(data as ConsultationType[]);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -78,7 +80,7 @@ const ScheduleSettings = () => {
 
     setIsLoading(true);
     try {
-      const newType = {
+      const newType: ConsultationType = {
         name: newTypeName.trim(),
         duration: newTypeDuration,
         doctor_id: doctorId
@@ -93,7 +95,7 @@ const ScheduleSettings = () => {
         console.error("Error adding consultation type:", error);
         toast.error("Erro ao adicionar tipo de consulta");
       } else if (data) {
-        setConsultationTypes([...consultationTypes, data[0]]);
+        setConsultationTypes([...consultationTypes, data[0] as ConsultationType]);
         setNewTypeName("");
         setNewTypeDuration(30);
         toast.success("Tipo de consulta adicionado com sucesso");
