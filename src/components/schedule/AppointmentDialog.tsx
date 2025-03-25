@@ -2,20 +2,16 @@
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { Appointment } from "@/hooks/use-appointments";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import DatePickerField from "./DatePickerField";
+import PatientInfoFields from "./PatientInfoFields";
+import NotesField from "./NotesField";
+import DialogActionButtons from "./DialogActionButtons";
 
 interface AppointmentDialogProps {
   date: Date;
@@ -171,6 +167,7 @@ const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: Ap
   };
 
   const dialogTitle = appointment ? "Editar Consulta" : "Agendar Consulta";
+  const isEditMode = !!appointment;
 
   return (
     <DialogContent className="sm:max-w-[425px]">
@@ -178,37 +175,11 @@ const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: Ap
         <DialogTitle>{dialogTitle}</DialogTitle>
       </DialogHeader>
       <div className="grid gap-4 py-4">
-        <div>
-          <label htmlFor="date" className="font-medium mb-1 block">Data:</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? (
-                  format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                ) : (
-                  "Selecione uma data"
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                initialFocus
-                className="pointer-events-auto"
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DatePickerField 
+          selectedDate={selectedDate}
+          onChange={(date) => date && setSelectedDate(date)}
+          label="Data"
+        />
         
         <div>
           <p className="font-medium mb-1">Horário da Consulta:</p>
@@ -219,73 +190,30 @@ const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: Ap
           />
         </div>
         
-        <div>
-          <label htmlFor="patientName" className="font-medium mb-1 block">Nome do Paciente:</label>
-          <Input 
-            id="patientName"
-            type="text" 
-            value={patientName} 
-            onChange={(e) => setPatientName(e.target.value)}
-            placeholder="Digite o nome do paciente"
-            disabled={!!appointment} // Disable editing patient name when updating
-          />
-        </div>
-        <div>
-          <label htmlFor="status" className="font-medium mb-1 block">Status:</label>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="aguardando">Aguardando</SelectItem>
-              <SelectItem value="confirmado">Confirmado</SelectItem>
-              <SelectItem value="cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label htmlFor="type" className="font-medium mb-1 block">Tipo de Consulta:</label>
-          <Select value={type} onValueChange={setType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Consulta">Consulta de Rotina</SelectItem>
-              <SelectItem value="Retorno">Retorno</SelectItem>
-              <SelectItem value="Urgência">Urgência</SelectItem>
-              <SelectItem value="Exame">Resultado de Exame</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label htmlFor="paymentMethod" className="font-medium mb-1 block">Forma de Pagamento:</label>
-          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a forma de pagamento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="insurance">Plano de Saúde</SelectItem>
-              <SelectItem value="private">Particular</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label htmlFor="notes" className="font-medium mb-1 block">Observações:</label>
-          <Textarea 
-            id="notes"
-            value={notes} 
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Observações adicionais"
-            className="resize-none min-h-[80px]"
-          />
-        </div>
+        <PatientInfoFields
+          patientName={patientName}
+          setPatientName={setPatientName}
+          status={status}
+          setStatus={setStatus}
+          type={type}
+          setType={setType}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
+          isEditMode={isEditMode}
+        />
+        
+        <NotesField
+          notes={notes}
+          setNotes={setNotes}
+        />
       </div>
-      <div className="flex justify-end gap-2 mt-4">
-        <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancelar</Button>
-        <Button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? "Salvando..." : (appointment ? "Atualizar" : "Salvar")}
-        </Button>
-      </div>
+      
+      <DialogActionButtons
+        onClose={onClose}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+        isEditMode={isEditMode}
+      />
     </DialogContent>
   );
 };
