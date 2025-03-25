@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateAllTimeSlots } from "@/utils/timeSlotUtils";
+import { DateTimeBlockSelector, TimeBlock } from "@/components/DateTimeBlockSelector";
 
 interface ConsultationType {
   id?: string;
@@ -33,7 +34,7 @@ interface WeeklyTimeSlot {
 
 const ScheduleSettings = () => {
   const [activeTab, setActiveTab] = useState<string>("availability");
-  const [blockedTimes, setBlockedTimes] = useState<any[]>([]);
+  const [blockedTimes, setBlockedTimes] = useState<TimeBlock[]>([]);
   const [weeklyAvailability, setWeeklyAvailability] = useState<WeeklyTimeSlot[]>([]);
   const [consultationTypes, setConsultationTypes] = useState<ConsultationType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -51,6 +52,7 @@ const ScheduleSettings = () => {
   useEffect(() => {
     fetchConsultationTypes();
     fetchWeeklyAvailability();
+    fetchBlockedTimes();
   }, []);
 
   const fetchConsultationTypes = async () => {
@@ -98,6 +100,35 @@ const ScheduleSettings = () => {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Erro ao carregar disponibilidade semanal");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchBlockedTimes = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('doctor_id', doctorId)
+        .eq('event_type', 'block');
+
+      if (error) {
+        console.error("Error fetching blocked times:", error);
+        toast.error("Erro ao carregar bloqueios de agenda");
+      } else if (data) {
+        const transformedData = data.map(block => ({
+          id: block.id,
+          date: new Date(block.date),
+          startTime: block.start_time.substring(0, 5),
+          endTime: block.end_time.substring(0, 5)
+        }));
+        setBlockedTimes(transformedData);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erro ao carregar bloqueios de agenda");
     } finally {
       setIsLoading(false);
     }
@@ -249,6 +280,68 @@ const ScheduleSettings = () => {
     }
   };
 
+  const handleBlocksChange = async (blocks: TimeBlock[]) => {
+    setBlockedTimes(blocks);
+    
+    try {
+      const { data: existingBlocks, error: fetchError } = await supabase
+        .from('calendar_events')
+        .select('id')
+        .eq('doctor_id', doctorId)
+        .eq('event_type', 'block');
+        
+      if (fetchError) {
+        console.error("Error fetching existing blocks:", fetchError);
+        toast.error("Erro ao sincronizar bloqueios");
+        return;
+      }
+      
+      const currentBlockIds = blocks.map(block => block.id).filter(Boolean) as string[];
+      const blocksToDelete = existingBlocks
+        .filter(block => !currentBlockIds.includes(block.id))
+        .map(block => block.id);
+        
+      if (blocksToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('calendar_events')
+          .delete()
+          .in('id', blocksToDelete);
+          
+        if (deleteError) {
+          console.error("Error deleting blocks:", deleteError);
+        }
+      }
+      
+      const blocksToUpsert = blocks.map(block => ({
+        id: block.id,
+        doctor_id: doctorId,
+        date: block.date.toISOString().split('T')[0],
+        start_time: block.startTime,
+        end_time: block.endTime,
+        event_type: 'block',
+        title: 'Agenda bloqueada',
+        description: 'Período indisponível para agendamentos'
+      }));
+      
+      if (blocksToUpsert.length > 0) {
+        const { error: upsertError } = await supabase
+          .from('calendar_events')
+          .upsert(blocksToUpsert);
+          
+        if (upsertError) {
+          console.error("Error upserting blocks:", upsertError);
+          toast.error("Erro ao salvar bloqueios");
+          return;
+        }
+      }
+      
+      toast.success("Bloqueios de agenda atualizados com sucesso");
+    } catch (error) {
+      console.error("Error updating blocks:", error);
+      toast.error("Erro ao atualizar bloqueios");
+    }
+  };
+
   const getDayName = (day: number): string => {
     const days = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     return days[day];
@@ -314,9 +407,11 @@ const ScheduleSettings = () => {
                           <SelectValue placeholder="Início" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
-                          {TIME_SLOTS.map(time => (
-                            <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
-                          ))}
+                          <ScrollArea className="h-[200px]">
+                            {TIME_SLOTS.map(time => (
+                              <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
+                            ))}
+                          </ScrollArea>
                         </SelectContent>
                       </Select>
                     </div>
@@ -328,9 +423,11 @@ const ScheduleSettings = () => {
                           <SelectValue placeholder="Fim" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
-                          {TIME_SLOTS.map(time => (
-                            <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
-                          ))}
+                          <ScrollArea className="h-[200px]">
+                            {TIME_SLOTS.map(time => (
+                              <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
+                            ))}
+                          </ScrollArea>
                         </SelectContent>
                       </Select>
                     </div>
@@ -413,11 +510,11 @@ const ScheduleSettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500 border rounded-md">
-                <Clock className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                <p>Funcionalidade de bloqueios em desenvolvimento</p>
-                <p className="text-sm mt-1">Em breve você poderá adicionar bloqueios específicos à sua agenda</p>
-              </div>
+              <DateTimeBlockSelector 
+                blocks={blockedTimes}
+                onChange={handleBlocksChange}
+                mode="block"
+              />
             </CardContent>
           </Card>
         </TabsContent>

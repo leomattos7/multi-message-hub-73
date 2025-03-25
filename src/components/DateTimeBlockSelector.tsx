@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateAllTimeSlots } from "@/utils/timeSlotUtils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface TimeBlock {
   id?: string;
@@ -130,6 +131,7 @@ export function DateTimeBlockSelector({
                   onSelect={(date) => date && updateBlockDate(index, date)}
                   disabled={(date) => date < new Date("1900-01-01")}
                   initialFocus
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
@@ -149,9 +151,11 @@ export function DateTimeBlockSelector({
                 <SelectValue placeholder="Início" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
-                {TIME_SLOTS.map(time => (
-                  <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
-                ))}
+                <ScrollArea className="h-[200px]">
+                  {TIME_SLOTS.map(time => (
+                    <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
+                  ))}
+                </ScrollArea>
               </SelectContent>
             </Select>
             
@@ -165,9 +169,11 @@ export function DateTimeBlockSelector({
                 <SelectValue placeholder="Fim" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
-                {TIME_SLOTS.map(time => (
-                  <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
-                ))}
+                <ScrollArea className="h-[200px]">
+                  {TIME_SLOTS.map(time => (
+                    <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
+                  ))}
+                </ScrollArea>
               </SelectContent>
             </Select>
             
