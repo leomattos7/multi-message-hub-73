@@ -1,11 +1,21 @@
 
 import { Appointment } from "@/hooks/use-appointments";
 
+// Generate all possible time slots from 00:00 to 23:30 in 30-minute intervals
+export const generateAllTimeSlots = () => {
+  const slots = [];
+  for (let hour = 0; hour < 24; hour++) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    slots.push(`${hour.toString().padStart(2, '0')}:30`);
+  }
+  return slots;
+};
+
 // Helper function to generate time slots based on appointments
 export const generateTimeSlots = (appointments: Appointment[] = []) => {
-  // Default time range from 8:00 to 18:00
-  let startHour = 8;
-  let endHour = 18;
+  // Default time range from 00:00 to 23:30
+  let startHour = 0;
+  let endHour = 24;
   
   // Check if we need to expand the time range based on appointments
   if (appointments.length > 0) {
@@ -38,15 +48,5 @@ export const generateTimeSlots = (appointments: Appointment[] = []) => {
     });
   }
   
-  // Generate time slots based on the expanded range
-  const slots = [];
-  for (let hour = startHour; hour <= endHour; hour++) {
-    slots.push(`${hour.toString().padStart(2, '0')}:00`);
-    // Add half-hour slots
-    if (hour < endHour) {
-      slots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-  }
-  
-  return slots;
+  return generateAllTimeSlots();
 };

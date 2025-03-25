@@ -15,6 +15,7 @@ import {
   X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { generateAllTimeSlots } from "@/utils/timeSlotUtils";
 
 interface ConsultationType {
   id?: string;
@@ -44,6 +45,8 @@ const ScheduleSettings = () => {
   const [endTime, setEndTime] = useState<string>("17:00");
 
   const doctorId = "00000000-0000-0000-0000-000000000000";
+
+  const TIME_SLOTS = generateAllTimeSlots();
 
   useEffect(() => {
     fetchConsultationTypes();
@@ -251,11 +254,6 @@ const ScheduleSettings = () => {
     return days[day];
   };
 
-  const TIME_SLOTS = [
-    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-    "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
-  ];
-
   return (
     <div className="mt-6 space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -315,7 +313,7 @@ const ScheduleSettings = () => {
                         <SelectTrigger id="start-time">
                           <SelectValue placeholder="Início" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[300px]">
                           {TIME_SLOTS.map(time => (
                             <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
                           ))}
@@ -329,7 +327,7 @@ const ScheduleSettings = () => {
                         <SelectTrigger id="end-time">
                           <SelectValue placeholder="Fim" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[300px]">
                           {TIME_SLOTS.map(time => (
                             <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
                           ))}

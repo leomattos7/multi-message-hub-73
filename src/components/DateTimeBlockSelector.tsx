@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { generateAllTimeSlots } from "@/utils/timeSlotUtils";
 
 export interface TimeBlock {
   id?: string;
@@ -25,11 +26,8 @@ interface DateTimeBlockSelectorProps {
   mode?: "available" | "block";
 }
 
-// Predefined time slots
-const TIME_SLOTS = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
-];
+// Get all possible time slots from 00:00 to 23:30
+const TIME_SLOTS = generateAllTimeSlots();
 
 export function DateTimeBlockSelector({
   blocks = [],
@@ -150,7 +148,7 @@ export function DateTimeBlockSelector({
               <SelectTrigger className="w-[110px]">
                 <SelectValue placeholder="Início" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[300px]">
                 {TIME_SLOTS.map(time => (
                   <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
                 ))}
@@ -166,7 +164,7 @@ export function DateTimeBlockSelector({
               <SelectTrigger className="w-[110px]">
                 <SelectValue placeholder="Fim" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[300px]">
                 {TIME_SLOTS.map(time => (
                   <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
                 ))}

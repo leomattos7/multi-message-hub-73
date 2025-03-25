@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { generateAllTimeSlots } from "@/utils/timeSlotUtils";
 
 type Availability = {
   id?: string;
@@ -34,10 +35,8 @@ const getDayName = (day: number): string => {
   return days[day];
 };
 
-const TIME_SLOTS = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
-];
+// Get all possible time slots from 00:00 to 23:30
+const TIME_SLOTS = generateAllTimeSlots();
 
 export function VisualWeeklySchedule({
   doctorId,
@@ -201,7 +200,7 @@ export function VisualWeeklySchedule({
               <SelectTrigger>
                 <SelectValue placeholder="Horário inicial" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[300px]">
                 {TIME_SLOTS.map((time) => (
                   <SelectItem key={`start-${time}`} value={time}>
                     {time}
@@ -216,7 +215,7 @@ export function VisualWeeklySchedule({
               <SelectTrigger>
                 <SelectValue placeholder="Horário final" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[300px]">
                 {TIME_SLOTS.map((time) => (
                   <SelectItem key={`end-${time}`} value={time}>
                     {time}
