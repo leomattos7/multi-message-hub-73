@@ -82,49 +82,50 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
         gradient, 
         appointment.status === 'cancelado' ? "opacity-70" : "hover:shadow-md"
       )}
-      onClick={(e) => e.stopPropagation()}
     >
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2 mb-1">
-          <StatusIcon className="h-3.5 w-3.5 flex-shrink-0" />
-          <span className="font-medium">{timeDisplay}</span>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-1 font-medium">
+            <StatusIcon className="h-3.5 w-3.5 flex-shrink-0" />
+            <span>{timeDisplay}</span>
+          </div>
+          
+          {appointment.status !== 'cancelado' && (onEdit || onDelete) && (
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+              {onEdit && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 rounded-full hover:bg-white/50" 
+                  onClick={() => onEdit(appointment)}
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 rounded-full hover:bg-white/50 text-red-500 hover:text-red-600" 
+                  onClick={() => onDelete(appointment.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
         
-        <div className="flex items-center gap-1.5 mb-1">
+        <div className="flex items-center gap-1.5 mt-1">
           <User className="h-3.5 w-3.5 flex-shrink-0" />
           <div className="font-medium truncate flex-grow">
             {appointment.patient?.name || "Paciente não identificado"}
           </div>
         </div>
         
-        <div className="text-[10px] opacity-80 truncate">
+        <div className="text-[10px] mt-1 opacity-80 truncate">
           {appointment.type}
         </div>
-        
-        {appointment.status !== 'cancelado' && (onEdit || onDelete) && (
-          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-            {onEdit && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 rounded-full hover:bg-white/50" 
-                onClick={() => onEdit(appointment)}
-              >
-                <Edit className="h-3 w-3" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 rounded-full hover:bg-white/50 text-red-500 hover:text-red-600" 
-                onClick={() => onDelete(appointment.id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

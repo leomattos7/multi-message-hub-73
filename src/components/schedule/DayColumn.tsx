@@ -78,47 +78,46 @@ const DayColumn = ({
         </div>
       </div>
       
-      {timeSlots.map((time, index) => {
-        // Get appointments that start at this time slot
-        const slotAppointments = allDayAppointments.filter(apt => apt.startSlot === index);
-        
-        return (
+      <div className="relative">
+        {timeSlots.map((time, index) => (
           <div 
             key={`${day}-${time}`} 
             className={cn(
-              "h-16 border-b border-r border-gray-200 hover:bg-blue-50/50 transition-colors cursor-pointer relative p-1",
+              "h-16 border-b border-r border-gray-200 hover:bg-blue-50/50 transition-colors cursor-pointer",
               isCurrentDay && "bg-blue-50/30"
             )}
             onClick={() => onCellClick(day, time)}
           >
-            {isLoadingAppointments ? (
-              <div className="text-xs text-gray-400 animate-pulse">Carregando...</div>
-            ) : slotAppointments.length > 0 ? (
-              <div className="absolute inset-0 p-1 overflow-y-auto">
-                {slotAppointments.map((appointment) => (
-                  <div 
-                    key={appointment.id}
-                    className={cn(
-                      "absolute left-0 right-0 mx-1",
-                      `h-[${appointment.spanCount * 16}px]`
-                    )}
-                    style={{ 
-                      height: `${appointment.spanCount * 16}px`,
-                      zIndex: 10
-                    }}
-                  >
-                    <AppointmentIndicator 
-                      appointment={appointment}
-                      onEdit={onEditAppointment}
-                      onDelete={onDeleteAppointment}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : null}
+            {/* Empty cell content */}
           </div>
-        );
-      })}
+        ))}
+
+        {/* Render appointments as absolute positioned elements */}
+        {!isLoadingAppointments && allDayAppointments.map((appointment) => {
+          const slotHeight = 16; // height of each time slot in pixels
+          const top = appointment.startSlot * slotHeight;
+          const height = appointment.spanCount * slotHeight;
+          
+          return (
+            <div 
+              key={appointment.id}
+              className="absolute left-0 right-0 mx-1"
+              style={{ 
+                top: `${top}px`,
+                height: `${height}px`,
+                zIndex: 10
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AppointmentIndicator 
+                appointment={appointment}
+                onEdit={onEditAppointment}
+                onDelete={onDeleteAppointment}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
