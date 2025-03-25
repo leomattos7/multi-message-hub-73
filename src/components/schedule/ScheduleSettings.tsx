@@ -9,13 +9,14 @@ import AvailabilityTab from "./settings/AvailabilityTab";
 import BlockedTimesTab from "./settings/BlockedTimesTab";
 import ConsultationTypesTab from "./settings/ConsultationTypesTab";
 
-const ScheduleSettings = () => {
+interface ScheduleSettingsProps {
+  doctorId: string;
+}
+
+const ScheduleSettings = ({ doctorId }: ScheduleSettingsProps) => {
   const [activeTab, setActiveTab] = useState<string>("availability");
   const [blockedTimes, setBlockedTimes] = useState<TimeBlock[]>([]);
   const [availableTimes, setAvailableTimes] = useState<TimeBlock[]>([]);
-
-  // Temporary doctor ID for demonstration (in a real app, this would come from auth)
-  const doctorId = "00000000-0000-0000-0000-000000000000";
 
   return (
     <div className="mt-6 space-y-6">
@@ -39,6 +40,7 @@ const ScheduleSettings = () => {
           <AvailabilityTab 
             availableTimes={availableTimes}
             onAvailableTimesChange={setAvailableTimes}
+            doctorId={doctorId}
           />
         </TabsContent>
         
