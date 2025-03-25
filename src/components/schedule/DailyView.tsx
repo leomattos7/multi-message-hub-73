@@ -5,59 +5,12 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useAppointments } from "@/hooks/use-appointments";
 import AppointmentDialog from "./AppointmentDialog";
-import { useAppointments, Appointment } from "@/hooks/use-appointments";
 import AppointmentIndicator from "./AppointmentIndicator";
-import { useQueryClient } from "@tanstack/react-query";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-
-// Helper function to generate time slots
-const generateTimeSlots = (appointments: Appointment[] = []) => {
-  // Default time range from 8:00 to 18:00
-  let startHour = 8;
-  let endHour = 18;
-  
-  // Check if we need to expand the time range based on appointments
-  if (appointments.length > 0) {
-    appointments.forEach(appointment => {
-      // Parse appointment start time
-      const appointmentStartHour = parseInt(appointment.time.split(':')[0], 10);
-      
-      // Parse appointment end time if available
-      let appointmentEndHour = endHour;
-      if (appointment.end_time) {
-        appointmentEndHour = parseInt(appointment.end_time.split(':')[0], 10);
-        // Account for appointments that end in the next hour
-        if (parseInt(appointment.end_time.split(':')[1], 10) > 0) {
-          appointmentEndHour += 1;
-        }
-      }
-      
-      // Update start and end hours if needed
-      if (appointmentStartHour < startHour) {
-        startHour = appointmentStartHour;
-      }
-      
-      if (appointmentEndHour > endHour) {
-        endHour = appointmentEndHour;
-      }
-    });
-  }
-  
-  // Generate time slots based on the expanded range
-  const slots = [];
-  for (let hour = startHour; hour <= endHour; hour++) {
-    slots.push(`${hour.toString().padStart(2, '0')}:00`);
-    // Optionally add half-hour slots
-    if (hour < endHour) {
-      slots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-  }
-  
-  return slots;
-};
+import { generateTimeSlots } from "@/utils/timeSlotUtils";
+import { useAppointmentDeletion } from "@/hooks/useAppointmentDeletion";
+import DeleteAppointmentDialog from "./DeleteAppointmentDialog";
 
 interface DailyViewProps {
   date: Date;
@@ -66,13 +19,16 @@ interface DailyViewProps {
 const DailyView = ({ date }: DailyViewProps) => {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
   
   const { appointments, isLoading: isLoadingAppointments } = useAppointments(date);
-  const queryClient = useQueryClient();
+  const { 
+    deleteDialogOpen, 
+    isLoading: isDeleting,
+    handleDeleteClick, 
+    confirmDelete, 
+    setDeleteDialogOpen 
+  } = useAppointmentDeletion();
   
   // Use useMemo to generate time slots based on appointments
   const timeSlots = useMemo(() => {
@@ -91,42 +47,10 @@ const DailyView = ({ date }: DailyViewProps) => {
     setSelectedAppointment(null);
   };
 
-  const handleEditAppointment = (appointment: Appointment) => {
+  const handleEditAppointment = (appointment: any) => {
     setSelectedAppointment(appointment);
     setSelectedSlot(null);
     setIsDialogOpen(true);
-  };
-
-  const handleDeleteClick = (appointmentId: string) => {
-    setAppointmentToDelete(appointmentId);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!appointmentToDelete) return;
-    
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("appointments")
-        .update({ status: "cancelado" })
-        .eq("id", appointmentToDelete);
-
-      if (error) {
-        toast.error("Erro ao cancelar consulta");
-        console.error("Error canceling appointment:", error);
-      } else {
-        toast.success("Consulta cancelada com sucesso");
-        queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      }
-    } catch (error) {
-      console.error("Error canceling appointment:", error);
-      toast.error("Erro ao cancelar consulta");
-    } finally {
-      setIsLoading(false);
-      setDeleteDialogOpen(false);
-      setAppointmentToDelete(null);
-    }
   };
 
   // Group appointments by time
@@ -201,26 +125,12 @@ const DailyView = ({ date }: DailyViewProps) => {
         )}
       </Dialog>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar Consulta</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja cancelar esta consulta? Esta ação irá marcar a consulta como cancelada.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Não, manter agendamento</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isLoading}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {isLoading ? "Cancelando..." : "Sim, cancelar consulta"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteAppointmentDialog
+        isOpen={deleteDialogOpen}
+        isLoading={isDeleting}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirmDelete={confirmDelete}
+      />
     </div>
   );
 };
