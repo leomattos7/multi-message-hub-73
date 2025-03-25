@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { format, addDays, startOfWeek, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,52 @@ import { useAppointments, Appointment } from "@/hooks/use-appointments";
 import AppointmentIndicator from "./AppointmentIndicator";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+// Helper function to generate time slots based on appointments
+const generateTimeSlots = (appointments: Appointment[] = []) => {
+  // Default time range from 8:00 to 18:00
+  let startHour = 8;
+  let endHour = 18;
+  
+  // Check if we need to expand the time range based on appointments
+  if (appointments.length > 0) {
+    appointments.forEach(appointment => {
+      // Parse appointment start time
+      const appointmentStartHour = parseInt(appointment.time.split(':')[0], 10);
+      
+      // Parse appointment end time if available
+      let appointmentEndHour = endHour;
+      if (appointment.end_time) {
+        appointmentEndHour = parseInt(appointment.end_time.split(':')[0], 10);
+        // Account for appointments that end in the next hour
+        if (parseInt(appointment.end_time.split(':')[1], 10) > 0) {
+          appointmentEndHour += 1;
+        }
+      }
+      
+      // Update start and end hours if needed
+      if (appointmentStartHour < startHour) {
+        startHour = appointmentStartHour;
+      }
+      
+      if (appointmentEndHour > endHour) {
+        endHour = appointmentEndHour;
+      }
+    });
+  }
+  
+  // Generate time slots based on the expanded range
+  const slots = [];
+  for (let hour = startHour; hour <= endHour; hour++) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    // Optionally add half-hour slots
+    if (hour < endHour) {
+      slots.push(`${hour.toString().padStart(2, '0')}:30`);
+    }
+  }
+  
+  return slots;
+};
 
 interface WeeklyViewProps {
   date: Date;
@@ -31,15 +77,14 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
   const startDate = startOfWeek(date, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
   
-  // Time slots from 8:00 to 18:00 (hourly intervals)
-  const timeSlots = [];
-  for (let hour = 8; hour < 18; hour++) {
-    timeSlots.push(`${hour}:00`);
-  }
-
   // Get all appointments for the week
   const { appointments, isLoading: isLoadingAppointments } = useAppointments();
   const queryClient = useQueryClient();
+  
+  // Use useMemo to generate time slots based on appointments
+  const timeSlots = useMemo(() => {
+    return generateTimeSlots(appointments);
+  }, [appointments]);
 
   // Group appointments by date and time
   const appointmentsByDateAndTime = appointments.reduce((acc, appointment) => {

@@ -1,9 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,11 +14,48 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 // Helper function to generate time slots
-const generateTimeSlots = () => {
-  const slots = [];
-  for (let hour = 8; hour < 18; hour++) {
-    slots.push(`${hour}:00`);
+const generateTimeSlots = (appointments: Appointment[] = []) => {
+  // Default time range from 8:00 to 18:00
+  let startHour = 8;
+  let endHour = 18;
+  
+  // Check if we need to expand the time range based on appointments
+  if (appointments.length > 0) {
+    appointments.forEach(appointment => {
+      // Parse appointment start time
+      const appointmentStartHour = parseInt(appointment.time.split(':')[0], 10);
+      
+      // Parse appointment end time if available
+      let appointmentEndHour = endHour;
+      if (appointment.end_time) {
+        appointmentEndHour = parseInt(appointment.end_time.split(':')[0], 10);
+        // Account for appointments that end in the next hour
+        if (parseInt(appointment.end_time.split(':')[1], 10) > 0) {
+          appointmentEndHour += 1;
+        }
+      }
+      
+      // Update start and end hours if needed
+      if (appointmentStartHour < startHour) {
+        startHour = appointmentStartHour;
+      }
+      
+      if (appointmentEndHour > endHour) {
+        endHour = appointmentEndHour;
+      }
+    });
   }
+  
+  // Generate time slots based on the expanded range
+  const slots = [];
+  for (let hour = startHour; hour <= endHour; hour++) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    // Optionally add half-hour slots
+    if (hour < endHour) {
+      slots.push(`${hour.toString().padStart(2, '0')}:30`);
+    }
+  }
+  
   return slots;
 };
 
@@ -34,9 +71,13 @@ const DailyView = ({ date }: DailyViewProps) => {
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  const timeSlots = generateTimeSlots();
   const { appointments, isLoading: isLoadingAppointments } = useAppointments(date);
   const queryClient = useQueryClient();
+  
+  // Use useMemo to generate time slots based on appointments
+  const timeSlots = useMemo(() => {
+    return generateTimeSlots(appointments);
+  }, [appointments]);
 
   const handleSlotClick = (time: string) => {
     setSelectedSlot(time);
