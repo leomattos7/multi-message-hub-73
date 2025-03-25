@@ -118,6 +118,7 @@ export function useAppointmentSubmission() {
           
         if (appointmentError) {
           toast.error("Erro ao agendar consulta");
+          console.error("Error creating appointment:", appointmentError);
           setIsLoading(false);
           return;
         }
