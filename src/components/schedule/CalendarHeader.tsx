@@ -88,7 +88,7 @@ const CalendarHeader = ({
               <span>Configurar Agenda</span>
             </Button>
           </SheetTrigger>
-          <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetContent className="w-full sm:max-w-lg overflow-y-auto h-[85vh]">
             <SheetHeader>
               <SheetTitle>Configurações da Agenda</SheetTitle>
             </SheetHeader>
