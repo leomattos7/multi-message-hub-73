@@ -3,11 +3,9 @@ import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { Appointment } from "@/hooks/use-appointments";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
+import { useAppointmentSubmission } from "@/hooks/useAppointmentSubmission";
 import DatePickerField from "./DatePickerField";
 import PatientInfoFields from "./PatientInfoFields";
 import NotesField from "./NotesField";
@@ -29,8 +27,8 @@ const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: Ap
   const [startTime, setStartTime] = useState(time || "08:00");
   const [endTime, setEndTime] = useState("09:00");
   const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
-  const [isLoading, setIsLoading] = useState(false);
-  const queryClient = useQueryClient();
+  
+  const { isLoading, handleSubmit } = useAppointmentSubmission();
   
   // Initialize form with appointment data if editing
   useEffect(() => {
@@ -62,108 +60,19 @@ const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: Ap
     setEndTime(newEndTime);
   };
   
-  const handleSubmit = async () => {
-    if (!patientName.trim()) {
-      toast.error("Por favor, informe o nome do paciente");
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Check if we're editing an existing appointment
-      if (appointment) {
-        // Update the appointment
-        const { error: appointmentError } = await supabase
-          .from("appointments")
-          .update({
-            type: type,
-            status: status,
-            payment_method: paymentMethod,
-            notes: notes,
-            time: startTime,
-            end_time: endTime,
-            date: format(selectedDate, "yyyy-MM-dd")
-          })
-          .eq('id', appointment.id);
-          
-        if (appointmentError) {
-          toast.error("Erro ao atualizar consulta");
-          setIsLoading(false);
-          return;
-        }
-        
-        toast.success("Consulta atualizada com sucesso");
-      } else {
-        // Creating a new appointment - First, create a patient record if it doesn't exist
-        const { data: patientData, error: patientError } = await supabase
-          .from("patients")
-          .select("id")
-          .eq("name", patientName)
-          .maybeSingle();
-          
-        let patientId;
-        
-        if (patientError) {
-          toast.error("Erro ao verificar paciente");
-          setIsLoading(false);
-          return;
-        }
-        
-        // If patient doesn't exist, create one
-        if (!patientData) {
-          const { data: newPatient, error: createError } = await supabase
-            .from("patients")
-            .insert({ name: patientName })
-            .select("id")
-            .single();
-            
-          if (createError) {
-            toast.error("Erro ao criar paciente");
-            setIsLoading(false);
-            return;
-          }
-          
-          patientId = newPatient.id;
-        } else {
-          patientId = patientData.id;
-        }
-        
-        // Now create the appointment
-        const formattedDate = format(selectedDate, "yyyy-MM-dd");
-        
-        const { error: appointmentError } = await supabase
-          .from("appointments")
-          .insert({
-            patient_id: patientId,
-            date: formattedDate,
-            time: startTime,
-            end_time: endTime,
-            type: type,
-            status: status,
-            payment_method: paymentMethod,
-            notes: notes
-          });
-          
-        if (appointmentError) {
-          toast.error("Erro ao agendar consulta");
-          setIsLoading(false);
-          return;
-        }
-        
-        toast.success(`Consulta agendada para ${format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} das ${startTime} às ${endTime}`);
-      }
-      
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      
-      onClose();
-    } catch (error) {
-      console.error("Error creating/updating appointment:", error);
-      toast.error("Erro ao processar consulta");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleAppointmentSubmit = () => {
+    handleSubmit({
+      appointment,
+      patientName,
+      status,
+      type,
+      paymentMethod,
+      notes,
+      startTime,
+      endTime,
+      selectedDate,
+      onClose
+    });
   };
 
   const dialogTitle = appointment ? "Editar Consulta" : "Agendar Consulta";
@@ -210,7 +119,7 @@ const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: Ap
       
       <DialogActionButtons
         onClose={onClose}
-        onSubmit={handleSubmit}
+        onSubmit={handleAppointmentSubmit}
         isLoading={isLoading}
         isEditMode={isEditMode}
       />
