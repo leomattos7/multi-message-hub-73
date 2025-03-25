@@ -14,24 +14,16 @@ export const generateTimeSlots = (appointments: Appointment[] = []) => {
       const appointmentStartHour = parseInt(appointment.time.split(':')[0], 10);
       
       // Parse appointment end time if available
-      let appointmentEndHour = endHour;
+      let appointmentEndHour = appointmentStartHour + 1; // Default 1 hour duration
       if (appointment.end_time) {
         appointmentEndHour = parseInt(appointment.end_time.split(':')[0], 10);
         // Account for appointments that end exactly at the hour
         const appointmentEndMinutes = parseInt(appointment.end_time.split(':')[1], 10);
         if (appointmentEndMinutes === 0 && appointmentEndHour > 0) {
-          // If appointment ends at HH:00, we don't need to include the next hour
+          // If appointment ends at HH:00, we use that hour as is
         } else {
           // If appointment ends at HH:MM (MM > 0), we need to include the next hour
           appointmentEndHour += 1;
-        }
-      } else {
-        // If no end time specified, assume 30 minutes duration
-        const startMinutes = parseInt(appointment.time.split(':')[1], 10);
-        if (startMinutes + 30 >= 60) {
-          appointmentEndHour = appointmentStartHour + 1;
-        } else {
-          appointmentEndHour = appointmentStartHour;
         }
       }
       

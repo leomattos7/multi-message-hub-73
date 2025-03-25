@@ -94,7 +94,7 @@ const DayColumn = ({
 
         {/* Render appointments as absolute positioned elements */}
         {!isLoadingAppointments && allDayAppointments.map((appointment) => {
-          const slotHeight = 16; // height of each time slot in pixels
+          const slotHeight = 64; // height of each time slot in pixels (4rem = 64px)
           const top = appointment.startSlot * slotHeight;
           const height = appointment.spanCount * slotHeight;
           
