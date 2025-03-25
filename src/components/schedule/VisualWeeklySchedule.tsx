@@ -22,8 +22,8 @@ type WeeklyAvailability = {
 
 interface VisualWeeklyScheduleProps {
   doctorId: string;
-  initialAvailability?: WeeklyAvailability[];
-  onAvailabilityChange?: (availability: WeeklyAvailability[]) => void;
+  weeklyAvailability: WeeklyAvailability[];
+  onAvailabilityChange: (availability: WeeklyAvailability[]) => void;
 }
 
 const getDayName = (day: number): string => {
@@ -38,10 +38,10 @@ const TIME_SLOTS = [
 
 export const VisualWeeklySchedule = ({ 
   doctorId, 
-  initialAvailability = [],
+  weeklyAvailability,
   onAvailabilityChange
 }: VisualWeeklyScheduleProps) => {
-  const [availability, setAvailability] = useState<WeeklyAvailability[]>(initialAvailability);
+  const [availability, setAvailability] = useState<WeeklyAvailability[]>(weeklyAvailability);
   const [selectedDay, setSelectedDay] = useState<number>(1); // Default to Monday
   const [startTime, setStartTime] = useState<string>("08:00");
   const [endTime, setEndTime] = useState<string>("09:00");

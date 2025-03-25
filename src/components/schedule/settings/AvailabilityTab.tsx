@@ -93,7 +93,7 @@ const AvailabilityTab = ({ availableTimes, onAvailableTimesChange, doctorId }: A
           ) : (
             <VisualWeeklySchedule 
               doctorId={doctorId}
-              initialAvailability={weeklyAvailability}
+              weeklyAvailability={weeklyAvailability}
               onAvailabilityChange={handleWeeklyAvailabilityChange}
             />
           )}
