@@ -6,6 +6,8 @@ import { VisualWeeklySchedule } from "@/components/schedule/VisualWeeklySchedule
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface AvailabilityTabProps {
   availableTimes: TimeBlock[];
@@ -73,7 +75,7 @@ const AvailabilityTab = ({ availableTimes, onAvailableTimesChange, doctorId }: A
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Horários Disponíveis</CardTitle>
+        <CardTitle>Disponibilidade</CardTitle>
         <CardDescription>
           Configure os dias e horários em que você está disponível para atendimentos.
         </CardDescription>
@@ -91,11 +93,24 @@ const AvailabilityTab = ({ availableTimes, onAvailableTimesChange, doctorId }: A
               Carregando disponibilidade...
             </div>
           ) : (
-            <VisualWeeklySchedule 
-              doctorId={doctorId}
-              weeklyAvailability={weeklyAvailability}
-              onAvailabilityChange={handleWeeklyAvailabilityChange}
-            />
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Horários Disponíveis</h2>
+                <div className="text-gray-600 mb-6">
+                  Configure quais dias e horários você está disponível para atendimento.
+                </div>
+                
+                <VisualWeeklySchedule 
+                  doctorId={doctorId}
+                  weeklyAvailability={weeklyAvailability}
+                  onAvailabilityChange={handleWeeklyAvailabilityChange}
+                />
+              </div>
+              
+              <div className="text-sm text-gray-500 mt-2">
+                (GMT-03:00) Horário Padrão de Brasília - São Paulo
+              </div>
+            </div>
           )}
         </TabsContent>
         <TabsContent value="calendar" className="mt-0">

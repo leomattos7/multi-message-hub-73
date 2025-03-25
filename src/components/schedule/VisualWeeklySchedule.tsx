@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,6 +46,10 @@ export const VisualWeeklySchedule = ({
   const [startTime, setStartTime] = useState<string>("08:00");
   const [endTime, setEndTime] = useState<string>("09:00");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setAvailability(weeklyAvailability);
+  }, [weeklyAvailability]);
 
   // Check if a time slot with the same day and start time already exists
   const checkDuplicateTimeSlot = (day: number, start: string): boolean => {
@@ -164,14 +168,20 @@ export const VisualWeeklySchedule = ({
   const availableSlots = availability.filter(slot => slot.is_available);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Adicionar novo horário disponível</h3>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div>
+      <div className="mb-8">
+        <Button 
+          onClick={handleAddAvailability}
+          className="w-full bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 font-medium"
+          disabled={isLoading}
+        >
+          <Plus className="h-4 w-4 mr-2" /> Adicionar disponibilidade
+        </Button>
+      
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Select value={selectedDay.toString()} onValueChange={(value) => setSelectedDay(parseInt(value))}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione o dia" />
               </SelectTrigger>
               <SelectContent>
@@ -186,9 +196,9 @@ export const VisualWeeklySchedule = ({
             </Select>
           </div>
           
-          <div>
+          <div className="flex items-center gap-2">
             <Select value={startTime} onValueChange={setStartTime}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Horário inicial" />
               </SelectTrigger>
               <SelectContent>
@@ -199,11 +209,11 @@ export const VisualWeeklySchedule = ({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          
-          <div>
+            
+            <span className="text-gray-500">até</span>
+            
             <Select value={endTime} onValueChange={setEndTime}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Horário final" />
               </SelectTrigger>
               <SelectContent>
@@ -215,20 +225,10 @@ export const VisualWeeklySchedule = ({
               </SelectContent>
             </Select>
           </div>
-          
-          <Button 
-            onClick={handleAddAvailability} 
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Adicionando...' : 'Adicionar disponibilidade'}
-          </Button>
         </div>
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-4">Horários configurados</h3>
-        
         {availableSlots.length === 0 ? (
           <div className="text-center py-8 text-gray-500 border rounded-md">
             <Clock className="h-12 w-12 mx-auto text-gray-300 mb-3" />

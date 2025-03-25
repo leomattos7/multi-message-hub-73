@@ -137,7 +137,7 @@ export default function ScheduleManagement() {
               ) : (
                 <VisualWeeklySchedule 
                   doctorId={doctorId}
-                  initialAvailability={weeklyAvailability}
+                  weeklyAvailability={weeklyAvailability}
                   onAvailabilityChange={handleAvailabilityChange}
                 />
               )}
