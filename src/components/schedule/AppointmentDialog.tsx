@@ -12,6 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQueryClient } from "@tanstack/react-query";
 import { Appointment } from "@/hooks/use-appointments";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface AppointmentDialogProps {
   date: Date;
@@ -20,7 +24,7 @@ interface AppointmentDialogProps {
   appointment?: Appointment;
 }
 
-const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDialogProps) => {
+const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: AppointmentDialogProps) => {
   const [patientName, setPatientName] = useState("");
   const [status, setStatus] = useState("aguardando");
   const [type, setType] = useState("Consulta");
@@ -28,6 +32,7 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
   const [notes, setNotes] = useState("");
   const [startTime, setStartTime] = useState(time || "08:00");
   const [endTime, setEndTime] = useState("09:00");
+  const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   
@@ -41,6 +46,9 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
       setNotes(appointment.notes || "");
       setStartTime(appointment.time);
       setEndTime(appointment.end_time || calculateEndTime(appointment.time));
+      if (appointment.date) {
+        setSelectedDate(new Date(appointment.date));
+      }
     }
   }, [appointment]);
 
@@ -78,7 +86,8 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
             payment_method: paymentMethod,
             notes: notes,
             time: startTime,
-            end_time: endTime
+            end_time: endTime,
+            date: format(selectedDate, "yyyy-MM-dd")
           })
           .eq('id', appointment.id);
           
@@ -125,7 +134,7 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
         }
         
         // Now create the appointment
-        const formattedDate = format(date, "yyyy-MM-dd");
+        const formattedDate = format(selectedDate, "yyyy-MM-dd");
         
         const { error: appointmentError } = await supabase
           .from("appointments")
@@ -146,7 +155,7 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
           return;
         }
         
-        toast.success(`Consulta agendada para ${format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} das ${startTime} às ${endTime}`);
+        toast.success(`Consulta agendada para ${format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} das ${startTime} às ${endTime}`);
       }
       
       // Invalidate queries to refresh the data
@@ -170,8 +179,35 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
       </DialogHeader>
       <div className="grid gap-4 py-4">
         <div>
-          <p className="font-medium mb-1">Data:</p>
-          <p>{format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+          <label htmlFor="date" className="font-medium mb-1 block">Data:</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? (
+                  format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+                ) : (
+                  "Selecione uma data"
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+                className="pointer-events-auto"
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
         
         <div>

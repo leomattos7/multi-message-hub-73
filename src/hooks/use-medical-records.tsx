@@ -18,6 +18,7 @@ interface Patient {
   biological_sex?: string;
   gender_identity?: string;
   cpf?: string;
+  doctor_id?: string;
 }
 
 interface RecordSummary {
@@ -37,9 +38,19 @@ export const useMedicalRecords = () => {
   } = useQuery({
     queryKey: ["patients", searchQuery],
     queryFn: async () => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
       let query = supabase
         .from("patients")
-        .select("id, name, email, phone, address, notes, payment_method, insurance_name, birth_date, biological_sex, gender_identity");
+        .select("id, name, email, phone, address, notes, payment_method, insurance_name, birth_date, biological_sex, gender_identity, doctor_id");
+      
+      // Filter by current doctor if this is a multi-doctor system
+      query = query.eq("doctor_id", user.id);
       
       if (searchQuery) {
         query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
@@ -47,7 +58,10 @@ export const useMedicalRecords = () => {
       
       const { data: patientsData, error: patientsError } = await query.order("name");
       
-      if (patientsError) throw patientsError;
+      if (patientsError) {
+        console.error("Error fetching patients:", patientsError);
+        throw patientsError;
+      }
       
       const patientsWithRecordCounts = await Promise.all(patientsData.map(async (patient) => {
         const { count, error: countError } = await supabase
@@ -70,11 +84,22 @@ export const useMedicalRecords = () => {
   const { data: recordSummary } = useQuery({
     queryKey: ["record-summary"],
     queryFn: async () => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
       const { data, error } = await supabase
         .from("patient_records")
-        .select("record_type");
+        .select("record_type, patients!inner(doctor_id)")
+        .eq("patients.doctor_id", user.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching record summary:", error);
+        throw error;
+      }
       
       const counts: Record<string, number> = {};
       data.forEach(record => {
