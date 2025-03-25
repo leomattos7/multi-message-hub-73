@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { TabsContent } from "@/components/ui/tabs";
 
-// Import our components
+// Import our new components
 import WeeklyView from "@/components/schedule/WeeklyView";
 import MonthlyView from "@/components/schedule/MonthlyView";
 import CalendarHeader from "@/components/schedule/CalendarHeader";
@@ -51,13 +51,17 @@ const SchedulePage = () => {
             onTodayClick={handleTodayClick}
             onViewChange={handleViewChange}
           />
+          
+          <div className="mt-4">
+            {currentView === "weekly" ? (
+              <WeeklyView date={currentDate} />
+            ) : (
+              <MonthlyView date={currentDate} />
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          {currentView === "weekly" ? (
-            <WeeklyView date={currentDate} />
-          ) : (
-            <MonthlyView date={currentDate} />
-          )}
+          {/* Additional functionality could go here */}
         </CardContent>
       </Card>
     </div>

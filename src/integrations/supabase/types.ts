@@ -98,33 +98,6 @@ export type Database = {
         }
         Relationships: []
       }
-      consultation_types: {
-        Row: {
-          created_at: string
-          doctor_id: string
-          duration: number
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          doctor_id: string
-          duration: number
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          doctor_id?: string
-          duration?: number
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       conversation_tags: {
         Row: {
           color: string

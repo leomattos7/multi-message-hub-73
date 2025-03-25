@@ -30,10 +30,6 @@ const CalendarHeader = ({
   onTodayClick,
   onViewChange,
 }: CalendarHeaderProps) => {
-  // Add a default doctorId for testing/development purposes
-  // In a real application, this would come from auth context or props
-  const doctorId = "00000000-0000-0000-0000-000000000000";
-
   return (
     <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
       <div className="flex flex-col sm:flex-row gap-2 items-center">
@@ -96,7 +92,7 @@ const CalendarHeader = ({
             <SheetHeader>
               <SheetTitle>Configurações da Agenda</SheetTitle>
             </SheetHeader>
-            <ScheduleSettings doctorId={doctorId} />
+            <ScheduleSettings />
           </SheetContent>
         </Sheet>
       </div>

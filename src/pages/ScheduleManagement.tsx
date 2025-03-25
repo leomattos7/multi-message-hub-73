@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { VisualWeeklySchedule } from "@/components/schedule/VisualWeeklySchedule";
+import { VisualWeeklySchedule } from "@/components/VisualWeeklySchedule";
 import { ProfileEditForm } from "@/components/ProfileEditForm";
 import { DoctorProfile } from "@/components/DoctorProfile/types";
 import { supabase } from "@/integrations/supabase/client";
