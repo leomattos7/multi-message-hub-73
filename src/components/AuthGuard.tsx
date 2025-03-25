@@ -1,76 +1,149 @@
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, createContext, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from "@supabase/supabase-js";
 
-export interface User {
+export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  role: "doctor" | "secretary";
-  phone?: string;
+  role: "owner" | "admin" | "doctor" | "staff";
+  organization_id: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  profile: UserProfile | null;
+  session: Session | null;
+  isLoading: boolean;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  profile: null,
+  session: null,
+  isLoading: true,
+  signOut: async () => {}
+});
+
+export const useAuth = () => useContext(AuthContext);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Configurar o listener de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Carregar perfil do usuário
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          
+          if (error) {
+            console.error("Erro ao carregar perfil:", error);
+            return;
+          }
+          
+          if (data) {
+            setProfile(data as UserProfile);
+          }
+        } else {
+          setProfile(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // Verificar se há uma sessão ativa ao carregar
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Carregar perfil do usuário
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Erro ao carregar perfil:", error);
+          return;
+        }
+        
+        if (data) {
+          setProfile(data as UserProfile);
+        }
+      }
+      
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, profile, session, isLoading, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 interface AuthGuardProps {
   children: ReactNode;
-  requiredRole?: "doctor" | "secretary" | undefined;
+  requiredRole?: "owner" | "admin" | "doctor" | "staff";
 }
 
 export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
+  const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (!userStr) {
+    if (!isLoading && !user) {
       navigate("/login");
       return;
     }
 
-    try {
-      const userData = JSON.parse(userStr) as User;
-      setUser(userData);
-      
-      // If this is the first login, initialize collections if they don't exist
-      if (!localStorage.getItem("patients")) {
-        localStorage.setItem("patients", "[]");
-      }
-      
-      if (!localStorage.getItem("appointments")) {
-        localStorage.setItem("appointments", "[]");
-      }
-      
-      if (!localStorage.getItem("conversations")) {
-        localStorage.setItem("conversations", "[]");
-      }
-      
-      // If a specific role is required and the user doesn't have it, redirect
-      if (requiredRole && userData.role !== requiredRole) {
+    if (!isLoading && user && requiredRole && profile?.role !== requiredRole) {
+      // Redirecionar baseado no perfil
+      if (profile?.role === "staff") {
         navigate("/secretaria");
-        return;
+      } else {
+        navigate("/");
       }
-    } catch (error) {
-      console.error("Error parsing user data:", error);
-      navigate("/login");
+      return;
     }
-  }, [navigate, requiredRole]);
+  }, [isLoading, user, profile, requiredRole, navigate]);
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  }
 
   return <>{children}</>;
-}
-
-export function useAuth(): { user: User | null } {
-  const [user, setUser] = useState<User | null>(null);
-  
-  useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr) as User;
-        setUser(userData);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    }
-  }, []);
-  
-  return { user };
 }

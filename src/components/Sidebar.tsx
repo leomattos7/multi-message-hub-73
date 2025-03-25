@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Inbox,
@@ -15,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "./AuthGuard";
 
 // Default navigation items
 const sidebarItems = [
@@ -42,24 +42,15 @@ const sidebarItems = [
     name: "Funcionários",
     href: "/funcionarios",
     icon: <Briefcase />,
+    roles: ["owner", "admin"],
   },
 ];
 
 export function Sidebar() {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(!isMobile);
-  const [userData, setUserData] = useState<any>(null);
-
-  // Load user data from localStorage
-  useEffect(() => {
-    const userString = localStorage.getItem("user");
-    if (userString) {
-      const user = JSON.parse(userString);
-      setUserData(user);
-    }
-  }, []);
 
   // Toggle the sidebar on mobile
   const toggleSidebar = () => {
@@ -67,16 +58,19 @@ export function Sidebar() {
   };
 
   // Handle logout
-  const handleLogout = () => {
-    // Remove user data from localStorage
-    localStorage.removeItem("user");
-    
-    // Show success message
+  const handleLogout = async () => {
+    await signOut();
     toast.success("Você saiu com sucesso");
-    
-    // Redirect to login page
-    navigate("/login");
   };
+
+  // Filter navigation items based on user role
+  const filteredItems = sidebarItems.filter(item => {
+    // If no roles are specified for the item, show it to everyone
+    if (!item.roles) return true;
+    
+    // Otherwise, check if the user's role is in the list of allowed roles
+    return profile && item.roles.includes(profile.role);
+  });
 
   return (
     <>
@@ -101,17 +95,17 @@ export function Sidebar() {
           <div className="flex items-center justify-start mb-8 px-2">
             <Link to="/" className="flex items-center">
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                {userData?.name?.charAt(0) || "U"}
+                {profile?.name?.charAt(0) || user?.email?.charAt(0) || "M"}
               </div>
               <span className="ml-2 text-lg font-semibold">
-                {userData?.name || "Médico"}
+                {profile?.name || user?.email?.split('@')[0] || "Médico"}
               </span>
             </Link>
           </div>
 
           {/* Navigation Items */}
           <ul className="space-y-2 font-medium flex-1">
-            {sidebarItems.map((item) => (
+            {filteredItems.map((item) => (
               <li key={item.href}>
                 <Link
                   to={item.href}
