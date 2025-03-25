@@ -1,11 +1,9 @@
 
-import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import React from "react";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Appointment } from "@/hooks/use-appointments";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
-import { useAppointmentSubmission } from "@/hooks/useAppointmentSubmission";
+import { useAppointmentForm } from "@/hooks/useAppointmentForm";
 import DatePickerField from "./DatePickerField";
 import PatientInfoFields from "./PatientInfoFields";
 import NotesField from "./NotesField";
@@ -18,65 +16,22 @@ interface AppointmentDialogProps {
   appointment?: Appointment;
 }
 
-const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: AppointmentDialogProps) => {
-  const [patientName, setPatientName] = useState("");
-  const [status, setStatus] = useState("aguardando");
-  const [type, setType] = useState("Consulta");
-  const [paymentMethod, setPaymentMethod] = useState("insurance");
-  const [notes, setNotes] = useState("");
-  const [startTime, setStartTime] = useState(time || "08:00");
-  const [endTime, setEndTime] = useState("09:00");
-  const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
-  
-  const { isLoading, handleSubmit } = useAppointmentSubmission();
-  
-  // Initialize form with appointment data if editing
-  useEffect(() => {
-    if (appointment) {
-      setPatientName(appointment.patient?.name || "");
-      setStatus(appointment.status);
-      setType(appointment.type);
-      setPaymentMethod(appointment.payment_method || "insurance");
-      setNotes(appointment.notes || "");
-      setStartTime(appointment.time);
-      setEndTime(appointment.end_time || calculateEndTime(appointment.time));
-      if (appointment.date) {
-        setSelectedDate(new Date(appointment.date));
-      }
-    }
-  }, [appointment]);
+const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDialogProps) => {
+  const {
+    formState,
+    isLoading,
+    isEditMode,
+    setField,
+    handleTimeChange,
+    handleSubmit
+  } = useAppointmentForm({
+    initialDate: date,
+    initialTime: time,
+    appointment,
+    onClose
+  });
 
-  // Calculate default end time (1 hour after start time)
-  const calculateEndTime = (startTimeStr: string): string => {
-    const [hours, minutes] = startTimeStr.split(':').map(Number);
-    let endHours = hours + 1;
-    if (endHours >= 24) endHours = 23;
-    return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  };
-  
-  // Handle time range changes
-  const handleTimeChange = (newStartTime: string, newEndTime: string) => {
-    setStartTime(newStartTime);
-    setEndTime(newEndTime);
-  };
-  
-  const handleAppointmentSubmit = () => {
-    handleSubmit({
-      appointment,
-      patientName,
-      status,
-      type,
-      paymentMethod,
-      notes,
-      startTime,
-      endTime,
-      selectedDate,
-      onClose
-    });
-  };
-
-  const dialogTitle = appointment ? "Editar Consulta" : "Agendar Consulta";
-  const isEditMode = !!appointment;
+  const dialogTitle = isEditMode ? "Editar Consulta" : "Agendar Consulta";
 
   return (
     <DialogContent className="sm:max-w-[425px]">
@@ -85,41 +40,41 @@ const AppointmentDialog = ({ date: initialDate, time, onClose, appointment }: Ap
       </DialogHeader>
       <div className="grid gap-4 py-4">
         <DatePickerField 
-          selectedDate={selectedDate}
-          onChange={(date) => date && setSelectedDate(date)}
+          selectedDate={formState.selectedDate}
+          onChange={(date) => date && setField("selectedDate", date)}
           label="Data"
         />
         
         <div>
           <p className="font-medium mb-1">Horário da Consulta:</p>
           <TimeRangeSelector 
-            startTime={startTime} 
-            endTime={endTime} 
+            startTime={formState.startTime} 
+            endTime={formState.endTime} 
             onTimeChange={handleTimeChange}
           />
         </div>
         
         <PatientInfoFields
-          patientName={patientName}
-          setPatientName={setPatientName}
-          status={status}
-          setStatus={setStatus}
-          type={type}
-          setType={setType}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
+          patientName={formState.patientName}
+          setPatientName={(value) => setField("patientName", value)}
+          status={formState.status}
+          setStatus={(value) => setField("status", value)}
+          type={formState.type}
+          setType={(value) => setField("type", value)}
+          paymentMethod={formState.paymentMethod}
+          setPaymentMethod={(value) => setField("paymentMethod", value)}
           isEditMode={isEditMode}
         />
         
         <NotesField
-          notes={notes}
-          setNotes={setNotes}
+          notes={formState.notes}
+          setNotes={(value) => setField("notes", value)}
         />
       </div>
       
       <DialogActionButtons
         onClose={onClose}
-        onSubmit={handleAppointmentSubmit}
+        onSubmit={handleSubmit}
         isLoading={isLoading}
         isEditMode={isEditMode}
       />
