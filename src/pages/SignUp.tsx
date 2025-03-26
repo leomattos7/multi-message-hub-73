@@ -55,7 +55,7 @@ export default function SignUp() {
           data: {
             name: data.name,
             phone: data.phone || "",
-            role: "admin" // Using the new standardized role
+            role: "admin" // Using the standardized role
           }
         }
       });
@@ -79,7 +79,7 @@ export default function SignUp() {
             id: authData.user.id,
             name: data.name,
             email: data.email,
-            role: "admin", // Using the new standardized role
+            role: "admin", // Using the standardized role
             status: "active"
           }
         ]);
@@ -89,9 +89,40 @@ export default function SignUp() {
         // Continue anyway since the auth user was created
       }
       
-      toast.success("Conta criada com sucesso!");
-      // Navigate to login page after signup
-      navigate("/login");
+      // Auto sign-in the user after registration
+      if (authData.session) {
+        // Store user in localStorage
+        const userData = {
+          id: authData.user.id,
+          name: authData.user.user_metadata?.name || "Usuário",
+          email: authData.user.email || "",
+          role: authData.user.user_metadata?.role || "admin",
+          phone: authData.user.user_metadata?.phone
+        };
+        
+        localStorage.setItem("user", JSON.stringify(userData));
+        
+        // Initialize collections if they don't exist
+        if (!localStorage.getItem("patients")) {
+          localStorage.setItem("patients", "[]");
+        }
+        
+        if (!localStorage.getItem("appointments")) {
+          localStorage.setItem("appointments", "[]");
+        }
+        
+        if (!localStorage.getItem("conversations")) {
+          localStorage.setItem("conversations", "[]");
+        }
+      
+        toast.success("Conta criada com sucesso!");
+        // Navigate directly to home page after signup
+        navigate("/");
+      } else {
+        // If no session is returned (e.g., if email confirmation is required)
+        toast.success("Conta criada com sucesso! Por favor, faça login.");
+        navigate("/login");
+      }
     } catch (error: any) {
       console.error("Registration error:", error);
       setError("Erro ao criar conta: " + error.message);
