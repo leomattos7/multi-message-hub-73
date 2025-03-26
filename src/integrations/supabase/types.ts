@@ -98,30 +98,6 @@ export type Database = {
         }
         Relationships: []
       }
-      chat_transcripts: {
-        Row: {
-          created_at: string | null
-          id: string
-          phone: string
-          transcript: Json
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          phone: string
-          transcript: Json
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          phone?: string
-          transcript?: Json
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       consultation_types: {
         Row: {
           created_at: string
