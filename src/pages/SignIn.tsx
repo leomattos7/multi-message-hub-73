@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { LucideStethoscope } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   email: z.string().email({ message: "E-mail inválido" }),
@@ -22,7 +21,6 @@ type FormValues = z.infer<typeof formSchema>;
 export default function SignIn() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -34,32 +32,27 @@ export default function SignIn() {
 
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
-    setAuthError(null);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // Create a new empty user account (no mock data)
+      const user = {
+        id: "user-" + Math.random().toString(36).substr(2, 9),
         email: data.email,
-        password: data.password,
-      });
+        role: "doctor",
+        name: "Dr. " + data.email.split('@')[0]
+      };
       
-      if (error) {
-        throw error;
-      }
+      // Store user in localStorage - starting with empty collections
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("patients", JSON.stringify([]));
+      localStorage.setItem("appointments", JSON.stringify([]));
+      localStorage.setItem("conversations", JSON.stringify([]));
       
       toast.success("Login realizado com sucesso!");
       navigate("/");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login error:", error);
-      setAuthError(
-        error.message === "Invalid login credentials"
-          ? "Credenciais inválidas. Verifique seu e-mail e senha."
-          : error.message || "Erro ao fazer login. Tente novamente."
-      );
-      toast.error(
-        error.message === "Invalid login credentials"
-          ? "Credenciais inválidas. Verifique seu e-mail e senha."
-          : error.message || "Erro ao fazer login. Tente novamente."
-      );
+      toast.error("Erro ao fazer login. Verifique suas credenciais.");
     } finally {
       setIsLoading(false);
     }
@@ -87,12 +80,6 @@ export default function SignIn() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {authError && (
-                <div className="mb-4 p-3 rounded bg-red-50 text-red-600 text-sm">
-                  {authError}
-                </div>
-              )}
-              
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField

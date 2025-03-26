@@ -10,12 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { LucideStethoscope } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
   phone: z.string().optional(),
-  email: z.string().email({ message: "E-mail inválido" }),
+  email: z.string().email({ message: "E-mail inválido" }).optional().or(z.literal("")),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string().min(6, { message: "Confirme sua senha" }),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -28,7 +27,6 @@ type FormValues = z.infer<typeof formSchema>;
 export default function SignUp() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -43,42 +41,30 @@ export default function SignUp() {
 
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
-    setAuthError(null);
     
     try {
-      // Create user account with Supabase
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.name,
-            phone: data.phone || "",
-            role: "doctor" // Default role for new registrations
-          }
-        }
-      });
+      // Create a new user account without example data
+      const user = {
+        id: "user-" + Math.random().toString(36).substr(2, 9),
+        email: data.email || "",
+        role: "doctor",
+        name: data.name,
+        phone: data.phone || "",
+      };
       
-      if (error) {
-        throw error;
-      }
+      // Store user in localStorage
+      localStorage.setItem("user", JSON.stringify(user));
       
-      toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar o cadastro.");
+      // Initialize empty collections
+      localStorage.setItem("patients", JSON.stringify([]));
+      localStorage.setItem("appointments", JSON.stringify([]));
+      localStorage.setItem("conversations", JSON.stringify([]));
       
-      // After successful signup, redirect to login page instead of auto-signing in
-      navigate("/login");
-    } catch (error: any) {
+      toast.success("Conta criada com sucesso!");
+      navigate("/");
+    } catch (error) {
       console.error("Registration error:", error);
-      
-      // Handle common error messages
-      const errorMsg = error.message;
-      if (errorMsg.includes("already registered")) {
-        setAuthError("Este e-mail já está registrado. Tente fazer login.");
-        toast.error("Este e-mail já está registrado. Tente fazer login.");
-      } else {
-        setAuthError(errorMsg || "Erro ao criar conta. Tente novamente.");
-        toast.error(errorMsg || "Erro ao criar conta. Tente novamente.");
-      }
+      toast.error("Erro ao criar conta. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -106,12 +92,6 @@ export default function SignUp() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {authError && (
-                <div className="mb-4 p-3 rounded bg-red-50 text-red-600 text-sm">
-                  {authError}
-                </div>
-              )}
-              
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
@@ -145,7 +125,7 @@ export default function SignUp() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>E-mail *</FormLabel>
+                        <FormLabel>E-mail</FormLabel>
                         <FormControl>
                           <Input placeholder="seu@email.com" {...field} />
                         </FormControl>
@@ -160,7 +140,7 @@ export default function SignUp() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Senha *</FormLabel>
+                          <FormLabel>Senha</FormLabel>
                           <FormControl>
                             <Input type="password" placeholder="••••••" {...field} />
                           </FormControl>
@@ -173,7 +153,7 @@ export default function SignUp() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirmar senha *</FormLabel>
+                          <FormLabel>Confirmar senha</FormLabel>
                           <FormControl>
                             <Input type="password" placeholder="••••••" {...field} />
                           </FormControl>
