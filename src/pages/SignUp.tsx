@@ -55,7 +55,7 @@ export default function SignUp() {
           data: {
             name: data.name,
             phone: data.phone || "",
-            role: "doctor"
+            role: "admin" // Using the new standardized role
           }
         }
       });
@@ -79,7 +79,7 @@ export default function SignUp() {
             id: authData.user.id,
             name: data.name,
             email: data.email,
-            role: "administrador",
+            role: "admin", // Using the new standardized role
             status: "active"
           }
         ]);

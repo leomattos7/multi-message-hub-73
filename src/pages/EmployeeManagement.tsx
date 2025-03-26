@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -56,7 +55,7 @@ export default function EmployeeManagement() {
       name: "",
       email: "",
       password: "",
-      role: "funcionario",
+      role: "employee",
     },
   });
 
@@ -69,7 +68,6 @@ export default function EmployeeManagement() {
     },
   });
 
-  // Load employees on component mount
   useEffect(() => {
     fetchEmployees();
   }, []);
@@ -92,7 +90,6 @@ export default function EmployeeManagement() {
 
       console.log("Fetched employees:", data);
 
-      // Convert database format to our Employee interface
       const fetchedEmployees = data.map((emp) => ({
         id: emp.id,
         name: emp.name,
@@ -117,14 +114,13 @@ export default function EmployeeManagement() {
     try {
       console.log("Adding employee:", data);
       
-      // First, create a user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: {
             name: data.name,
-            role: data.role === "administrador" ? "doctor" : "secretary"
+            role: data.role === "admin" ? "admin" : "employee"
           }
         }
       });
@@ -142,12 +138,11 @@ export default function EmployeeManagement() {
         throw new Error("No user returned from Auth signUp");
       }
 
-      // Then insert the employee record
       const { data: newEmployee, error: insertError } = await supabase
         .from("employees")
         .insert([
           {
-            id: authData.user.id, // Use the same ID as the auth user
+            id: authData.user.id,
             name: data.name,
             email: data.email,
             role: data.role,
@@ -164,7 +159,6 @@ export default function EmployeeManagement() {
 
       console.log("New employee added:", newEmployee);
 
-      // Format for our UI
       const formattedEmployee: Employee = {
         id: newEmployee.id,
         name: newEmployee.name,
@@ -204,7 +198,6 @@ export default function EmployeeManagement() {
     try {
       console.log("Updating employee:", selectedEmployee.id, data);
       
-      // Update employee in Supabase
       const { error } = await supabase
         .from("employees")
         .update({
@@ -220,7 +213,6 @@ export default function EmployeeManagement() {
         throw error;
       }
 
-      // Update local state
       setEmployees(employees.map(emp => 
         emp.id === selectedEmployee.id 
           ? { ...emp, name: data.name, email: data.email, role: data.role }
@@ -249,7 +241,6 @@ export default function EmployeeManagement() {
       try {
         console.log("Removing employee:", selectedEmployee.id);
         
-        // Delete from Supabase
         const { error } = await supabase
           .from("employees")
           .delete()
@@ -261,7 +252,6 @@ export default function EmployeeManagement() {
           throw error;
         }
 
-        // Update local state
         setEmployees(employees.filter(emp => emp.id !== selectedEmployee.id));
         toast.success(`${selectedEmployee.name} removido(a) com sucesso`);
         setIsRemoveDialogOpen(false);
@@ -274,7 +264,6 @@ export default function EmployeeManagement() {
     }
   };
 
-  // Check if user is logged in
   const checkAuth = () => {
     const user = localStorage.getItem("user");
     if (!user) {
@@ -284,7 +273,6 @@ export default function EmployeeManagement() {
     return true;
   };
 
-  // Call checkAuth when component mounts
   useEffect(() => {
     checkAuth();
   }, []);
@@ -367,7 +355,6 @@ export default function EmployeeManagement() {
         </Card>
       </div>
 
-      {/* Add Employee Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -434,8 +421,8 @@ export default function EmployeeManagement() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="administrador">Administrador</SelectItem>
-                        <SelectItem value="funcionario">Funcionário</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                        <SelectItem value="employee">Funcionário</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -456,7 +443,6 @@ export default function EmployeeManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Employee Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -510,8 +496,8 @@ export default function EmployeeManagement() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="administrador">Administrador</SelectItem>
-                        <SelectItem value="funcionario">Funcionário</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                        <SelectItem value="employee">Funcionário</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -532,7 +518,6 @@ export default function EmployeeManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm Remove Dialog */}
       <Dialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
         <DialogContent>
           <DialogHeader>

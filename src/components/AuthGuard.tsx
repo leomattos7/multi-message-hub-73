@@ -7,13 +7,13 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "doctor" | "secretary";
+  role: "admin" | "employee" | "owner";
   phone?: string;
 }
 
 interface AuthGuardProps {
   children: ReactNode;
-  requiredRole?: "doctor" | "secretary" | undefined;
+  requiredRole?: "admin" | "employee" | undefined;
 }
 
 export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
@@ -46,7 +46,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
           id: session.user.id,
           name: session.user.user_metadata?.name || "Usuário",
           email: session.user.email || "",
-          role: session.user.user_metadata?.role || "doctor",
+          role: session.user.user_metadata?.role || "admin",
           phone: session.user.user_metadata?.phone
         };
         
@@ -94,7 +94,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
+            role: session.user.user_metadata?.role || "admin",
             phone: session.user.user_metadata?.phone
           };
           
@@ -134,7 +134,7 @@ export function useAuth(): { user: User | null } {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
+            role: session.user.user_metadata?.role || "admin",
             phone: session.user.user_metadata?.phone
           };
           
@@ -168,7 +168,7 @@ export function useAuth(): { user: User | null } {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
+            role: session.user.user_metadata?.role || "admin",
             phone: session.user.user_metadata?.phone
           };
           

@@ -55,11 +55,17 @@ export default function SignIn() {
         return;
       }
       
-      // Get the user's metadata/role from the auth data
+      // Get the user's metadata/role from the auth data - ensure it uses the standardized roles
+      let userRole = authData.user.user_metadata?.role;
+      
+      // Convert legacy roles if needed
+      if (userRole === "doctor") userRole = "admin";
+      if (userRole === "secretary") userRole = "employee";
+      
       const userData = {
         id: authData.user.id,
         email: authData.user.email || "",
-        role: authData.user.user_metadata?.role || "doctor",
+        role: userRole || "admin",
         name: authData.user.user_metadata?.name || "Usuário"
       };
       

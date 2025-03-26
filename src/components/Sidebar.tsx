@@ -71,7 +71,7 @@ export function Sidebar() {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
+            role: session.user.user_metadata?.role || "admin",
           };
           setUserData(userData);
         }
