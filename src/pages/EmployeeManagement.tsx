@@ -43,7 +43,7 @@ interface Employee {
 
 export default function EmployeeManagement() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -75,25 +75,36 @@ export default function EmployeeManagement() {
 
   // Carregar funcionários ao montar o componente
   useEffect(() => {
-    fetchEmployees();
-  }, []);
+    if (profile) {
+      fetchEmployees();
+    }
+  }, [profile]);
 
   const fetchEmployees = async () => {
     setIsLoading(true);
     try {
       if (!profile?.organization_id) {
-        throw new Error("ID da organização não encontrado");
+        console.log("Perfil do usuário:", profile);
+        console.log("ID do usuário:", user?.id);
+        toast.error("ID da organização não encontrado. Verifique se seu perfil está corretamente configurado.");
+        setIsLoading(false);
+        return;
       }
+
+      console.log("Buscando funcionários da organização:", profile.organization_id);
 
       // Buscar perfis da organização do usuário logado
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
+        .eq("organization_id", profile.organization_id)
         .order("name");
 
       if (error) {
         throw error;
       }
+
+      console.log("Funcionários encontrados:", data);
 
       // Converter o formato do banco para nossa interface
       const fetchedEmployees = data.map((emp) => ({
@@ -116,7 +127,8 @@ export default function EmployeeManagement() {
   const onAddEmployee = async (data: EmployeeFormValues) => {
     try {
       if (!profile?.organization_id) {
-        throw new Error("ID da organização não encontrado");
+        toast.error("ID da organização não encontrado");
+        return;
       }
 
       setIsLoading(true);
