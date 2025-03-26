@@ -46,15 +46,15 @@ export default function SignUp() {
     setAuthError(null);
     
     try {
-      // Criar conta de usuário com Supabase
-      const { error } = await supabase.auth.signUp({
+      // Create user account with Supabase
+      const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: {
             name: data.name,
             phone: data.phone || "",
-            role: "doctor" // Papel padrão para novos cadastros
+            role: "doctor" // Default role for new registrations
           }
         }
       });
@@ -64,11 +64,13 @@ export default function SignUp() {
       }
       
       toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar o cadastro.");
-      navigate("/");
+      
+      // After successful signup, redirect to login page instead of auto-signing in
+      navigate("/login");
     } catch (error: any) {
       console.error("Registration error:", error);
       
-      // Tratar mensagens de erro comuns
+      // Handle common error messages
       const errorMsg = error.message;
       if (errorMsg.includes("already registered")) {
         setAuthError("Este e-mail já está registrado. Tente fazer login.");

@@ -1,6 +1,6 @@
 
 import { ReactNode, useEffect, useState, createContext, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 
@@ -42,14 +42,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Configurar o listener de autenticação
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Carregar perfil do usuário
+          // Load user profile
           const { data, error } = await supabase
             .from('profiles')
             .select('*')
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             .maybeSingle();
           
           if (error) {
-            console.error("Erro ao carregar perfil:", error);
+            console.error("Error loading profile:", error);
             return;
           }
           
@@ -72,13 +72,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     );
 
-    // Verificar se há uma sessão ativa ao carregar
+    // Check for active session on load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Carregar perfil do usuário
+        // Load user profile
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .maybeSingle();
         
         if (error) {
-          console.error("Erro ao carregar perfil:", error);
+          console.error("Error loading profile:", error);
           return;
         }
         
@@ -123,15 +123,21 @@ interface AuthGuardProps {
 export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    // Skip redirection if already on login or signup page
+    if (location.pathname === "/login" || location.pathname === "/cadastro") {
+      return;
+    }
+
     if (!isLoading && !user) {
       navigate("/login");
       return;
     }
 
     if (!isLoading && user && requiredRole && profile?.role !== requiredRole) {
-      // Redirecionar baseado no perfil
+      // Redirect based on profile
       if (profile?.role === "staff") {
         navigate("/secretaria");
       } else {
@@ -139,7 +145,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
       }
       return;
     }
-  }, [isLoading, user, profile, requiredRole, navigate]);
+  }, [isLoading, user, profile, requiredRole, navigate, location.pathname]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
