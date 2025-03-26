@@ -103,7 +103,7 @@ function App() {
             } />
             
             <Route path="/funcionarios" element={
-              <AuthGuard requiredRole="doctor">
+              <AuthGuard requiredRole="admin">
                 <div className="flex h-screen w-full overflow-hidden">
                   <Sidebar />
                   <main className="flex-1 w-full overflow-x-hidden overflow-y-auto p-6">

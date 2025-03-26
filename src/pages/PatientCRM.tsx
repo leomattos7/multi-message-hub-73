@@ -13,7 +13,7 @@ import { FilterPatientDialog } from "@/components/patient/crm/FilterPatientDialo
 
 export default function PatientCRM() {
   const { user } = useAuth();
-  const isDoctor = user?.role === "doctor";
+  const isDoctor = user?.role === "admin";
   
   const { 
     patients,
