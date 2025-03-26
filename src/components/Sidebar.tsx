@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 // Default navigation items
 const sidebarItems = [
@@ -59,6 +60,27 @@ export function Sidebar() {
       const user = JSON.parse(userString);
       setUserData(user);
     }
+    
+    // Setup auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          setUserData(null);
+        } else if (session) {
+          const userData = {
+            id: session.user.id,
+            name: session.user.user_metadata?.name || "Usuário",
+            email: session.user.email || "",
+            role: session.user.user_metadata?.role || "doctor",
+          };
+          setUserData(userData);
+        }
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Toggle the sidebar on mobile
@@ -67,15 +89,29 @@ export function Sidebar() {
   };
 
   // Handle logout
-  const handleLogout = () => {
-    // Remove user data from localStorage
-    localStorage.removeItem("user");
-    
-    // Show success message
-    toast.success("Você saiu com sucesso");
-    
-    // Redirect to login page
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error signing out:", error);
+        toast.error("Erro ao sair: " + error.message);
+        return;
+      }
+      
+      // Remove user data from localStorage
+      localStorage.removeItem("user");
+      
+      // Show success message
+      toast.success("Você saiu com sucesso");
+      
+      // Redirect to login page
+      navigate("/login");
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      toast.error("Erro ao sair: " + error.message);
+    }
   };
 
   return (

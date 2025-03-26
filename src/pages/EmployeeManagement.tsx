@@ -9,18 +9,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { UserPlus, Trash2, Mail, UserCircle, Pencil } from "lucide-react";
+import { UserPlus, Trash2, Mail, UserCircle, Pencil, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 
 const employeeFormSchema = z.object({
+  name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
+  email: z.string().email({ message: "E-mail inválido" }),
+  password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
+  role: z.string().min(1, { message: "Cargo é obrigatório" }),
+});
+
+const editEmployeeFormSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
   email: z.string().email({ message: "E-mail inválido" }),
   role: z.string().min(1, { message: "Cargo é obrigatório" }),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
+type EditEmployeeFormValues = z.infer<typeof editEmployeeFormSchema>;
 
 interface Employee {
   id: string;
@@ -39,18 +48,20 @@ export default function EmployeeManagement() {
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: {
       name: "",
       email: "",
-      role: "Funcionário",
+      password: "",
+      role: "funcionario",
     },
   });
 
-  const editForm = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeFormSchema),
+  const editForm = useForm<EditEmployeeFormValues>({
+    resolver: zodResolver(editEmployeeFormSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -65,6 +76,7 @@ export default function EmployeeManagement() {
 
   const fetchEmployees = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       console.log("Fetching employees...");
       const { data, error } = await supabase
@@ -74,6 +86,7 @@ export default function EmployeeManagement() {
 
       if (error) {
         console.error("Error fetching employees:", error);
+        setError("Erro ao carregar funcionários: " + error.message);
         throw error;
       }
 
@@ -92,21 +105,49 @@ export default function EmployeeManagement() {
       setEmployees(fetchedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      toast.error("Erro ao carregar funcionários");
+      setError("Erro ao carregar funcionários");
     } finally {
       setIsLoading(false);
     }
   };
 
   const onAddEmployee = async (data: EmployeeFormValues) => {
+    setIsLoading(true);
+    setError(null);
     try {
       console.log("Adding employee:", data);
       
-      // Insert new employee to Supabase
-      const { data: newEmployee, error } = await supabase
+      // First, create a user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            role: data.role === "administrador" ? "doctor" : "secretary"
+          }
+        }
+      });
+
+      if (authError) {
+        console.error("Error creating Supabase auth user:", authError);
+        setError("Erro ao criar usuário autenticado: " + authError.message);
+        throw authError;
+      }
+
+      console.log("Created auth user:", authData);
+      
+      if (!authData.user) {
+        setError("Erro ao criar usuário: Nenhum usuário retornado");
+        throw new Error("No user returned from Auth signUp");
+      }
+
+      // Then insert the employee record
+      const { data: newEmployee, error: insertError } = await supabase
         .from("employees")
         .insert([
           {
+            id: authData.user.id, // Use the same ID as the auth user
             name: data.name,
             email: data.email,
             role: data.role,
@@ -115,9 +156,10 @@ export default function EmployeeManagement() {
         .select()
         .single();
 
-      if (error) {
-        console.error("Error adding employee:", error);
-        throw error;
+      if (insertError) {
+        console.error("Error adding employee to database:", insertError);
+        setError("Erro ao adicionar funcionário ao banco de dados: " + insertError.message);
+        throw insertError;
       }
 
       console.log("New employee added:", newEmployee);
@@ -136,9 +178,11 @@ export default function EmployeeManagement() {
       toast.success(`${data.name} adicionado(a) como ${data.role}`);
       setIsAddDialogOpen(false);
       form.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding employee:", error);
-      toast.error("Erro ao adicionar funcionário");
+      toast.error(error.message || "Erro ao adicionar funcionário");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -152,9 +196,11 @@ export default function EmployeeManagement() {
     setIsEditDialogOpen(true);
   };
 
-  const onEditEmployee = async (data: EmployeeFormValues) => {
+  const onEditEmployee = async (data: EditEmployeeFormValues) => {
     if (!selectedEmployee) return;
 
+    setIsLoading(true);
+    setError(null);
     try {
       console.log("Updating employee:", selectedEmployee.id, data);
       
@@ -170,6 +216,7 @@ export default function EmployeeManagement() {
 
       if (error) {
         console.error("Error updating employee:", error);
+        setError("Erro ao atualizar funcionário: " + error.message);
         throw error;
       }
 
@@ -182,9 +229,11 @@ export default function EmployeeManagement() {
 
       toast.success(`${data.name} atualizado(a) com sucesso`);
       setIsEditDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating employee:", error);
-      toast.error("Erro ao atualizar funcionário");
+      toast.error(error.message || "Erro ao atualizar funcionário");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -195,6 +244,8 @@ export default function EmployeeManagement() {
 
   const removeEmployee = async () => {
     if (selectedEmployee) {
+      setIsLoading(true);
+      setError(null);
       try {
         console.log("Removing employee:", selectedEmployee.id);
         
@@ -206,6 +257,7 @@ export default function EmployeeManagement() {
 
         if (error) {
           console.error("Error removing employee:", error);
+          setError("Erro ao remover funcionário: " + error.message);
           throw error;
         }
 
@@ -213,9 +265,11 @@ export default function EmployeeManagement() {
         setEmployees(employees.filter(emp => emp.id !== selectedEmployee.id));
         toast.success(`${selectedEmployee.name} removido(a) com sucesso`);
         setIsRemoveDialogOpen(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error removing employee:", error);
-        toast.error("Erro ao remover funcionário");
+        toast.error(error.message || "Erro ao remover funcionário");
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -231,9 +285,9 @@ export default function EmployeeManagement() {
   };
 
   // Call checkAuth when component mounts
-  useState(() => {
+  useEffect(() => {
     checkAuth();
-  });
+  }, []);
 
   return (
     <div className="w-full p-6">
@@ -245,6 +299,13 @@ export default function EmployeeManagement() {
             Adicionar Funcionário
           </Button>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <Card>
           <CardHeader>
@@ -312,7 +373,7 @@ export default function EmployeeManagement() {
           <DialogHeader>
             <DialogTitle>Adicionar Funcionário</DialogTitle>
             <DialogDescription>
-              Adicione um novo funcionário ao sistema.
+              Adicione um novo funcionário ao sistema. Isso criará uma conta de usuário.
             </DialogDescription>
           </DialogHeader>
           
@@ -346,6 +407,19 @@ export default function EmployeeManagement() {
               />
               <FormField
                 control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="******" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
@@ -360,8 +434,8 @@ export default function EmployeeManagement() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Administrador">Administrador</SelectItem>
-                        <SelectItem value="Funcionário">Funcionário</SelectItem>
+                        <SelectItem value="administrador">Administrador</SelectItem>
+                        <SelectItem value="funcionario">Funcionário</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -373,7 +447,9 @@ export default function EmployeeManagement() {
                 <DialogClose asChild>
                   <Button variant="outline" type="button">Cancelar</Button>
                 </DialogClose>
-                <Button type="submit">Adicionar</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Adicionando..." : "Adicionar"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -434,8 +510,8 @@ export default function EmployeeManagement() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Administrador">Administrador</SelectItem>
-                        <SelectItem value="Funcionário">Funcionário</SelectItem>
+                        <SelectItem value="administrador">Administrador</SelectItem>
+                        <SelectItem value="funcionario">Funcionário</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -447,7 +523,9 @@ export default function EmployeeManagement() {
                 <DialogClose asChild>
                   <Button variant="outline" type="button">Cancelar</Button>
                 </DialogClose>
-                <Button type="submit">Salvar Alterações</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Salvando..." : "Salvar Alterações"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -471,8 +549,9 @@ export default function EmployeeManagement() {
             <Button
               variant="destructive"
               onClick={removeEmployee}
+              disabled={isLoading}
             >
-              Remover
+              {isLoading ? "Removendo..." : "Remover"}
             </Button>
           </DialogFooter>
         </DialogContent>

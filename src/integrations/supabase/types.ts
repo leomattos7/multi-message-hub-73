@@ -98,6 +98,30 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_transcripts: {
+        Row: {
+          created_at: string | null
+          id: string
+          phone: string
+          transcript: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          phone: string
+          transcript: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          phone?: string
+          transcript?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       consultation_types: {
         Row: {
           created_at: string
@@ -483,6 +507,27 @@ export type Database = {
           },
         ]
       }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patient_records: {
         Row: {
           content: string
@@ -578,6 +623,44 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          organization_id: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          name: string
+          organization_id?: string | null
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          organization_id?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -597,6 +680,10 @@ export type Database = {
           p_theme: string
         }
         Returns: undefined
+      }
+      get_user_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       is_employee_of: {
         Args: {

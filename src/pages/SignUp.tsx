@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { LucideStethoscope } from "lucide-react";
+import { LucideStethoscope, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
   phone: z.string().optional(),
-  email: z.string().email({ message: "E-mail inválido" }).optional().or(z.literal("")),
+  email: z.string().email({ message: "E-mail inválido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string().min(6, { message: "Confirme sua senha" }),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -27,6 +29,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function SignUp() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -41,30 +44,57 @@ export default function SignUp() {
 
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
+    setError(null);
     
     try {
-      // Create a new user account without example data
-      const user = {
-        id: "user-" + Math.random().toString(36).substr(2, 9),
-        email: data.email || "",
-        role: "doctor",
-        name: data.name,
-        phone: data.phone || "",
-      };
+      // Create user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            phone: data.phone || "",
+            role: "doctor"
+          }
+        }
+      });
       
-      // Store user in localStorage
-      localStorage.setItem("user", JSON.stringify(user));
+      if (authError) {
+        console.error("Registration error:", authError);
+        setError("Erro ao criar conta: " + authError.message);
+        return;
+      }
       
-      // Initialize empty collections
-      localStorage.setItem("patients", JSON.stringify([]));
-      localStorage.setItem("appointments", JSON.stringify([]));
-      localStorage.setItem("conversations", JSON.stringify([]));
+      if (!authData.user) {
+        setError("Erro ao criar conta: Nenhum usuário retornado");
+        return;
+      }
+      
+      // Create employee record
+      const { error: empError } = await supabase
+        .from("employees")
+        .insert([
+          {
+            id: authData.user.id,
+            name: data.name,
+            email: data.email,
+            role: "administrador",
+            status: "active"
+          }
+        ]);
+        
+      if (empError) {
+        console.error("Error creating employee record:", empError);
+        // Continue anyway since the auth user was created
+      }
       
       toast.success("Conta criada com sucesso!");
-      navigate("/");
-    } catch (error) {
+      // Navigate to login page after signup
+      navigate("/login");
+    } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error("Erro ao criar conta. Tente novamente.");
+      setError("Erro ao criar conta: " + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +113,13 @@ export default function SignUp() {
               Crie sua conta e gerencie seus pacientes
             </p>
           </div>
+          
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           
           <Card>
             <CardHeader>

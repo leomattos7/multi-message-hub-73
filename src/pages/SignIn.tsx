@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { LucideStethoscope } from "lucide-react";
+import { LucideStethoscope, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   email: z.string().email({ message: "E-mail inválido" }),
@@ -21,6 +23,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function SignIn() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -32,27 +35,55 @@ export default function SignIn() {
 
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
+    setError(null);
     
     try {
-      // Create a new empty user account (no mock data)
-      const user = {
-        id: "user-" + Math.random().toString(36).substr(2, 9),
+      // Use Supabase authentication
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
-        role: "doctor",
-        name: "Dr. " + data.email.split('@')[0]
+        password: data.password,
+      });
+      
+      if (authError) {
+        console.error("Login error:", authError);
+        setError("Erro ao fazer login: " + authError.message);
+        return;
+      }
+      
+      if (!authData.user) {
+        setError("Usuário não encontrado");
+        return;
+      }
+      
+      // Get the user's metadata/role from the auth data
+      const userData = {
+        id: authData.user.id,
+        email: authData.user.email || "",
+        role: authData.user.user_metadata?.role || "doctor",
+        name: authData.user.user_metadata?.name || "Usuário"
       };
       
-      // Store user in localStorage - starting with empty collections
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("patients", JSON.stringify([]));
-      localStorage.setItem("appointments", JSON.stringify([]));
-      localStorage.setItem("conversations", JSON.stringify([]));
+      // Store user in localStorage
+      localStorage.setItem("user", JSON.stringify(userData));
+      
+      // Initialize collections if they don't exist
+      if (!localStorage.getItem("patients")) {
+        localStorage.setItem("patients", JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem("appointments")) {
+        localStorage.setItem("appointments", JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem("conversations")) {
+        localStorage.setItem("conversations", JSON.stringify([]));
+      }
       
       toast.success("Login realizado com sucesso!");
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      toast.error("Erro ao fazer login. Verifique suas credenciais.");
+      setError("Erro ao fazer login: " + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -71,6 +102,13 @@ export default function SignIn() {
               Faça login para acessar sua conta
             </p>
           </div>
+          
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           
           <Card>
             <CardHeader>
