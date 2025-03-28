@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -54,7 +55,7 @@ export default function SignUp() {
           data: {
             name: data.name,
             phone: data.phone || "",
-            role: "admin" // Using the standardized role
+            role: "doctor" // Using the standardized role from the database
           }
         }
       });
@@ -77,7 +78,7 @@ export default function SignUp() {
           {
             id: authData.user.id,
             full_name: data.name,
-            role: "admin", // Using the standardized role in the profiles table
+            role: "doctor", // Using the standardized role in the profiles table
             phone: data.phone || null
           }
         ]);
@@ -94,7 +95,7 @@ export default function SignUp() {
           id: authData.user.id,
           name: authData.user.user_metadata?.name || "Usuário",
           email: authData.user.email || "",
-          role: authData.user.user_metadata?.role || "admin",
+          role: authData.user.user_metadata?.role || "doctor",
           phone: authData.user.user_metadata?.phone
         };
         

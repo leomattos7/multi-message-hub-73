@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -54,17 +55,13 @@ export default function SignIn() {
         return;
       }
       
-      // Get the user's metadata/role from the auth data - ensure it uses the standardized roles
-      let userRole = authData.user.user_metadata?.role;
-      
-      // Convert legacy roles if needed
-      if (userRole === "doctor") userRole = "admin";
-      if (userRole === "secretary") userRole = "employee";
+      // Get the user's role from metadata
+      const userRole = authData.user.user_metadata?.role || "doctor";
       
       const userData = {
         id: authData.user.id,
         email: authData.user.email || "",
-        role: userRole || "admin",
+        role: userRole,
         name: authData.user.user_metadata?.name || "Usuário"
       };
       

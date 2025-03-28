@@ -5,6 +5,7 @@ import { Appointment } from "@/hooks/use-appointments";
 import { appointmentService } from "@/integrations/supabase/services/appointmentService";
 import { useQueryClient } from "@tanstack/react-query";
 import { patientService } from "@/integrations/supabase/services/patientService"; 
+import { getCurrentUserId } from "@/integrations/supabase/client";
 
 interface AppointmentFormData {
   selectedDate: Date;
@@ -90,6 +91,7 @@ export const useAppointmentForm = ({
       }
 
       const date = formState.selectedDate.toISOString().split('T')[0];
+      const doctorId = isEditMode ? appointment.doctor_id : await getCurrentUserId() || "";
 
       if (isEditMode && appointment) {
         // Update existing appointment
@@ -99,7 +101,7 @@ export const useAppointmentForm = ({
           start_time: formState.startTime, // Add start_time field
           end_time: formState.endTime,
           patient_id: patientId,
-          doctor_id: appointment.doctor_id,
+          doctor_id: doctorId,
           status: formState.status,
           payment_method: formState.paymentMethod,
           notes: formState.notes,
@@ -115,7 +117,7 @@ export const useAppointmentForm = ({
           start_time: formState.startTime, // Add start_time field
           end_time: formState.endTime,
           patient_id: patientId,
-          doctor_id: "current-doctor-id", // This should come from authentication context
+          doctor_id: doctorId,
           status: formState.status,
           payment_method: formState.paymentMethod,
           notes: formState.notes,

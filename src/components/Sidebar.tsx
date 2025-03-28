@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -44,6 +43,7 @@ const sidebarItems = [
     name: "Funcionários",
     href: "/funcionarios",
     icon: <Briefcase />,
+    roles: ["doctor", "owner"],
   },
 ];
 
@@ -66,7 +66,7 @@ export function Sidebar() {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "admin",
+            role: session.user.user_metadata?.role || "doctor",
             phone: session.user.user_metadata?.phone
           };
           setUserData(userData);
@@ -99,7 +99,7 @@ export function Sidebar() {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "admin",
+            role: session.user.user_metadata?.role || "doctor",
             phone: session.user.user_metadata?.phone
           };
           setUserData(userData);
@@ -143,6 +143,15 @@ export function Sidebar() {
     }
   };
 
+  // Filter navigation items based on user role
+  const filteredNavItems = sidebarItems.filter(item => {
+    // If there's no roles property, show to all users
+    if (!item.roles) return true;
+    
+    // Otherwise, check if user role is included
+    return userData && item.roles.includes(userData.role);
+  });
+
   return (
     <>
       {isMobile && (
@@ -176,7 +185,7 @@ export function Sidebar() {
 
           {/* Navigation Items */}
           <ul className="space-y-2 font-medium flex-1">
-            {sidebarItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.href}>
                 <Link
                   to={item.href}
