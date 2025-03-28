@@ -125,7 +125,7 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
           </div>
           
           <div className="text-[10px] opacity-80 truncate">
-            {appointment.type}
+            {appointment.consultation_type_id || ""}
           </div>
         </div>
       </div>

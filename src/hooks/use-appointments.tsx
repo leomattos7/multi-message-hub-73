@@ -20,6 +20,7 @@ export interface Appointment {
     email?: string;
     phone?: string;
   };
+  type?: string; // Add the type property
 }
 
 export function useAppointments(date?: Date) {

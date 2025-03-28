@@ -96,8 +96,10 @@ export const useAppointmentForm = ({
         await appointmentService.updateAppointment(appointment.id, {
           date,
           time: formState.startTime,
+          start_time: formState.startTime, // Add start_time field
           end_time: formState.endTime,
           patient_id: patientId,
+          doctor_id: appointment.doctor_id,
           status: formState.status,
           payment_method: formState.paymentMethod,
           notes: formState.notes,
@@ -110,6 +112,7 @@ export const useAppointmentForm = ({
         await appointmentService.createAppointment({
           date,
           time: formState.startTime,
+          start_time: formState.startTime, // Add start_time field
           end_time: formState.endTime,
           patient_id: patientId,
           doctor_id: "current-doctor-id", // This should come from authentication context

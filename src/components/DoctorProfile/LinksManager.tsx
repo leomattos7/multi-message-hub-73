@@ -121,6 +121,7 @@ export const LinksManager: React.FC<LinksManagerProps> = ({ doctorId }) => {
         url,
         icon: formData.icon,
         is_active: formData.is_active,
+        display_order: links.length + 1, // Add display_order property
       });
 
       toast({
