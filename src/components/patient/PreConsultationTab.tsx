@@ -26,7 +26,8 @@ export const PreConsultationTab: React.FC = () => {
     handleSave,
     handleCancel,
     handleAddNewParameter,
-    handleSaveNewParameter
+    handleSaveNewParameter,
+    setEditingGroupName
   } = usePatientGroups();
 
   return (

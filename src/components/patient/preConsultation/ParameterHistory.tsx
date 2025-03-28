@@ -30,6 +30,7 @@ export const ParameterHistoryDisplay: React.FC<ParameterHistoryProps> = ({
 
   // Get historic data for a parameter and sort by date (newest first)
   const getParameterHistory = (id: string) => {
+    // Direct import from mock data without any DB calls
     const history = historicalData[id as keyof typeof historicalData] || [];
     
     // Sort history by date, newest first

@@ -1,19 +1,17 @@
 
-import { useState } from "react";
-import { ParameterGroup, Parameter, NewParameter } from "./types";
-import { initialGroups } from "./mockData";
+import { useState, useEffect } from "react";
+import { NewParameter, ParameterGroup } from "./types";
+import { initialGroups, historicalData } from "./mockData";
 
-export function usePatientGroups() {
-  const [groups, setGroups] = useState<ParameterGroup[]>(initialGroups);
+export const usePatientGroups = () => {
+  const [groups, setGroups] = useState<ParameterGroup[]>([]);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
-  const [editingGroupName, setEditingGroupName] = useState("");
-  const [newGroupName, setNewGroupName] = useState("");
-  
+  const [editingGroupName, setEditingGroupName] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState("");
-  const [editingUnit, setEditingUnit] = useState("");
-  const [editingField, setEditingField] = useState("");
-  
+  const [editingField, setEditingField] = useState<string>("");
+  const [editingValue, setEditingValue] = useState<string>("");
+  const [editingUnit, setEditingUnit] = useState<string>("");
+  const [newGroupName, setNewGroupName] = useState<string>("");
   const [addingToGroupId, setAddingToGroupId] = useState<string | null>(null);
   const [newParameter, setNewParameter] = useState<NewParameter>({
     field: "",
@@ -22,87 +20,106 @@ export function usePatientGroups() {
     collectedAt: new Date().toISOString()
   });
 
-  // Group management functions
+  // Load initial groups from mock data
+  useEffect(() => {
+    setGroups(initialGroups);
+  }, []);
+
+  // Edit group name
   const handleEditGroupName = (id: string, name: string) => {
     setEditingGroupId(id);
     setEditingGroupName(name);
   };
 
+  // Save edited group name
   const handleSaveGroupName = (id: string) => {
-    setGroups(groups.map(group => 
-      group.id === id ? { ...group, name: editingGroupName } : group
-    ));
+    if (editingGroupName.trim() === "") return;
+
+    setGroups(prev => prev.map(group => {
+      if (group.id === id) {
+        return { ...group, name: editingGroupName };
+      }
+      return group;
+    }));
+
     setEditingGroupId(null);
     setEditingGroupName("");
   };
 
+  // Cancel editing group name
   const handleCancelEditGroup = () => {
     setEditingGroupId(null);
     setEditingGroupName("");
   };
 
+  // Add new group
   const handleAddGroup = () => {
-    if (newGroupName.trim() !== "") {
-      const newId = (Number(groups[groups.length - 1]?.id || "0") + 1).toString();
-      setGroups([
-        ...groups,
-        {
-          id: newId,
-          name: newGroupName,
-          isDefault: false,
-          parameters: []
-        }
-      ]);
-      setNewGroupName("");
-      return true;
-    }
-    return false;
+    if (newGroupName.trim() === "") return false;
+
+    const newGroup: ParameterGroup = {
+      id: `${Date.now()}`,
+      name: newGroupName,
+      isDefault: false,
+      parameters: []
+    };
+
+    setGroups(prev => [...prev, newGroup]);
+    setNewGroupName("");
+    return true;
   };
 
-  // Parameter management functions
+  // Edit parameter
   const handleEdit = (groupId: string, id: string, field: string, value: string, unit: string) => {
-    const group = groups.find(g => g.id === groupId);
-    if (!group) return;
-    
     setEditingId(id);
     setEditingField(field);
     setEditingValue(value);
     setEditingUnit(unit);
   };
 
+  // Save edited parameter
   const handleSave = (groupId: string, id: string) => {
-    setGroups(groups.map(group => {
+    if (editingField.trim() === "" || editingValue.trim() === "") return;
+
+    setGroups(prev => prev.map(group => {
       if (group.id === groupId) {
-        return {
-          ...group,
-          parameters: group.parameters.map(item => 
-            item.id === id ? { 
-              ...item, 
+        const updatedParameters = group.parameters.map(param => {
+          if (param.id === id) {
+            return {
+              ...param,
               field: editingField,
-              value: editingValue, 
-              unit: editingUnit 
-            } : item
-          )
-        };
+              value: editingValue,
+              unit: editingUnit
+            };
+          }
+          return param;
+        });
+        return { ...group, parameters: updatedParameters };
       }
       return group;
     }));
+
     setEditingId(null);
+    setEditingField("");
+    setEditingValue("");
+    setEditingUnit("");
   };
 
+  // Cancel editing parameter
   const handleCancel = () => {
     setEditingId(null);
-    if (addingToGroupId) {
-      setAddingToGroupId(null);
-      setNewParameter({
-        field: "",
-        value: "",
-        unit: "",
-        collectedAt: new Date().toISOString()
-      });
-    }
+    setEditingField("");
+    setEditingValue("");
+    setEditingUnit("");
+    setAddingToGroupId(null);
+    setNewParameter({
+      field: "",
+      value: "",
+      unit: "",
+      collectedAt: new Date().toISOString()
+    });
   };
 
+  // Start adding new parameter
   const handleAddNewParameter = (groupId: string) => {
     setAddingToGroupId(groupId);
     setNewParameter({
@@ -113,62 +130,45 @@ export function usePatientGroups() {
     });
   };
 
+  // Save new parameter
   const handleSaveNewParameter = (groupId: string) => {
-    if (newParameter.field.trim() !== "") {
-      // Find largest ID across all parameters to ensure uniqueness
-      let maxId = 0;
-      groups.forEach(group => {
-        group.parameters.forEach(param => {
-          const paramId = parseInt(param.id);
-          if (!isNaN(paramId) && paramId > maxId) {
-            maxId = paramId;
-          }
-        });
-      });
+    if (newParameter.field.trim() === "" || newParameter.value.trim() === "") return;
 
-      const newId = (maxId + 1).toString();
-      
-      setGroups(groups.map(group => {
-        if (group.id === groupId) {
-          return {
-            ...group,
-            parameters: [
-              {
-                id: newId,
-                field: newParameter.field,
-                value: newParameter.value,
-                unit: newParameter.unit,
-                collectedAt: new Date().toISOString()
-              },
-              ...group.parameters
-            ]
-          };
-        }
-        return group;
-      }));
-      
-      setAddingToGroupId(null);
-      setNewParameter({
-        field: "",
-        value: "",
-        unit: "",
-        collectedAt: new Date().toISOString()
-      });
-      return true;
-    }
-    return false;
+    const newParamWithId = {
+      id: `${Date.now()}`,
+      ...newParameter
+    };
+
+    setGroups(prev => prev.map(group => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          parameters: [...group.parameters, newParamWithId]
+        };
+      }
+      return group;
+    }));
+
+    setAddingToGroupId(null);
+    setNewParameter({
+      field: "",
+      value: "",
+      unit: "",
+      collectedAt: new Date().toISOString()
+    });
   };
-  
+
   return {
     groups,
     editingGroupId,
     editingGroupName,
+    setEditingGroupName,
     newGroupName,
     setNewGroupName,
     editingId,
+    editingField,
     editingValue,
     editingUnit,
-    editingField,
     addingToGroupId,
     newParameter,
     setNewParameter,
@@ -182,4 +182,4 @@ export function usePatientGroups() {
     handleAddNewParameter,
     handleSaveNewParameter
   };
-}
+};
