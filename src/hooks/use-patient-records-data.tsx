@@ -1,13 +1,11 @@
 
-import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { MedicalRecord } from "@/types/patient";
-import { mockMedicalRecords, getMockData } from "@/utils/mock-data-provider";
 
 export const usePatientRecordsData = (patientId?: string, recordType: string = "all") => {
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  
   const { 
+    data: records, 
     isLoading: recordsLoading, 
     refetch: refetchRecords 
   } = useQuery({
@@ -15,59 +13,62 @@ export const usePatientRecordsData = (patientId?: string, recordType: string = "
     queryFn: async () => {
       if (!patientId) throw new Error("Patient ID is required");
       
-      // Filter records based on patient ID and record type
-      let filteredRecords = mockMedicalRecords.filter(
-        record => record.patient_id === patientId
-      );
-      
+      let query = supabase
+        .from("patient_records")
+        .select("*")
+        .eq("patient_id", patientId);
+
       if (recordType !== "all") {
-        filteredRecords = filteredRecords.filter(
-          record => record.record_type === recordType
-        );
+        query = query.eq("record_type", recordType);
       }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
       
-      // Sort by creation date, newest first
-      filteredRecords.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      if (error) throw error;
       
-      setRecords(filteredRecords as MedicalRecord[]);
-      return filteredRecords as MedicalRecord[];
+      return data as MedicalRecord[];
     },
     enabled: !!patientId,
   });
 
-  const createRecord = useCallback(async (content: string, type: string) => {
+  const createRecord = async (content: string, type: string) => {
     if (!patientId || !content.trim()) {
       throw new Error("Patient ID and content are required");
     }
 
     const currentDate = new Date().toISOString();
     
-    const newRecord = {
-      id: `record-${Date.now()}`,
-      patient_id: patientId,
-      record_date: currentDate,
-      record_type: type,
-      content: content,
-      created_at: currentDate,
-      updated_at: currentDate
-    };
+    const { error } = await supabase
+      .from("patient_records")
+      .insert({
+        patient_id: patientId,
+        record_date: currentDate,
+        record_type: type,
+        content: content,
+      });
+
+    if (error) throw error;
     
-    setRecords(prev => [newRecord as MedicalRecord, ...prev]);
     await refetchRecords();
     return true;
-  }, [patientId, refetchRecords]);
+  };
 
-  const deleteRecord = useCallback(async (recordId: string) => {
+  const deleteRecord = async (recordId: string) => {
     if (!patientId || !recordId) {
       throw new Error("Patient ID and record ID are required");
     }
     
-    setRecords(prev => prev.filter(record => record.id !== recordId));
+    const { error } = await supabase
+      .from("patient_records")
+      .delete()
+      .eq("id", recordId)
+      .eq("patient_id", patientId);
+
+    if (error) throw error;
+    
     await refetchRecords();
     return true;
-  }, [patientId, refetchRecords]);
+  };
 
   return {
     records,

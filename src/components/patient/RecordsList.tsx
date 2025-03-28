@@ -48,9 +48,9 @@ export const RecordsList = ({
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="w-full flex overflow-x-auto mb-6">
-        <TabsTrigger value="preconsult" className="flex-1">Histórico do paciente</TabsTrigger>
+        <TabsTrigger value="preconsult" className="flex-1">Pré Consulta</TabsTrigger>
         <TabsTrigger value="today" className="flex-1">Consulta de hoje</TabsTrigger>
-        <TabsTrigger value="history" className="flex-1">Consultas anteriores</TabsTrigger>
+        <TabsTrigger value="history" className="flex-1">Histórico</TabsTrigger>
         <TabsTrigger value="tasks" className="flex-1">Tarefas</TabsTrigger>
       </TabsList>
       
