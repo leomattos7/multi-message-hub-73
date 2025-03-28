@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -15,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
-import { User as UserType } from "./AuthGuard";
 
 // Default navigation items
 const sidebarItems = [
@@ -43,7 +43,6 @@ const sidebarItems = [
     name: "Funcionários",
     href: "/funcionarios",
     icon: <Briefcase />,
-    roles: ["doctor", "owner"],
   },
 ];
 
@@ -52,42 +51,15 @@ export function Sidebar() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(!isMobile);
-  const [userData, setUserData] = useState<UserType | null>(null);
+  const [userData, setUserData] = useState<any>(null);
 
-  // Load user data from localStorage and set up auth listener
+  // Load user data from localStorage
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        // Check for current session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          const userData: UserType = {
-            id: session.user.id,
-            name: session.user.user_metadata?.name || "Usuário",
-            email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
-            phone: session.user.user_metadata?.phone
-          };
-          setUserData(userData);
-        } else {
-          // Fallback to localStorage
-          const userString = localStorage.getItem("user");
-          if (userString) {
-            try {
-              const user = JSON.parse(userString);
-              setUserData(user);
-            } catch (error) {
-              console.error("Error parsing user data:", error);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error checking user:", error);
-      }
-    };
-    
-    checkUser();
+    const userString = localStorage.getItem("user");
+    if (userString) {
+      const user = JSON.parse(userString);
+      setUserData(user);
+    }
     
     // Setup auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -99,8 +71,7 @@ export function Sidebar() {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
-            phone: session.user.user_metadata?.phone
+            role: session.user.user_metadata?.role || "admin",
           };
           setUserData(userData);
         }
@@ -143,15 +114,6 @@ export function Sidebar() {
     }
   };
 
-  // Filter navigation items based on user role
-  const filteredNavItems = sidebarItems.filter(item => {
-    // If there's no roles property, show to all users
-    if (!item.roles) return true;
-    
-    // Otherwise, check if user role is included
-    return userData && item.roles.includes(userData.role);
-  });
-
   return (
     <>
       {isMobile && (
@@ -185,7 +147,7 @@ export function Sidebar() {
 
           {/* Navigation Items */}
           <ul className="space-y-2 font-medium flex-1">
-            {filteredNavItems.map((item) => (
+            {sidebarItems.map((item) => (
               <li key={item.href}>
                 <Link
                   to={item.href}

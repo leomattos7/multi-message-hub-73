@@ -35,8 +35,8 @@ export const LabExamCard = ({ exam, onDelete }: LabExamCardProps) => {
             </div>
             <div className="text-sm">
               <p><strong>Resultado:</strong> {exam.result}</p>
-              {exam.reference_value && (
-                <p><strong>Valor de referência:</strong> {exam.reference_value}</p>
+              {exam.reference_range && (
+                <p><strong>Valor de referência:</strong> {exam.reference_range}</p>
               )}
               <p className="text-xs text-gray-500 mt-1">{formattedDate}</p>
             </div>

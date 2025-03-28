@@ -1,11 +1,11 @@
 
 export interface LabExam {
   id: string;
-  patient_id: string;
-  exam_date: string;
   name: string;
-  result?: string;
-  reference_value?: string;
-  is_abnormal?: boolean;
+  result: string;
+  reference_range?: string;
+  is_abnormal: boolean;
+  exam_date: string;
   created_at: string;
+  patient_id: string;
 }

@@ -1,94 +1,104 @@
 
 import React from "react";
-import { Edit, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatDate } from "@/utils/records-utils";
-import { Patient } from "@/types/patient";
+import { ArrowLeft, Info } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
-interface PatientInfoProps {
-  patient: Patient;
-  onNewRecord: () => void;
-  onEditPatient?: () => void;
+interface Patient {
+  id: string;
+  name: string;
+  birth_date?: string;
+  biological_sex?: string;
+  gender_identity?: string;
 }
 
-export const PatientInfo: React.FC<PatientInfoProps> = ({ 
-  patient, 
-  onNewRecord,
-  onEditPatient 
-}) => {
-  // Get either full_name or name
-  const displayName = patient.full_name || patient.name;
+interface PatientInfoProps {
+  patient?: Patient;
+  onNewRecord?: () => void; // Keeping the prop type to avoid interface breaking changes
+}
+
+export const PatientInfo = ({ patient }: PatientInfoProps) => {
+  const navigate = useNavigate();
   
-  // Get birth_date from either field
-  const birthDate = patient.date_of_birth || patient.birth_date;
-  
-  // Get payment method from either field
-  const paymentMethod = patient.payment_form || patient.payment_method;
+  const calculateAge = (birthDate: string | undefined): number => {
+    if (!birthDate) return 0;
+    
+    const today = new Date();
+    const dob = new Date(birthDate);
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  const formatBirthDate = (birthDate: string | undefined): string => {
+    if (!birthDate) return 'Não informado';
+    
+    const date = new Date(birthDate);
+    return new Intl.DateTimeFormat('pt-BR').format(date);
+  };
   
   return (
-    <Card className="mb-6">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-2xl font-bold">{displayName}</h2>
-            <p className="text-gray-500">{patient.email}</p>
-          </div>
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center">
+        <Button variant="ghost" onClick={() => navigate("/prontuarios")} className="mr-2">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+        <div className="flex items-center">
+          <h1 className="text-2xl font-bold mr-2">{patient?.name}</h1>
           
-          <div className="flex space-x-2">
-            {onEditPatient && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={onEditPatient}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Editar Paciente
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Info className="h-5 w-5 text-blue-500" />
+                <span className="sr-only">Informações adicionais</span>
               </Button>
-            )}
-            
-            <Button 
-              size="sm"
-              onClick={onNewRecord}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Registro
-            </Button>
-          </div>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80">
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Informações Pessoais</h4>
+                <div className="flex justify-between">
+                  <span className="text-sm">Idade:</span>
+                  <span className="text-sm font-medium">
+                    {patient?.birth_date ? `${calculateAge(patient.birth_date)} anos` : 'Não informado'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Data de Nascimento:</span>
+                  <span className="text-sm font-medium">{formatBirthDate(patient?.birth_date)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Sexo Biológico:</span>
+                  <span className="text-sm font-medium">
+                    {patient?.biological_sex === 'male' ? 'Masculino' : 
+                      patient?.biological_sex === 'female' ? 'Feminino' : 
+                      patient?.biological_sex === 'intersex' ? 'Intersexo' : 'Não informado'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Identidade de Gênero:</span>
+                  <span className="text-sm font-medium">
+                    {patient?.gender_identity === 'man' ? 'Homem' : 
+                      patient?.gender_identity === 'woman' ? 'Mulher' : 
+                      patient?.gender_identity === 'non_binary' ? 'Não-Binário' : 
+                      patient?.gender_identity === 'other' ? 'Outro' : 'Não informado'}
+                  </span>
+                </div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500">Telefone</p>
-            <p>{patient.phone || "Não informado"}</p>
-          </div>
-          
-          <div>
-            <p className="text-gray-500">Data de Nascimento</p>
-            <p>{birthDate ? formatDate(birthDate) : "Não informado"}</p>
-          </div>
-          
-          <div>
-            <p className="text-gray-500">Método de Pagamento</p>
-            <p>{paymentMethod || "Não informado"}</p>
-          </div>
-          
-          <div>
-            <p className="text-gray-500">Sexo Biológico</p>
-            <p>{patient.biological_sex || "Não informado"}</p>
-          </div>
-          
-          <div>
-            <p className="text-gray-500">Identidade de Gênero</p>
-            <p>{patient.gender_identity || "Não informado"}</p>
-          </div>
-          
-          <div>
-            <p className="text-gray-500">CPF</p>
-            <p>{patient.cpf || "Não informado"}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

@@ -1,128 +1,128 @@
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Patient } from "@/types/patient";
+import { useNavigate } from "react-router-dom";
+
+interface Patient {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  payment_method?: string;
+  insurance_name?: string;
+  record_count?: number;
+  birth_date?: string;
+  biological_sex?: string;
+  gender_identity?: string;
+  cpf?: string;
+  doctor_id?: string;
+}
 
 interface RecordSummary {
-  total: number;
-  lastWeek: number;
-  thisMonth: number;
+  record_type: string;
+  count: number;
 }
 
 export const useMedicalRecords = () => {
-  const navigate = useNavigate();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [patientsLoading, setPatientsLoading] = useState(true);
-  const [recordSummary, setRecordSummary] = useState<RecordSummary>({
-    total: 0,
-    lastWeek: 0,
-    thisMonth: 0
-  });
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchPatients();
-    fetchRecordSummary();
-  }, []);
-
-  const fetchPatients = async () => {
-    try {
-      setPatientsLoading(true);
+  const { 
+    data: patients, 
+    isLoading: patientsLoading, 
+    refetch: refetchPatients 
+  } = useQuery({
+    queryKey: ["patients", searchQuery],
+    queryFn: async () => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Get all patients
-      const { data: patientsData, error: patientsError } = await supabase
-        .from("patients")
-        .select("*");
-
-      if (patientsError) throw patientsError;
-
-      // Get record counts per patient
-      const { data: recordsData, error: recordsError } = await supabase
-        .from("medical_records")
-        .select("patient_id");
-
-      if (recordsError) throw recordsError;
-
-      // Calculate record count per patient
-      const recordCounts: { [key: string]: number } = {};
-      if (recordsData) {
-        recordsData.forEach(record => {
-          if (record.patient_id) {
-            recordCounts[record.patient_id] = (recordCounts[record.patient_id] || 0) + 1;
-          }
-        });
+      if (!user) {
+        throw new Error("User not authenticated");
       }
-
-      // Combine patient data with record counts
-      const formattedPatients = patientsData?.map(patient => ({
-        ...patient,
-        name: patient.full_name,
-        birth_date: patient.date_of_birth,
-        payment_method: patient.payment_form,
-        record_count: recordCounts[patient.id] || 0,
-      })) || [];
-
-      setPatients(formattedPatients);
-      setPatientsLoading(false);
-    } catch (error) {
-      console.error("Error fetching patients:", error);
-      setPatientsLoading(false);
+      
+      let query = supabase
+        .from("patients")
+        .select("id, name, email, phone, address, notes, payment_method, insurance_name, birth_date, biological_sex, gender_identity, doctor_id");
+      
+      // Filter by current doctor if this is a multi-doctor system
+      query = query.eq("doctor_id", user.id);
+      
+      if (searchQuery) {
+        query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+      }
+      
+      const { data: patientsData, error: patientsError } = await query.order("name");
+      
+      if (patientsError) {
+        console.error("Error fetching patients:", patientsError);
+        throw patientsError;
+      }
+      
+      const patientsWithRecordCounts = await Promise.all(patientsData.map(async (patient) => {
+        const { count, error: countError } = await supabase
+          .from("patient_records")
+          .select("*", { count: "exact", head: true })
+          .eq("patient_id", patient.id);
+          
+        if (countError) {
+          console.error("Error fetching record count:", countError);
+          return { ...patient, record_count: 0 };
+        }
+        
+        return { ...patient, record_count: count || 0 };
+      }));
+      
+      return patientsWithRecordCounts as Patient[];
     }
-  };
+  });
 
-  const fetchRecordSummary = async () => {
-    try {
-      const { data: recordsData, error: recordsError } = await supabase
-        .from("medical_records")
-        .select("created_at");
-
-      if (recordsError) throw recordsError;
-
-      const now = new Date();
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const summary = {
-        total: recordsData?.length || 0,
-        lastWeek: recordsData?.filter(record => new Date(record.created_at) >= oneWeekAgo).length || 0,
-        thisMonth: recordsData?.filter(record => new Date(record.created_at) >= firstDayOfMonth).length || 0
-      };
-
-      setRecordSummary(summary);
-    } catch (error) {
-      console.error("Error fetching record summary:", error);
+  const { data: recordSummary } = useQuery({
+    queryKey: ["record-summary"],
+    queryFn: async () => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      const { data, error } = await supabase
+        .from("patient_records")
+        .select("record_type, patients!inner(doctor_id)")
+        .eq("patients.doctor_id", user.id);
+        
+      if (error) {
+        console.error("Error fetching record summary:", error);
+        throw error;
+      }
+      
+      const counts: Record<string, number> = {};
+      data.forEach(record => {
+        counts[record.record_type] = (counts[record.record_type] || 0) + 1;
+      });
+      
+      return Object.entries(counts).map(([record_type, count]) => ({
+        record_type,
+        count
+      })) as RecordSummary[];
     }
-  };
-
-  const refetchPatients = () => {
-    fetchPatients();
-    fetchRecordSummary();
-  };
+  });
 
   const viewPatientRecords = (patient: Patient) => {
-    navigate(`/prontuario/${patient.id}`);
+    navigate(`/prontuarios/paciente/${patient.id}`);
   };
 
   const navigateToNewPatient = (patientId: string) => {
-    navigate(`/prontuario/${patientId}`);
+    navigate(`/prontuarios/paciente/${patientId}`);
   };
 
-  // Filter patients based on search query
-  const filteredPatients = patients.filter(patient => {
-    const searchLower = searchQuery.toLowerCase();
-    const nameLower = (patient.full_name || patient.name || '').toLowerCase();
-    const emailLower = (patient.email || '').toLowerCase();
-    const phoneLower = (patient.phone || '').toLowerCase();
-    
-    return nameLower.includes(searchLower) || 
-           emailLower.includes(searchLower) || 
-           phoneLower.includes(searchLower);
-  });
-
   return {
-    patients: filteredPatients,
+    patients,
     patientsLoading,
     recordSummary,
     searchQuery,

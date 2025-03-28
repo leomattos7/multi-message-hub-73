@@ -1,38 +1,47 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { appointmentService } from "@/integrations/supabase/services/appointmentService";
+import { supabase } from "@/integrations/supabase/client";
 
-// Define and export the Appointment interface
-export interface Appointment {
+export type Appointment = {
   id: string;
   patient_id: string;
-  start_time: string;
-  end_time: string;
-  status: "aguardando" | "confirmado" | "cancelado";
-  payment_method?: "Particular" | "Convênio";
+  date: string;
+  time: string;
+  end_time?: string; // Add end_time as optional field
+  type: string;
+  status: string;
+  payment_method?: string;
   notes?: string;
-  consultation_type_id?: string;
-  doctor_id: string;
-  date: string; // Date in YYYY-MM-DD format
-  time: string; // Time in HH:MM format
   patient?: {
-    full_name: string;
+    name: string;
     email?: string;
     phone?: string;
   };
-  type?: string; // Add the type property
-}
+};
 
 export function useAppointments(date?: Date) {
-  const { 
-    data: appointments, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useQuery({
-    queryKey: ["appointments", date ? date.toISOString().split('T')[0] : undefined],
+  const formattedDate = date ? date.toISOString().split('T')[0] : undefined;
+
+  const { data: appointments, isLoading, error, refetch } = useQuery({
+    queryKey: ["appointments", formattedDate],
     queryFn: async () => {
-      return await appointmentService.getAppointments(date);
+      // If no date is provided, fetch all appointments
+      let query = supabase
+        .from("appointments")
+        .select(`
+          *,
+          patient:patients(name, email, phone)
+        `);
+
+      // If date is provided, filter by that date
+      if (formattedDate) {
+        query = query.eq("date", formattedDate);
+      }
+
+      const { data, error } = await query.order("time");
+      
+      if (error) throw error;
+      return data as Appointment[];
     },
   });
 

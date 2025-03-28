@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, addDays, isSameMonth, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -170,7 +171,7 @@ const MonthlyView = ({ date, onDateSelect }: MonthlyViewProps) => {
                           appointment={appointment} 
                           compact 
                         />
-                        <span className="truncate text-gray-700">{appointment.time} - {appointment.patient?.full_name}</span>
+                        <span className="truncate text-gray-700">{appointment.time.substring(0, 5)} - {appointment.patient?.name}</span>
                         
                         <div className="hidden group-hover:flex items-center gap-1 absolute right-0">
                           <Button 

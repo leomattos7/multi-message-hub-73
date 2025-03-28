@@ -55,18 +55,35 @@ export default function SignIn() {
         return;
       }
       
-      // Get the user's role from metadata
-      const userRole = authData.user.user_metadata?.role || "doctor";
+      // Get the user's metadata/role from the auth data - ensure it uses the standardized roles
+      let userRole = authData.user.user_metadata?.role;
+      
+      // Convert legacy roles if needed
+      if (userRole === "doctor") userRole = "admin";
+      if (userRole === "secretary") userRole = "employee";
       
       const userData = {
         id: authData.user.id,
         email: authData.user.email || "",
-        role: userRole,
+        role: userRole || "admin",
         name: authData.user.user_metadata?.name || "Usuário"
       };
       
       // Store user in localStorage
       localStorage.setItem("user", JSON.stringify(userData));
+      
+      // Initialize collections if they don't exist
+      if (!localStorage.getItem("patients")) {
+        localStorage.setItem("patients", JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem("appointments")) {
+        localStorage.setItem("appointments", JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem("conversations")) {
+        localStorage.setItem("conversations", JSON.stringify([]));
+      }
       
       toast.success("Login realizado com sucesso!");
       navigate("/");

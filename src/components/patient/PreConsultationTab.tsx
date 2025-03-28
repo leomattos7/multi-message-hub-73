@@ -305,7 +305,7 @@ export const PreConsultationTab: React.FC = () => {
     <div className="space-y-6">
       <div className="rounded-lg border p-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Dados da Pré-Consulta</h3>
+          <h3 className="text-lg font-medium">Histórico do Paciente</h3>
           <Dialog>
             <DialogTrigger asChild>
               <Button 

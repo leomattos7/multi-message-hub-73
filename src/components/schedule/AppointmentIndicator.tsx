@@ -64,7 +64,7 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
           </TooltipTrigger>
           <TooltipContent side="right" className="bg-white/95 backdrop-blur-sm border shadow-lg rounded-lg p-2">
             <p className="font-medium">{timeDisplay}</p>
-            <p className="font-medium">{appointment.patient?.full_name || "Paciente não identificado"}</p>
+            <p className="font-medium">{appointment.patient?.name || "Paciente não identificado"}</p>
             <div className="flex items-center gap-1 mt-1">
               <StatusIcon className="h-3 w-3" />
               <p className="text-xs capitalize">{appointment.status}</p>
@@ -120,12 +120,12 @@ const AppointmentIndicator = ({ appointment, compact = false, onEdit, onDelete }
           <div className="flex items-center gap-1.5">
             <User className="h-3.5 w-3.5 flex-shrink-0" />
             <div className="font-medium truncate flex-grow">
-              {appointment.patient?.full_name || "Paciente não identificado"}
+              {appointment.patient?.name || "Paciente não identificado"}
             </div>
           </div>
           
           <div className="text-[10px] opacity-80 truncate">
-            {appointment.consultation_type_id || ""}
+            {appointment.type}
           </div>
         </div>
       </div>

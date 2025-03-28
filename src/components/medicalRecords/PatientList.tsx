@@ -2,7 +2,14 @@
 import React from "react";
 import { Users } from "lucide-react";
 import { PatientCard } from "./PatientCard";
-import { Patient } from "@/types/patient";
+
+interface Patient {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  record_count?: number;
+}
 
 interface PatientListProps {
   patients?: Patient[];

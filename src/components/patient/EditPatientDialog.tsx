@@ -13,7 +13,19 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Patient } from "@/types/patient";
+
+interface Patient {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  birth_date?: string;
+  biological_sex?: string;
+  gender_identity?: string;
+  cpf?: string;
+}
 
 interface EditPatientDialogProps {
   patientData: Patient | null;
@@ -42,11 +54,11 @@ export const EditPatientDialog = ({
         
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="full_name">Nome Completo*</Label>
+            <Label htmlFor="name">Nome Completo*</Label>
             <Input
-              id="full_name"
-              value={patientData?.full_name || patientData?.name || ''}
-              onChange={(e) => onPatientChange(patientData ? {...patientData, full_name: e.target.value} : null)}
+              id="name"
+              value={patientData?.name || ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, name: e.target.value} : null)}
               placeholder="Digite o nome do paciente"
             />
           </div>
@@ -62,12 +74,12 @@ export const EditPatientDialog = ({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="date_of_birth">Data de Nascimento</Label>
+            <Label htmlFor="birth_date">Data de Nascimento</Label>
             <Input
-              id="date_of_birth"
+              id="birth_date"
               type="date"
-              value={patientData?.date_of_birth ? patientData.date_of_birth.split('T')[0] : (patientData?.birth_date ? patientData.birth_date.split('T')[0] : '')}
-              onChange={(e) => onPatientChange(patientData ? {...patientData, date_of_birth: e.target.value} : null)}
+              value={patientData?.birth_date ? patientData.birth_date.split('T')[0] : ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, birth_date: e.target.value} : null)}
             />
           </div>
           
@@ -75,16 +87,16 @@ export const EditPatientDialog = ({
             <Label htmlFor="biological_sex">Sexo Biológico</Label>
             <Select
               value={patientData?.biological_sex || ''}
-              onValueChange={(value) => onPatientChange(patientData ? {...patientData, biological_sex: value as "Masculino" | "Feminino" | "Intersexo" | "Não Informado"} : null)}
+              onValueChange={(value) => onPatientChange(patientData ? {...patientData, biological_sex: value} : null)}
             >
               <SelectTrigger id="biological_sex">
                 <SelectValue placeholder="Selecione o sexo biológico" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Masculino">Masculino</SelectItem>
-                <SelectItem value="Feminino">Feminino</SelectItem>
-                <SelectItem value="Intersexo">Intersexo</SelectItem>
-                <SelectItem value="Não Informado">Não Informado</SelectItem>
+                <SelectItem value="male">Masculino</SelectItem>
+                <SelectItem value="female">Feminino</SelectItem>
+                <SelectItem value="intersex">Intersexo</SelectItem>
+                <SelectItem value="not_informed">Não Informado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -93,17 +105,17 @@ export const EditPatientDialog = ({
             <Label htmlFor="gender_identity">Identidade de Gênero</Label>
             <Select
               value={patientData?.gender_identity || ''}
-              onValueChange={(value) => onPatientChange(patientData ? {...patientData, gender_identity: value as "Não Informado" | "Homem" | "Mulher" | "Não-Binário" | "Outro"} : null)}
+              onValueChange={(value) => onPatientChange(patientData ? {...patientData, gender_identity: value} : null)}
             >
               <SelectTrigger id="gender_identity">
                 <SelectValue placeholder="Selecione a identidade de gênero" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Homem">Homem</SelectItem>
-                <SelectItem value="Mulher">Mulher</SelectItem>
-                <SelectItem value="Não-Binário">Não-Binário</SelectItem>
-                <SelectItem value="Outro">Outro</SelectItem>
-                <SelectItem value="Não Informado">Não Informado</SelectItem>
+                <SelectItem value="man">Homem</SelectItem>
+                <SelectItem value="woman">Mulher</SelectItem>
+                <SelectItem value="non_binary">Não-Binário</SelectItem>
+                <SelectItem value="other">Outro</SelectItem>
+                <SelectItem value="not_informed">Não Informado</SelectItem>
               </SelectContent>
             </Select>
           </div>

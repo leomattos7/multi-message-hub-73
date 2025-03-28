@@ -9,142 +9,52 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      consultation_recipes: {
+      appointments: {
         Row: {
-          administration_method: string | null
-          consultation_id: string | null
-          created_at: string | null
-          dose: string | null
-          id: string
-          is_continuous: boolean | null
-          name: string
-        }
-        Insert: {
-          administration_method?: string | null
-          consultation_id?: string | null
-          created_at?: string | null
-          dose?: string | null
-          id?: string
-          is_continuous?: boolean | null
-          name: string
-        }
-        Update: {
-          administration_method?: string | null
-          consultation_id?: string | null
-          created_at?: string | null
-          dose?: string | null
-          id?: string
-          is_continuous?: boolean | null
-          name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "consultation_recipes_consultation_id_fkey"
-            columns: ["consultation_id"]
-            isOneToOne: false
-            referencedRelation: "consultations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      consultation_types: {
-        Row: {
-          accepts_insurance: boolean | null
-          created_at: string | null
+          created_at: string
+          date: string
           doctor_id: string | null
-          duration: unknown
+          end_time: string | null
           id: string
-          name: string
+          notes: string | null
+          patient_id: string
+          payment_method: string | null
+          status: string
+          time: string
+          type: string
+          updated_at: string
         }
         Insert: {
-          accepts_insurance?: boolean | null
-          created_at?: string | null
+          created_at?: string
+          date: string
           doctor_id?: string | null
-          duration: unknown
+          end_time?: string | null
           id?: string
-          name: string
+          notes?: string | null
+          patient_id: string
+          payment_method?: string | null
+          status?: string
+          time: string
+          type: string
+          updated_at?: string
         }
         Update: {
-          accepts_insurance?: boolean | null
-          created_at?: string | null
+          created_at?: string
+          date?: string
           doctor_id?: string | null
-          duration?: unknown
+          end_time?: string | null
           id?: string
-          name?: string
+          notes?: string | null
+          patient_id?: string
+          payment_method?: string | null
+          status?: string
+          time?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "consultation_types_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      consultations: {
-        Row: {
-          assessment: string | null
-          consultation_type_id: string | null
-          created_at: string | null
-          doctor_id: string | null
-          end_time: string
-          id: string
-          objective: string | null
-          patient_id: string | null
-          payment_method: Database["public"]["Enums"]["payment_form"] | null
-          plan: string | null
-          start_time: string
-          status: Database["public"]["Enums"]["consultation_status"] | null
-          subjective: string | null
-        }
-        Insert: {
-          assessment?: string | null
-          consultation_type_id?: string | null
-          created_at?: string | null
-          doctor_id?: string | null
-          end_time: string
-          id?: string
-          objective?: string | null
-          patient_id?: string | null
-          payment_method?: Database["public"]["Enums"]["payment_form"] | null
-          plan?: string | null
-          start_time: string
-          status?: Database["public"]["Enums"]["consultation_status"] | null
-          subjective?: string | null
-        }
-        Update: {
-          assessment?: string | null
-          consultation_type_id?: string | null
-          created_at?: string | null
-          doctor_id?: string | null
-          end_time?: string
-          id?: string
-          objective?: string | null
-          patient_id?: string | null
-          payment_method?: Database["public"]["Enums"]["payment_form"] | null
-          plan?: string | null
-          start_time?: string
-          status?: Database["public"]["Enums"]["consultation_status"] | null
-          subjective?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "consultations_consultation_type_id_fkey"
-            columns: ["consultation_type_id"]
-            isOneToOne: false
-            referencedRelation: "consultation_types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consultations_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consultations_patient_id_fkey"
+            foreignKeyName: "appointments_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -152,29 +62,143 @@ export type Database = {
           },
         ]
       }
-      conversation_tag_links: {
+      calendar_events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          doctor_id: string
+          end_time: string
+          event_type: string
+          id: string
+          start_time: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          doctor_id: string
+          end_time: string
+          event_type: string
+          id?: string
+          start_time: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          doctor_id?: string
+          end_time?: string
+          event_type?: string
+          id?: string
+          start_time?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      chat_transcripts: {
+        Row: {
+          created_at: string | null
+          id: string
+          phone: string
+          transcript: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          phone: string
+          transcript: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          phone?: string
+          transcript?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      consultation_types: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          duration: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          duration: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          duration?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      conversation_tags: {
+        Row: {
+          color: string
+          created_at: string
+          doctor_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          doctor_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      conversation_to_tag: {
         Row: {
           conversation_id: string
+          created_at: string
           tag_id: string
         }
         Insert: {
           conversation_id: string
+          created_at?: string
           tag_id: string
         }
         Update: {
           conversation_id?: string
+          created_at?: string
           tag_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "conversation_tag_links_conversation_id_fkey"
+            foreignKeyName: "conversation_to_tag_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "conversation_tag_links_tag_id_fkey"
+            foreignKeyName: "conversation_to_tag_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "conversation_tags"
@@ -182,65 +206,36 @@ export type Database = {
           },
         ]
       }
-      conversation_tags: {
-        Row: {
-          color: string | null
-          created_at: string | null
-          doctor_id: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string | null
-          doctor_id?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          color?: string | null
-          created_at?: string | null
-          doctor_id?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_tags_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       conversations: {
         Row: {
-          channel: string | null
-          created_at: string | null
+          channel: string
+          created_at: string
+          doctor_id: string | null
           id: string
-          is_archived: boolean | null
-          last_activity: string | null
-          patient_id: string | null
-          unread_count: number | null
+          is_archived: boolean
+          last_activity: string
+          patient_id: string
+          unread: number | null
         }
         Insert: {
-          channel?: string | null
-          created_at?: string | null
+          channel: string
+          created_at?: string
+          doctor_id?: string | null
           id?: string
-          is_archived?: boolean | null
-          last_activity?: string | null
-          patient_id?: string | null
-          unread_count?: number | null
+          is_archived?: boolean
+          last_activity?: string
+          patient_id: string
+          unread?: number | null
         }
         Update: {
-          channel?: string | null
-          created_at?: string | null
+          channel?: string
+          created_at?: string
+          doctor_id?: string | null
           id?: string
-          is_archived?: boolean | null
-          last_activity?: string | null
-          patient_id?: string | null
-          unread_count?: number | null
+          is_archived?: boolean
+          last_activity?: string
+          patient_id?: string
+          unread?: number | null
         }
         Relationships: [
           {
@@ -254,105 +249,222 @@ export type Database = {
       }
       doctor_availability: {
         Row: {
-          created_at: string | null
-          day_of_week: number | null
-          doctor_id: string | null
+          created_at: string
+          day_of_week: number
+          doctor_id: string
           end_time: string
           id: string
+          is_available: boolean
           start_time: string
         }
         Insert: {
-          created_at?: string | null
-          day_of_week?: number | null
-          doctor_id?: string | null
+          created_at?: string
+          day_of_week: number
+          doctor_id: string
           end_time: string
           id?: string
+          is_available?: boolean
           start_time: string
         }
         Update: {
-          created_at?: string | null
-          day_of_week?: number | null
-          doctor_id?: string | null
+          created_at?: string
+          day_of_week?: number
+          doctor_id?: string
           end_time?: string
           id?: string
+          is_available?: boolean
           start_time?: string
+        }
+        Relationships: []
+      }
+      doctor_links: {
+        Row: {
+          created_at: string
+          display_order: number
+          doctor_id: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          doctor_id: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          doctor_id?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
+          url?: string
         }
         Relationships: [
           {
-            foreignKeyName: "doctor_availability_doctor_id_fkey"
+            foreignKeyName: "doctor_links_doctor_id_fkey"
             columns: ["doctor_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "doctor_profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      doctor_unavailability: {
+      doctor_profiles: {
         Row: {
-          created_at: string | null
-          doctor_id: string | null
-          end_time: string
+          address: string | null
+          bio: string | null
+          created_at: string
+          email: string | null
           id: string
-          reason: string | null
-          start_time: string
+          name: string | null
+          phone: string | null
+          profile_image_url: string | null
+          public_url_slug: string
+          specialty: string | null
+          theme: string | null
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
-          doctor_id?: string | null
-          end_time: string
-          id?: string
-          reason?: string | null
-          start_time: string
+          address?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+          profile_image_url?: string | null
+          public_url_slug: string
+          specialty?: string | null
+          theme?: string | null
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
-          doctor_id?: string | null
-          end_time?: string
+          address?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
           id?: string
-          reason?: string | null
-          start_time?: string
+          name?: string | null
+          phone?: string | null
+          profile_image_url?: string | null
+          public_url_slug?: string
+          specialty?: string | null
+          theme?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      employees: {
+        Row: {
+          date_added: string
+          email: string
+          id: string
+          name: string
+          role: string
+          status: string
+        }
+        Insert: {
+          date_added?: string
+          email: string
+          id?: string
+          name: string
+          role: string
+          status?: string
+        }
+        Update: {
+          date_added?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      lab_exams: {
+        Row: {
+          created_at: string
+          exam_date: string
+          id: string
+          is_abnormal: boolean
+          name: string
+          patient_id: string
+          reference_range: string | null
+          result: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date: string
+          id?: string
+          is_abnormal?: boolean
+          name: string
+          patient_id: string
+          reference_range?: string | null
+          result: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          id?: string
+          is_abnormal?: boolean
+          name?: string
+          patient_id?: string
+          reference_range?: string | null
+          result?: string
         }
         Relationships: [
           {
-            foreignKeyName: "doctor_unavailability_doctor_id_fkey"
-            columns: ["doctor_id"]
+            foreignKeyName: "lab_exams_patient_id_fkey"
+            columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
       }
-      medical_records: {
+      measurements: {
         Row: {
-          abdominal_circumference: number | null
-          created_at: string | null
-          height: number | null
+          created_at: string
+          date: string
           id: string
-          imc: number | null
-          patient_id: string | null
-          weight: number | null
+          name: string
+          patient_id: string
+          unit: string
+          value: number
         }
         Insert: {
-          abdominal_circumference?: number | null
-          created_at?: string | null
-          height?: number | null
+          created_at?: string
+          date?: string
           id?: string
-          imc?: number | null
-          patient_id?: string | null
-          weight?: number | null
+          name: string
+          patient_id: string
+          unit: string
+          value: number
         }
         Update: {
-          abdominal_circumference?: number | null
-          created_at?: string | null
-          height?: number | null
+          created_at?: string
+          date?: string
           id?: string
-          imc?: number | null
-          patient_id?: string | null
-          weight?: number | null
+          name?: string
+          patient_id?: string
+          unit?: string
+          value?: number
         }
         Relationships: [
           {
-            foreignKeyName: "medical_records_patient_id_fkey"
+            foreignKeyName: "measurements_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -363,27 +475,27 @@ export type Database = {
       messages: {
         Row: {
           content: string
-          conversation_id: string | null
-          created_at: string | null
+          conversation_id: string
           id: string
           is_outgoing: boolean
-          status: string | null
+          status: string
+          timestamp: string
         }
         Insert: {
           content: string
-          conversation_id?: string | null
-          created_at?: string | null
+          conversation_id: string
           id?: string
-          is_outgoing: boolean
-          status?: string | null
+          is_outgoing?: boolean
+          status: string
+          timestamp?: string
         }
         Update: {
           content?: string
-          conversation_id?: string | null
-          created_at?: string | null
+          conversation_id?: string
           id?: string
           is_outgoing?: boolean
-          status?: string | null
+          status?: string
+          timestamp?: string
         }
         Relationships: [
           {
@@ -395,200 +507,156 @@ export type Database = {
           },
         ]
       }
-      patients: {
+      organizations: {
         Row: {
-          address: Json | null
-          biological_sex: Database["public"]["Enums"]["biological_sex"] | null
-          cpf: string | null
-          created_at: string | null
-          date_of_birth: string | null
-          doctor_id: string | null
-          email: string | null
-          full_name: string
-          gender_identity: Database["public"]["Enums"]["gender_identity"] | null
+          created_at: string
           id: string
-          notes: string | null
-          payment_form: Database["public"]["Enums"]["payment_form"] | null
-          phone: string | null
+          name: string
+          updated_at: string
         }
         Insert: {
-          address?: Json | null
-          biological_sex?: Database["public"]["Enums"]["biological_sex"] | null
-          cpf?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          doctor_id?: string | null
-          email?: string | null
-          full_name: string
-          gender_identity?:
-            | Database["public"]["Enums"]["gender_identity"]
-            | null
+          created_at?: string
           id?: string
-          notes?: string | null
-          payment_form?: Database["public"]["Enums"]["payment_form"] | null
-          phone?: string | null
+          name: string
+          updated_at?: string
         }
         Update: {
-          address?: Json | null
-          biological_sex?: Database["public"]["Enums"]["biological_sex"] | null
-          cpf?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          doctor_id?: string | null
-          email?: string | null
-          full_name?: string
-          gender_identity?:
-            | Database["public"]["Enums"]["gender_identity"]
-            | null
+          created_at?: string
           id?: string
-          notes?: string | null
-          payment_form?: Database["public"]["Enums"]["payment_form"] | null
-          phone?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "patients_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          accepts_insurance: boolean | null
-          created_at: string | null
-          full_name: string
-          id: string
-          phone: string | null
-          role: Database["public"]["Enums"]["app_role"]
-        }
-        Insert: {
-          accepts_insurance?: boolean | null
-          created_at?: string | null
-          full_name: string
-          id: string
-          phone?: string | null
-          role: Database["public"]["Enums"]["app_role"]
-        }
-        Update: {
-          accepts_insurance?: boolean | null
-          created_at?: string | null
-          full_name?: string
-          id?: string
-          phone?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
-      record_exams: {
+      patient_records: {
         Row: {
-          created_at: string | null
-          date: string | null
+          content: string
+          created_at: string
           id: string
-          is_abnormal: boolean | null
-          name: string
-          record_id: string | null
-          reference_value: string | null
-          result: string | null
+          patient_id: string
+          record_date: string
+          record_type: string
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
-          date?: string | null
+          content: string
+          created_at?: string
           id?: string
-          is_abnormal?: boolean | null
-          name: string
-          record_id?: string | null
-          reference_value?: string | null
-          result?: string | null
+          patient_id: string
+          record_date?: string
+          record_type: string
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
-          date?: string | null
+          content?: string
+          created_at?: string
           id?: string
-          is_abnormal?: boolean | null
-          name?: string
-          record_id?: string | null
-          reference_value?: string | null
-          result?: string | null
+          patient_id?: string
+          record_date?: string
+          record_type?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "record_exams_record_id_fkey"
-            columns: ["record_id"]
+            foreignKeyName: "patient_records_patient_id_fkey"
+            columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "medical_records"
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
       }
-      record_medications: {
+      patients: {
         Row: {
-          created_at: string | null
-          dosage: string | null
-          frequency: string | null
+          address: string | null
+          avatar_url: string | null
+          biological_sex: string | null
+          birth_date: string | null
+          cpf: string | null
+          created_at: string
+          doctor_id: string | null
+          email: string | null
+          gender_identity: string | null
           id: string
+          insurance_name: string | null
           name: string
-          record_id: string | null
+          notes: string | null
+          payment_method: string | null
+          phone: string | null
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
-          dosage?: string | null
-          frequency?: string | null
+          address?: string | null
+          avatar_url?: string | null
+          biological_sex?: string | null
+          birth_date?: string | null
+          cpf?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          email?: string | null
+          gender_identity?: string | null
           id?: string
+          insurance_name?: string | null
           name: string
-          record_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
-          dosage?: string | null
-          frequency?: string | null
+          address?: string | null
+          avatar_url?: string | null
+          biological_sex?: string | null
+          birth_date?: string | null
+          cpf?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          email?: string | null
+          gender_identity?: string | null
           id?: string
+          insurance_name?: string | null
           name?: string
-          record_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "record_medications_record_id_fkey"
-            columns: ["record_id"]
-            isOneToOne: false
-            referencedRelation: "medical_records"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      record_problems: {
+      profiles: {
         Row: {
-          ciap: string | null
-          cid: string | null
-          created_at: string | null
+          created_at: string
+          email: string | null
           id: string
           name: string
-          record_id: string | null
+          organization_id: string | null
+          role: string
+          updated_at: string
         }
         Insert: {
-          ciap?: string | null
-          cid?: string | null
-          created_at?: string | null
-          id?: string
+          created_at?: string
+          email?: string | null
+          id: string
           name: string
-          record_id?: string | null
+          organization_id?: string | null
+          role: string
+          updated_at?: string
         }
         Update: {
-          ciap?: string | null
-          cid?: string | null
-          created_at?: string | null
+          created_at?: string
+          email?: string | null
           id?: string
           name?: string
-          record_id?: string | null
+          organization_id?: string | null
+          role?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "record_problems_record_id_fkey"
-            columns: ["record_id"]
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
             isOneToOne: false
-            referencedRelation: "medical_records"
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -598,19 +666,47 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_doctor_profile: {
+        Args: {
+          p_id: string
+          p_bio: string
+          p_specialty: string
+          p_name: string
+          p_email: string
+          p_phone: string
+          p_address: string
+          p_profile_image_url: string
+          p_public_url_slug: string
+          p_theme: string
+        }
+        Returns: undefined
+      }
+      get_user_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_employee_of: {
+        Args: {
+          doctor_id: string
+        }
+        Returns: boolean
+      }
+      update_doctor_profile: {
+        Args: {
+          p_id: string
+          p_bio: string
+          p_specialty: string
+          p_name: string
+          p_email: string
+          p_phone: string
+          p_address: string
+          p_profile_image_url: string
+          p_theme: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      app_role: "owner" | "doctor" | "secretary"
-      biological_sex: "Masculino" | "Feminino" | "Intersexo" | "Não Informado"
-      consultation_status: "aguardando" | "confirmado" | "cancelado"
-      gender_identity:
-        | "Homem"
-        | "Mulher"
-        | "Não-Binário"
-        | "Outro"
-        | "Não Informado"
-      payment_form: "Particular" | "Convênio"
       user_role: "admin" | "employee" | "owner"
     }
     CompositeTypes: {

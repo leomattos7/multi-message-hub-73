@@ -7,13 +7,13 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "doctor" | "secretary" | "owner";
+  role: "admin" | "employee" | "owner";
   phone?: string;
 }
 
 interface AuthGuardProps {
   children: ReactNode;
-  requiredRole?: "doctor" | "secretary" | "owner" | undefined;
+  requiredRole?: "admin" | "employee" | undefined;
 }
 
 export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
@@ -46,7 +46,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
           id: session.user.id,
           name: session.user.user_metadata?.name || "Usuário",
           email: session.user.email || "",
-          role: session.user.user_metadata?.role || "doctor",
+          role: session.user.user_metadata?.role || "admin",
           phone: session.user.user_metadata?.phone
         };
         
@@ -54,6 +54,19 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
         
         // Store user in localStorage for backward compatibility
         localStorage.setItem("user", JSON.stringify(userData));
+        
+        // Initialize collections if they don't exist
+        if (!localStorage.getItem("patients")) {
+          localStorage.setItem("patients", "[]");
+        }
+        
+        if (!localStorage.getItem("appointments")) {
+          localStorage.setItem("appointments", "[]");
+        }
+        
+        if (!localStorage.getItem("conversations")) {
+          localStorage.setItem("conversations", "[]");
+        }
         
         // If a specific role is required and the user doesn't have it, redirect
         if (requiredRole && userData.role !== requiredRole) {
@@ -81,7 +94,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
+            role: session.user.user_metadata?.role || "admin",
             phone: session.user.user_metadata?.phone
           };
           
@@ -121,7 +134,7 @@ export function useAuth(): { user: User | null } {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
+            role: session.user.user_metadata?.role || "admin",
             phone: session.user.user_metadata?.phone
           };
           
@@ -155,7 +168,7 @@ export function useAuth(): { user: User | null } {
             id: session.user.id,
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
-            role: session.user.user_metadata?.role || "doctor",
+            role: session.user.user_metadata?.role || "admin",
             phone: session.user.user_metadata?.phone
           };
           

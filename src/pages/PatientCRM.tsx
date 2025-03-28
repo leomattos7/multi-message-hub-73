@@ -35,7 +35,6 @@ export default function PatientCRM() {
     setPatientFilters,
     editingPatient,
     setEditingPatient,
-    isProcessing,
     handleAddPatient,
     handleEditClick,
     handleUpdatePatient,
@@ -92,7 +91,6 @@ export default function PatientCRM() {
         isOpen={isAddPatientOpen}
         onOpenChange={setIsAddPatientOpen}
         onAdd={handleAddPatient}
-        isProcessing={isProcessing}
       />
 
       <EditPatientDialog 
@@ -101,14 +99,12 @@ export default function PatientCRM() {
         editingPatient={editingPatient}
         setEditingPatient={setEditingPatient}
         onUpdate={handleUpdatePatient}
-        isProcessing={isProcessing}
       />
 
       <DeletePatientDialog 
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onDelete={handleDeletePatient}
-        isProcessing={isProcessing}
       />
 
       <FilterPatientDialog 
