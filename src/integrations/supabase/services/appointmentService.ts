@@ -1,18 +1,18 @@
 
-import { supabase } from '../client';
-import { format } from 'date-fns';
+import { supabase, generateUUID } from "../client";
 
 export interface Appointment {
   id: string;
   patient_id: string;
   start_time: string;
   end_time: string;
-  status: 'aguardando' | 'confirmado' | 'cancelado';
-  payment_method?: 'Particular' | 'Convênio';
+  status: "aguardando" | "confirmado" | "cancelado";
+  payment_method?: "Particular" | "Convênio";
   notes?: string;
-  type?: string;
   consultation_type_id?: string;
-  doctor_id?: string;
+  doctor_id: string;
+  date: string; // Date in YYYY-MM-DD format
+  time: string; // Time in HH:MM format
   patient?: {
     full_name: string;
     email?: string;
@@ -21,9 +21,11 @@ export interface Appointment {
 }
 
 export const appointmentService = {
-  async getAppointments(date?: Date) {
+  /**
+   * Gets appointments for a specific date or all appointments if no date is provided
+   */
+  async getAppointments(date?: Date): Promise<Appointment[]> {
     try {
-      // Use consultations instead of appointments based on the database schema
       let query = supabase
         .from("consultations")
         .select(`
@@ -33,7 +35,7 @@ export const appointmentService = {
           end_time,
           status,
           payment_method,
-          subjective as notes,
+          notes,
           consultation_type_id,
           doctor_id,
           patients(full_name, email, phone)
@@ -41,132 +43,156 @@ export const appointmentService = {
 
       // If date is provided, filter by that date
       if (date) {
-        const formattedDate = format(date, "yyyy-MM-dd");
-        // Filter based on start_time (date component)
-        query = query.gte('start_time', `${formattedDate}T00:00:00`)
-                     .lt('start_time', `${formattedDate}T23:59:59`);
+        const dateString = date.toISOString().split('T')[0];
+        query = query.eq('date', dateString);
       }
 
-      const { data, error } = await query.order("start_time");
-      
-      if (error) throw error;
-      
-      // Map to our Appointment interface
-      return data.map(item => ({
-        id: item.id,
-        patient_id: item.patient_id,
-        start_time: item.start_time,
-        end_time: item.end_time,
-        status: item.status,
-        payment_method: item.payment_method,
-        notes: item.notes,
-        consultation_type_id: item.consultation_type_id,
-        doctor_id: item.doctor_id,
-        patient: item.patients
-      })) as Appointment[];
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching appointments:", error);
+        throw error;
+      }
+
+      // Transform the data into our Appointment type format
+      return (data || []).map(item => {
+        // Extract date and time from start_time
+        const startDateTime = new Date(item.start_time);
+        const date = startDateTime.toISOString().split('T')[0];
+        const time = startDateTime.toTimeString().split(' ')[0].substring(0, 5);
+
+        return {
+          id: item.id,
+          patient_id: item.patient_id,
+          start_time: item.start_time,
+          end_time: item.end_time,
+          status: item.status,
+          payment_method: item.payment_method,
+          notes: item.notes,
+          consultation_type_id: item.consultation_type_id,
+          doctor_id: item.doctor_id,
+          date,
+          time,
+          patient: item.patients
+        };
+      });
     } catch (error) {
-      console.error("Error fetching appointments:", error);
-      throw error;
+      console.error("Failed to get appointments:", error);
+      return [];
     }
   },
-  
-  async createAppointment(appointment: {
-    patient_id: string;
-    start_time: string;
-    end_time: string;
-    status: 'aguardando' | 'confirmado' | 'cancelado';
-    payment_method?: 'Particular' | 'Convênio';
-    notes?: string;
-    consultation_type_id?: string;
-    doctor_id?: string;
-  }) {
+
+  /**
+   * Creates a new appointment
+   */
+  async createAppointment(appointmentData: Omit<Appointment, "id">): Promise<Appointment> {
     try {
+      // Format the date and time as a proper ISO string for start_time
+      const startTime = new Date(`${appointmentData.date}T${appointmentData.time}`);
+      
+      // Calculate end_time if provided
+      let endTime = null;
+      if (appointmentData.end_time) {
+        endTime = new Date(`${appointmentData.date}T${appointmentData.end_time}`);
+      }
+
       const { data, error } = await supabase
         .from("consultations")
         .insert({
-          patient_id: appointment.patient_id,
-          start_time: appointment.start_time,
-          end_time: appointment.end_time,
-          status: appointment.status,
-          payment_method: appointment.payment_method,
-          subjective: appointment.notes,
-          consultation_type_id: appointment.consultation_type_id,
-          doctor_id: appointment.doctor_id
+          id: generateUUID(),
+          patient_id: appointmentData.patient_id,
+          start_time: startTime.toISOString(),
+          end_time: endTime ? endTime.toISOString() : null,
+          status: appointmentData.status,
+          payment_method: appointmentData.payment_method,
+          notes: appointmentData.notes,
+          consultation_type_id: appointmentData.consultation_type_id,
+          doctor_id: appointmentData.doctor_id,
         })
-        .select()
-        .single();
-        
-      if (error) throw error;
-      return data;
+        .select();
+
+      if (error) {
+        console.error("Error creating appointment:", error);
+        throw error;
+      }
+
+      // Return the created appointment
+      return {
+        ...appointmentData,
+        id: data[0].id
+      };
     } catch (error) {
-      console.error("Error creating appointment:", error);
+      console.error("Failed to create appointment:", error);
       throw error;
     }
   },
-  
-  async updateAppointment(id: string, updates: {
-    patient_id?: string;
-    start_time?: string;
-    end_time?: string;
-    status?: 'aguardando' | 'confirmado' | 'cancelado';
-    payment_method?: 'Particular' | 'Convênio';
-    notes?: string;
-    consultation_type_id?: string;
-    doctor_id?: string;
-  }) {
+
+  /**
+   * Updates an existing appointment
+   */
+  async updateAppointment(appointmentId: string, appointmentData: Partial<Appointment>): Promise<Appointment> {
     try {
-      // Map to database columns
-      const dbUpdates: any = {};
-      if (updates.patient_id) dbUpdates.patient_id = updates.patient_id;
-      if (updates.start_time) dbUpdates.start_time = updates.start_time;
-      if (updates.end_time) dbUpdates.end_time = updates.end_time;
-      if (updates.status) dbUpdates.status = updates.status;
-      if (updates.payment_method) dbUpdates.payment_method = updates.payment_method;
-      if (updates.notes) dbUpdates.subjective = updates.notes;
-      if (updates.consultation_type_id) dbUpdates.consultation_type_id = updates.consultation_type_id;
-      if (updates.doctor_id) dbUpdates.doctor_id = updates.doctor_id;
+      const updateData: any = {};
+
+      // Only include fields that are provided in the update
+      if (appointmentData.patient_id) updateData.patient_id = appointmentData.patient_id;
       
+      // Format date and time if provided
+      if (appointmentData.date && appointmentData.time) {
+        const startTime = new Date(`${appointmentData.date}T${appointmentData.time}`);
+        updateData.start_time = startTime.toISOString();
+      }
+      
+      // Calculate end_time if provided
+      if (appointmentData.date && appointmentData.end_time) {
+        const endTime = new Date(`${appointmentData.date}T${appointmentData.end_time}`);
+        updateData.end_time = endTime.toISOString();
+      }
+      
+      if (appointmentData.status) updateData.status = appointmentData.status;
+      if (appointmentData.payment_method) updateData.payment_method = appointmentData.payment_method;
+      if (appointmentData.notes !== undefined) updateData.notes = appointmentData.notes;
+      if (appointmentData.consultation_type_id) updateData.consultation_type_id = appointmentData.consultation_type_id;
+      if (appointmentData.doctor_id) updateData.doctor_id = appointmentData.doctor_id;
+
       const { data, error } = await supabase
         .from("consultations")
-        .update(dbUpdates)
-        .eq('id', id)
-        .select()
-        .single();
+        .update(updateData)
+        .eq("id", appointmentId)
+        .select();
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error updating appointment:", error);
+        throw error;
+      }
+
+      // Return the updated appointment
+      return {
+        ...appointmentData as Appointment,
+        id: appointmentId
+      };
     } catch (error) {
-      console.error("Error updating appointment:", error);
+      console.error("Failed to update appointment:", error);
       throw error;
     }
   },
-  
-  async cancelAppointment(id: string) {
+
+  /**
+   * Cancels an appointment
+   */
+  async cancelAppointment(appointmentId: string): Promise<void> {
     try {
       const { error } = await supabase
         .from("consultations")
         .update({ status: "cancelado" })
-        .eq("id", id);
+        .eq("id", appointmentId);
 
-      if (error) throw error;
-      return { success: true };
+      if (error) {
+        console.error("Error canceling appointment:", error);
+        throw error;
+      }
     } catch (error) {
-      console.error("Error canceling appointment:", error);
-      throw error;
-    }
-  },
-  
-  async deleteAppointment(id: string) {
-    try {
-      const { error } = await supabase
-        .from("consultations")
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      return { success: true };
-    } catch (error) {
-      console.error("Error deleting appointment:", error);
+      console.error("Failed to cancel appointment:", error);
       throw error;
     }
   }

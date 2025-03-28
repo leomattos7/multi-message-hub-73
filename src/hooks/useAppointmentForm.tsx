@@ -1,18 +1,21 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Appointment } from "@/hooks/use-appointments";
-import { useAppointmentSubmission } from "@/hooks/useAppointmentSubmission";
+import { appointmentService } from "@/integrations/supabase/services/appointmentService";
+import { useQueryClient } from "@tanstack/react-query";
+import { patientService } from "@/integrations/supabase/services/patientService"; 
 
-interface AppointmentFormState {
+interface AppointmentFormData {
+  selectedDate: Date;
+  patientId: string;
   patientName: string;
-  status: string;
-  type: string;
-  paymentMethod: string;
-  notes: string;
   startTime: string;
   endTime: string;
-  selectedDate: Date;
+  status: "aguardando" | "confirmado" | "cancelado";
+  paymentMethod?: "Particular" | "Convênio";
+  notes: string;
+  type: string;
 }
 
 interface UseAppointmentFormProps {
@@ -22,100 +25,122 @@ interface UseAppointmentFormProps {
   onClose: () => void;
 }
 
-export function useAppointmentForm({
+export const useAppointmentForm = ({
   initialDate,
   initialTime,
   appointment,
   onClose
-}: UseAppointmentFormProps) {
-  // Form state
-  const [formState, setFormState] = useState<AppointmentFormState>({
-    patientName: "",
-    status: "aguardando",
-    type: "Consulta",
-    paymentMethod: "insurance",
-    notes: "",
-    startTime: initialTime || "08:00",
-    endTime: "09:00",
-    selectedDate: initialDate,
-  });
-  
-  const { isLoading, handleSubmit: submitAppointment } = useAppointmentSubmission();
-  
-  // Initialize form with appointment data if editing
-  useEffect(() => {
-    if (appointment) {
-      setFormState({
-        patientName: appointment.patient?.name || "",
-        status: appointment.status,
-        type: appointment.type,
-        paymentMethod: appointment.payment_method || "insurance",
-        notes: appointment.notes || "",
-        startTime: appointment.time,
-        endTime: appointment.end_time || calculateEndTime(appointment.time),
-        selectedDate: appointment.date ? new Date(appointment.date) : initialDate,
-      });
-    }
-  }, [appointment, initialDate]);
+}: UseAppointmentFormProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const isEditMode = !!appointment;
+  const queryClient = useQueryClient();
 
-  // Calculate default end time (1 hour after start time)
-  const calculateEndTime = (startTimeStr: string): string => {
-    const [hours, minutes] = startTimeStr.split(':').map(Number);
-    let endHours = hours + 1;
-    if (endHours >= 24) endHours = 23;
-    return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  // Set initial form state based on appointment data or defaults
+  const [formState, setFormState] = useState<AppointmentFormData>({
+    selectedDate: isEditMode ? new Date(appointment.date) : initialDate,
+    patientId: isEditMode ? appointment.patient_id : "",
+    patientName: isEditMode ? (appointment.patient?.full_name || "") : "",
+    startTime: isEditMode ? appointment.time : (initialTime || "08:00"),
+    endTime: isEditMode ? (appointment.end_time || "") : "",
+    status: isEditMode ? appointment.status : "aguardando",
+    paymentMethod: isEditMode ? appointment.payment_method : undefined,
+    notes: isEditMode ? (appointment.notes || "") : "",
+    type: isEditMode ? (appointment.consultation_type_id || "") : "",
+  });
+
+  // Helper to set a specific field value
+  const setField = (field: keyof AppointmentFormData, value: any) => {
+    setFormState(prev => ({ ...prev, [field]: value }));
   };
-  
-  // Field update handlers
-  const setField = <K extends keyof AppointmentFormState>(
-    field: K,
-    value: AppointmentFormState[K]
-  ) => {
-    setFormState((prev) => ({ ...prev, [field]: value }));
-  };
-  
-  // Handle time range changes
-  const handleTimeChange = (newStartTime: string, newEndTime: string) => {
-    setFormState((prev) => ({
+
+  // Handle time range selection
+  const handleTimeChange = (startTime: string, endTime: string) => {
+    setFormState(prev => ({
       ...prev,
-      startTime: newStartTime,
-      endTime: newEndTime
+      startTime,
+      endTime
     }));
   };
-  
-  // Form validation
-  const validateForm = (): boolean => {
-    if (!formState.patientName.trim()) {
-      toast.error("Por favor, informe o nome do paciente");
-      return false;
+
+  // Handle form submission
+  const handleSubmit = async () => {
+    try {
+      setIsLoading(true);
+
+      // Validate form data
+      if (!formState.patientName.trim()) {
+        toast.error("O nome do paciente é obrigatório");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!formState.startTime) {
+        toast.error("O horário de início é obrigatório");
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if patient exists or create a new one
+      let patientId = formState.patientId;
+      if (!patientId) {
+        const newPatient = await patientService.createPatient({
+          full_name: formState.patientName,
+        });
+        patientId = newPatient.id;
+      }
+
+      const date = formState.selectedDate.toISOString().split('T')[0];
+
+      if (isEditMode && appointment) {
+        // Update existing appointment
+        await appointmentService.updateAppointment(appointment.id, {
+          date,
+          time: formState.startTime,
+          end_time: formState.endTime,
+          patient_id: patientId,
+          status: formState.status,
+          payment_method: formState.paymentMethod,
+          notes: formState.notes,
+          consultation_type_id: formState.type,
+        });
+
+        toast.success("Consulta atualizada com sucesso");
+      } else {
+        // Create new appointment
+        await appointmentService.createAppointment({
+          date,
+          time: formState.startTime,
+          end_time: formState.endTime,
+          patient_id: patientId,
+          doctor_id: "current-doctor-id", // This should come from authentication context
+          status: formState.status,
+          payment_method: formState.paymentMethod,
+          notes: formState.notes,
+          consultation_type_id: formState.type,
+        });
+
+        toast.success("Consulta agendada com sucesso");
+      }
+
+      // Invalidate queries to refetch appointments
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+
+      // Close dialog
+      onClose();
+    } catch (error) {
+      console.error("Error saving appointment:", error);
+      toast.error("Erro ao salvar consulta");
+    } finally {
+      setIsLoading(false);
     }
-    return true;
-  };
-  
-  // Form submission handler
-  const handleSubmit = () => {
-    if (!validateForm()) return;
-    
-    submitAppointment({
-      appointment,
-      patientName: formState.patientName,
-      status: formState.status,
-      type: formState.type,
-      paymentMethod: formState.paymentMethod,
-      notes: formState.notes,
-      startTime: formState.startTime,
-      endTime: formState.endTime,
-      selectedDate: formState.selectedDate,
-      onClose
-    });
   };
 
   return {
     formState,
     isLoading,
-    isEditMode: !!appointment,
+    isEditMode,
     setField,
     handleTimeChange,
-    handleSubmit,
+    handleSubmit
   };
-}
+};

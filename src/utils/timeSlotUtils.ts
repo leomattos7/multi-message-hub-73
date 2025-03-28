@@ -1,4 +1,5 @@
 
+// Import Appointment from the hook where it's defined and exported
 import { Appointment } from "@/hooks/use-appointments";
 
 // Generate all possible time slots from 00:00 to 23:30 in 30-minute intervals

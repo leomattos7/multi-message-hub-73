@@ -26,15 +26,15 @@ export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
     queryFn: async () => {
       if (!patientId) return [];
       
+      // This is a temporary type cast until the database tables are updated properly
       const { data, error } = await supabase
-        .from("lab_exams")
+        .from("lab_exams" as any) // Type cast to any to bypass type checking
         .select("*")
         .eq("patient_id", patientId)
-        .order("exam_date", { ascending: false })
-        .limit(3);
+        .order("exam_date", { ascending: false });
       
       if (error) throw error;
-      return data as LabExam[];
+      return data as unknown as LabExam[];
     },
     enabled: !!patientId,
   });
@@ -45,7 +45,7 @@ export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
       if (!patientId) throw new Error("Patient ID is required");
       
       const { data, error } = await supabase
-        .from("lab_exams")
+        .from("lab_exams" as any) // Type cast to any to bypass type checking
         .insert({
           ...examData,
           patient_id: patientId,
@@ -80,7 +80,7 @@ export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
       if (!patientId) throw new Error("Patient ID is required");
       
       const { error } = await supabase
-        .from("lab_exams")
+        .from("lab_exams" as any) // Type cast to any to bypass type checking
         .delete()
         .eq("id", examId)
         .eq("patient_id", patientId);

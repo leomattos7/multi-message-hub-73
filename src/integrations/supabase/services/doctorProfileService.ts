@@ -1,269 +1,239 @@
 
-import { supabase, getCurrentUserId } from '../client';
+import { supabase } from "@/integrations/supabase/client";
+import { DoctorProfile, DoctorLink } from "@/components/DoctorProfile/types";
 
 export const doctorProfileService = {
-  async getProfileByDoctorId(doctorId: string) {
+  /**
+   * Gets a doctor's profile by their ID
+   */
+  async getProfileByDoctorId(doctorId: string): Promise<DoctorProfile | null> {
     try {
-      console.log("Getting profile for doctor ID:", doctorId);
+      console.log("Fetching profile for doctor ID:", doctorId);
       
-      // Get the profile using a direct query
       const { data, error } = await supabase
-        .from('doctor_profiles')
-        .select('*')
-        .eq('id', doctorId)
-        .maybeSingle();
-      
+        .from("doctor_profiles")
+        .select("*")
+        .eq("id", doctorId)
+        .single();
+
       if (error) {
         console.error("Error fetching doctor profile:", error);
         throw error;
       }
-      
-      return data;
-    } catch (error: any) {
-      console.error("Error in getProfileByDoctorId:", error);
-      throw error;
+
+      return data as DoctorProfile;
+    } catch (error) {
+      console.error("Failed to get doctor profile:", error);
+      return null;
     }
   },
-  
-  async getProfileBySlug(slug: string) {
-    const { data, error } = await supabase
-      .from('doctor_profiles')
-      .select(`
-        *,
-        doctor_links(*)
-      `)
-      .eq('public_url_slug', slug)
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-  
-  async createProfile(doctorId: string, profile: any) {
+
+  /**
+   * Gets a doctor's profile by their URL slug
+   */
+  async getProfileBySlug(slug: string): Promise<DoctorProfile | null> {
     try {
-      // Make sure the slug is unique
-      const slug = profile.public_url_slug.toLowerCase().replace(/\s+/g, '-');
-      
-      console.log("Checking if slug exists:", slug);
-      const { data: existingProfile, error: checkError } = await supabase
-        .from('doctor_profiles')
-        .select('public_url_slug')
-        .eq('public_url_slug', slug)
-        .maybeSingle();
-        
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error("Error checking slug existence:", checkError);
-        throw checkError;
-      }
-      
-      if (existingProfile) {
-        console.error("Slug already exists:", slug);
-        throw new Error('Este nome de URL já está em uso. Por favor, escolha outro.');
-      }
-      
-      console.log("Creating profile with doctor ID:", doctorId);
-      
-      // Use the RPC function to create the profile
-      const { error } = await supabase.rpc('create_doctor_profile', {
-        p_id: doctorId,
-        p_bio: profile.bio || null,
-        p_specialty: profile.specialty || null,
-        p_name: profile.name || null,
-        p_email: profile.email || null,
-        p_phone: profile.phone || null,
-        p_address: profile.address || null,
-        p_profile_image_url: profile.profile_image_url || null,
-        p_public_url_slug: slug,
-        p_theme: profile.theme || 'default'
-      });
-      
-      if (error) {
-        console.error("Error creating profile:", error);
-        throw error;
-      }
-      
-      // Get the created profile
-      const { data: newProfile, error: getError } = await supabase
-        .from('doctor_profiles')
-        .select('*')
-        .eq('id', doctorId)
-        .single();
-        
-      if (getError) {
-        console.error("Error retrieving created profile:", getError);
-        throw getError;
-      }
-      
-      console.log("Profile created successfully:", newProfile);
-      return newProfile;
-    } catch (error: any) {
-      console.error("Error in createProfile:", error);
-      throw error;
-    }
-  },
-  
-  async updateProfile(doctorId: string, updates: any) {
-    try {
-      console.log("Updating profile for doctor ID:", doctorId);
-      
-      // First check if profile exists
-      const existingProfile = await this.getProfileByDoctorId(doctorId);
-      
-      if (!existingProfile) {
-        console.error("Profile not found for doctor ID:", doctorId);
-        throw new Error('Perfil não encontrado');
-      }
-      
-      // Use the RPC function to update the profile
-      const { error } = await supabase.rpc('update_doctor_profile', {
-        p_id: doctorId,
-        p_bio: updates.bio || null,
-        p_specialty: updates.specialty || null,
-        p_name: updates.name || null,
-        p_email: updates.email || null,
-        p_phone: updates.phone || null,
-        p_address: updates.address || null,
-        p_profile_image_url: updates.profile_image_url || null,
-        p_theme: updates.theme || 'default'
-      });
-      
-      if (error) {
-        console.error("Error updating profile:", error);
-        throw error;
-      }
-      
-      // Get the updated profile
-      const { data: updatedProfile, error: getError } = await supabase
-        .from('doctor_profiles')
-        .select('*')
-        .eq('id', doctorId)
-        .single();
-        
-      if (getError) {
-        console.error("Error retrieving updated profile:", getError);
-        throw getError;
-      }
-      
-      console.log("Profile updated successfully:", updatedProfile);
-      return updatedProfile;
-    } catch (error: any) {
-      console.error("Error in updateProfile:", error);
-      throw error;
-    }
-  },
-  
-  async getLinksByDoctorId(doctorId: string) {
-    try {
-      console.log("Getting links for doctor ID:", doctorId);
-      
-      // First check if profile exists
-      const existingProfile = await this.getProfileByDoctorId(doctorId);
-      
-      if (!existingProfile) {
-        console.log("No profile found for doctor ID:", doctorId);
-        return [];
-      }
-      
       const { data, error } = await supabase
-        .from('doctor_links')
-        .select('*')
-        .eq('doctor_id', doctorId)
-        .order('display_order', { ascending: true });
-      
+        .from("doctor_profiles")
+        .select("*")
+        .eq("public_url_slug", slug)
+        .single();
+
+      if (error) {
+        console.error("Error fetching doctor profile by slug:", error);
+        throw error;
+      }
+
+      return data as DoctorProfile;
+    } catch (error) {
+      console.error("Failed to get doctor profile by slug:", error);
+      return null;
+    }
+  },
+
+  /**
+   * Creates a new doctor profile
+   */
+  async createProfile(doctorId: string, profileData: Partial<DoctorProfile>): Promise<DoctorProfile> {
+    try {
+      const { data, error } = await supabase
+        .from("doctor_profiles")
+        .insert({
+          id: doctorId,
+          bio: profileData.bio || null,
+          specialty: profileData.specialty || null,
+          profile_image_url: profileData.profile_image_url || null,
+          public_url_slug: profileData.public_url_slug,
+          theme: profileData.theme || 'default',
+          name: profileData.name || null,
+          email: profileData.email || null,
+          phone: profileData.phone || null,
+          address: profileData.address || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating doctor profile:", error);
+        throw error;
+      }
+
+      return data as DoctorProfile;
+    } catch (error) {
+      console.error("Failed to create doctor profile:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Updates an existing doctor profile
+   */
+  async updateProfile(doctorId: string, profileData: Partial<DoctorProfile>): Promise<DoctorProfile> {
+    try {
+      const { data, error } = await supabase
+        .from("doctor_profiles")
+        .update({
+          bio: profileData.bio,
+          specialty: profileData.specialty,
+          profile_image_url: profileData.profile_image_url,
+          theme: profileData.theme,
+          name: profileData.name,
+          email: profileData.email,
+          phone: profileData.phone,
+          address: profileData.address,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", doctorId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating doctor profile:", error);
+        throw error;
+      }
+
+      return data as DoctorProfile;
+    } catch (error) {
+      console.error("Failed to update doctor profile:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Gets all links for a doctor
+   */
+  async getLinksByDoctorId(doctorId: string): Promise<DoctorLink[]> {
+    try {
+      const { data, error } = await supabase
+        .from("doctor_links")
+        .select("*")
+        .eq("doctor_id", doctorId)
+        .order("display_order", { ascending: true });
+
       if (error) {
         console.error("Error fetching doctor links:", error);
         throw error;
       }
-      
-      return data;
-    } catch (error: any) {
-      console.error("Error in getLinksByDoctorId:", error);
+
+      return data as DoctorLink[];
+    } catch (error) {
+      console.error("Failed to get doctor links:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Creates a new link for a doctor
+   */
+  async createLink(linkData: Omit<DoctorLink, 'id' | 'created_at' | 'updated_at'>): Promise<DoctorLink> {
+    try {
+      // Get highest display order
+      const { data: existingLinks } = await supabase
+        .from("doctor_links")
+        .select("display_order")
+        .eq("doctor_id", linkData.doctor_id)
+        .order("display_order", { ascending: false })
+        .limit(1);
+
+      const nextDisplayOrder = existingLinks?.length ? (existingLinks[0].display_order || 0) + 1 : 0;
+
+      const { data, error } = await supabase
+        .from("doctor_links")
+        .insert({
+          doctor_id: linkData.doctor_id,
+          title: linkData.title,
+          url: linkData.url,
+          icon: linkData.icon,
+          is_active: linkData.is_active,
+          display_order: nextDisplayOrder,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating doctor link:", error);
+        throw error;
+      }
+
+      return data as DoctorLink;
+    } catch (error) {
+      console.error("Failed to create doctor link:", error);
       throw error;
     }
   },
-  
-  async createLink(link: any) {
-    // Add the current user ID if not provided
-    if (!link.doctor_id) {
-      const userId = await getCurrentUserId();
-      if (!userId) throw new Error("User not authenticated");
-      link.doctor_id = userId;
+
+  /**
+   * Updates an existing link
+   */
+  async updateLink(linkId: string, linkData: Partial<DoctorLink>): Promise<DoctorLink> {
+    try {
+      const { data, error } = await supabase
+        .from("doctor_links")
+        .update({
+          title: linkData.title,
+          url: linkData.url,
+          icon: linkData.icon,
+          is_active: linkData.is_active,
+          display_order: linkData.display_order,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", linkId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating doctor link:", error);
+        throw error;
+      }
+
+      return data as DoctorLink;
+    } catch (error) {
+      console.error("Failed to update doctor link:", error);
+      throw error;
     }
-    
-    // Get the current highest display order
-    const { data: links, error: fetchError } = await supabase
-      .from('doctor_links')
-      .select('display_order')
-      .eq('doctor_id', link.doctor_id)
-      .order('display_order', { ascending: false })
-      .limit(1);
-    
-    if (fetchError) throw fetchError;
-    
-    const nextOrder = links && links.length > 0 ? (links[0] as any).display_order + 1 : 1;
-    
-    const { data, error } = await supabase
-      .from('doctor_links')
-      .insert({
-        doctor_id: link.doctor_id,
-        title: link.title,
-        url: link.url,
-        icon: link.icon,
-        is_active: link.is_active !== undefined ? link.is_active : true,
-        display_order: nextOrder
-      })
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
   },
-  
-  async updateLink(linkId: string, updates: any) {
-    const userId = await getCurrentUserId();
-    if (!userId) throw new Error("User not authenticated");
-    
-    const { data, error } = await supabase
-      .from('doctor_links')
-      .update(updates)
-      .eq('id', linkId)
-      .eq('doctor_id', userId)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-  
-  async deleteLink(linkId: string) {
-    const userId = await getCurrentUserId();
-    if (!userId) throw new Error("User not authenticated");
-    
-    const { error } = await supabase
-      .from('doctor_links')
-      .delete()
-      .eq('id', linkId)
-      .eq('doctor_id', userId);
-    
-    if (error) throw error;
-    return { success: true };
-  },
-  
-  async reorderLinks(doctorId: string, linkIds: string[]) {
-    const userId = await getCurrentUserId();
-    if (!userId) throw new Error("User not authenticated");
-    
-    // Update each link with its new display order
-    const updates = linkIds.map((id, index) => {
-      return supabase
-        .from('doctor_links')
-        .update({ display_order: index + 1 })
-        .eq('id', id)
-        .eq('doctor_id', userId);
-    });
-    
-    await Promise.all(updates);
-    
-    return { success: true };
+
+  /**
+   * Deletes a link
+   */
+  async deleteLink(linkId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from("doctor_links")
+        .delete()
+        .eq("id", linkId);
+
+      if (error) {
+        console.error("Error deleting doctor link:", error);
+        throw error;
+      }
+    } catch (error) {
+      console.error("Failed to delete doctor link:", error);
+      throw error;
+    }
   }
 };

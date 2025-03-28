@@ -15,7 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { generateAllTimeSlots } from "@/utils/timeSlotUtils";
 
-type Availability = {
+export type Availability = {
   id?: string;
   doctor_id: string;
   day_of_week: number;
@@ -116,8 +116,14 @@ export function VisualWeeklySchedule({
       }
       
       if (data && data.length > 0) {
+        // Transform DB response to ensure it matches our Availability type
+        const transformedData = data.map(item => ({
+          ...item,
+          is_available: true // Ensure is_available is set
+        })) as Availability[];
+        
         // Update state with the inserted record (now with an ID)
-        const updatedAvailability = [...availability, data[0]];
+        const updatedAvailability = [...availability, ...transformedData];
         setAvailability(updatedAvailability);
         onAvailabilityChange(updatedAvailability);
         
