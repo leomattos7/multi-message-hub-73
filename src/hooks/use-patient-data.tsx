@@ -42,16 +42,16 @@ export const usePatientData = (patientId?: string) => {
     const { error } = await supabase
       .from("patients")
       .update({
-        full_name: updatedPatient.name || updatedPatient.full_name,
+        full_name: updatedPatient.full_name || updatedPatient.name || "",
         email: updatedPatient.email || null,
         phone: updatedPatient.phone || null,
         address: updatedPatient.address || null,
         notes: updatedPatient.notes || null,
-        date_of_birth: updatedPatient.birth_date || updatedPatient.date_of_birth || null,
+        date_of_birth: updatedPatient.date_of_birth || updatedPatient.birth_date || null,
         biological_sex: updatedPatient.biological_sex as "Masculino" | "Feminino" | "Intersexo" | "Não Informado" || null,
         gender_identity: updatedPatient.gender_identity as "Não Informado" | "Homem" | "Mulher" | "Não-Binário" | "Outro" || null,
         cpf: updatedPatient.cpf || null,
-        payment_form: updatedPatient.payment_method || updatedPatient.payment_form as "Particular" | "Convênio" || null
+        payment_form: (updatedPatient.payment_form || updatedPatient.payment_method) as "Particular" | "Convênio" || null
       })
       .eq("id", patientId);
 

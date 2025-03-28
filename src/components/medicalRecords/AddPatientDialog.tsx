@@ -7,7 +7,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -19,14 +18,14 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NewPatient {
-  name: string;
+  full_name: string;
   email: string;
   phone: string;
   address: string;
   notes: string;
-  payment_method: string;
+  payment_form: string;
   insurance_name: string;
-  birth_date: string;
+  date_of_birth: string;
   biological_sex: string;
   gender_identity: string;
   cpf: string;
@@ -46,21 +45,21 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
   onRefetch
 }) => {
   const [newPatient, setNewPatient] = useState<NewPatient>({
-    name: "",
+    full_name: "",
     email: "",
     phone: "",
     address: "",
     notes: "",
-    payment_method: "particular",
+    payment_form: "Particular",
     insurance_name: "",
-    birth_date: "",
+    date_of_birth: "",
     biological_sex: "",
     gender_identity: "",
     cpf: ""
   });
 
   const handleAddPatient = async () => {
-    if (!newPatient.name) {
+    if (!newPatient.full_name) {
       toast({
         title: "Campo obrigatório",
         description: "O nome do paciente é obrigatório.",
@@ -73,17 +72,16 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
       const { data, error } = await supabase
         .from("patients")
         .insert({
-          name: newPatient.name,
+          full_name: newPatient.full_name,
           email: newPatient.email || null,
           phone: newPatient.phone || null,
           address: newPatient.address || null,
           notes: newPatient.notes || null,
-          payment_method: newPatient.payment_method || "particular",
-          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
-          birth_date: newPatient.birth_date || null,
-          biological_sex: newPatient.biological_sex || null,
-          gender_identity: newPatient.gender_identity || null,
-          cpf: newPatient.cpf || null
+          payment_form: newPatient.payment_form as "Particular" | "Convênio" || "Particular",
+          cpf: newPatient.cpf || null,
+          date_of_birth: newPatient.date_of_birth || null,
+          biological_sex: newPatient.biological_sex as "Masculino" | "Feminino" | "Intersexo" | "Não Informado" || null,
+          gender_identity: newPatient.gender_identity as "Não Informado" | "Homem" | "Mulher" | "Não-Binário" | "Outro" || null
         })
         .select();
 
@@ -95,14 +93,14 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
       });
 
       setNewPatient({
-        name: "",
+        full_name: "",
         email: "",
         phone: "",
         address: "",
         notes: "",
-        payment_method: "particular",
+        payment_form: "Particular",
         insurance_name: "",
-        birth_date: "",
+        date_of_birth: "",
         biological_sex: "",
         gender_identity: "",
         cpf: ""
@@ -136,11 +134,11 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
       
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome Completo*</Label>
+            <Label htmlFor="full_name">Nome Completo*</Label>
             <Input
-              id="name"
-              value={newPatient.name}
-              onChange={(e) => setNewPatient({...newPatient, name: e.target.value})}
+              id="full_name"
+              value={newPatient.full_name}
+              onChange={(e) => setNewPatient({...newPatient, full_name: e.target.value})}
               placeholder="Digite o nome do paciente"
             />
           </div>
@@ -156,12 +154,12 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="birth_date">Data de Nascimento</Label>
+            <Label htmlFor="date_of_birth">Data de Nascimento</Label>
             <Input
-              id="birth_date"
+              id="date_of_birth"
               type="date"
-              value={newPatient.birth_date}
-              onChange={(e) => setNewPatient({...newPatient, birth_date: e.target.value})}
+              value={newPatient.date_of_birth}
+              onChange={(e) => setNewPatient({...newPatient, date_of_birth: e.target.value})}
             />
           </div>
           
@@ -175,10 +173,10 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
                 <SelectValue placeholder="Selecione o sexo biológico" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="male">Masculino</SelectItem>
-                <SelectItem value="female">Feminino</SelectItem>
-                <SelectItem value="intersex">Intersexo</SelectItem>
-                <SelectItem value="not_informed">Não Informado</SelectItem>
+                <SelectItem value="Masculino">Masculino</SelectItem>
+                <SelectItem value="Feminino">Feminino</SelectItem>
+                <SelectItem value="Intersexo">Intersexo</SelectItem>
+                <SelectItem value="Não Informado">Não Informado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -193,11 +191,11 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
                 <SelectValue placeholder="Selecione a identidade de gênero" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="man">Homem</SelectItem>
-                <SelectItem value="woman">Mulher</SelectItem>
-                <SelectItem value="non_binary">Não-Binário</SelectItem>
-                <SelectItem value="other">Outro</SelectItem>
-                <SelectItem value="not_informed">Não Informado</SelectItem>
+                <SelectItem value="Homem">Homem</SelectItem>
+                <SelectItem value="Mulher">Mulher</SelectItem>
+                <SelectItem value="Não-Binário">Não-Binário</SelectItem>
+                <SelectItem value="Outro">Outro</SelectItem>
+                <SelectItem value="Não Informado">Não Informado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -236,22 +234,22 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
           <div className="space-y-2">
             <Label>Forma de Pagamento</Label>
             <RadioGroup 
-              value={newPatient.payment_method} 
-              onValueChange={(value) => setNewPatient({...newPatient, payment_method: value})}
+              value={newPatient.payment_form} 
+              onValueChange={(value) => setNewPatient({...newPatient, payment_form: value})}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="particular" id="particular" />
+                <RadioGroupItem value="Particular" id="particular" />
                 <Label htmlFor="particular">Particular</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="convenio" id="convenio" />
+                <RadioGroupItem value="Convênio" id="convenio" />
                 <Label htmlFor="convenio">Convênio</Label>
               </div>
             </RadioGroup>
           </div>
         
-          {newPatient.payment_method === "convenio" && (
+          {newPatient.payment_form === "Convênio" && (
             <div className="space-y-2">
               <Label htmlFor="insurance_name">Nome do Convênio</Label>
               <Input
