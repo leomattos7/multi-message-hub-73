@@ -21,16 +21,18 @@ export const PreConsultationTab: React.FC = () => {
   const [preConsultData, setPreConsultData] = useState(initialPreConsultData);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  const [editingUnit, setEditingUnit] = useState("");
 
-  const handleEdit = (id: string, value: string) => {
+  const handleEdit = (id: string, value: string, unit: string) => {
     setEditingId(id);
     setEditingValue(value);
+    setEditingUnit(unit);
   };
 
   const handleSave = (id: string) => {
     setPreConsultData(
       preConsultData.map((item) =>
-        item.id === id ? { ...item, value: editingValue } : item
+        item.id === id ? { ...item, value: editingValue, unit: editingUnit } : item
       )
     );
     setEditingId(null);
@@ -69,7 +71,17 @@ export const PreConsultationTab: React.FC = () => {
                     item.value
                   )}
                 </TableCell>
-                <TableCell>{item.unit}</TableCell>
+                <TableCell>
+                  {editingId === item.id ? (
+                    <Input
+                      value={editingUnit}
+                      onChange={(e) => setEditingUnit(e.target.value)}
+                      className="w-full"
+                    />
+                  ) : (
+                    item.unit
+                  )}
+                </TableCell>
                 <TableCell>
                   {editingId === item.id ? (
                     <div className="flex space-x-1">
@@ -92,7 +104,7 @@ export const PreConsultationTab: React.FC = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => handleEdit(item.id, item.value)}
+                      onClick={() => handleEdit(item.id, item.value, item.unit)}
                     >
                       <PencilIcon className="h-4 w-4" />
                     </Button>
