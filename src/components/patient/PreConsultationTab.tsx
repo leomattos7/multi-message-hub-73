@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PencilIcon, CheckIcon, XIcon, PlusIcon, HistoryIcon, Settings2Icon, BotIcon, UserIcon } from "lucide-react";
+import { PencilIcon, CheckIcon, XIcon, PlusIcon, HistoryIcon, Settings2Icon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -96,14 +96,14 @@ const initialGroups = [
     name: "Dados gerais",
     isDefault: true,
     parameters: [
-      { id: "1", field: "Peso", value: "72 kg", unit: "kg", collectedAt: new Date().toISOString(), createdBy: "human" },
-      { id: "2", field: "Altura", value: "175", unit: "cm", collectedAt: new Date().toISOString(), createdBy: "ai" },
-      { id: "3", field: "Pressão Arterial", value: "120/80", unit: "mmHg", collectedAt: new Date().toISOString(), createdBy: "human" },
-      { id: "4", field: "Temperatura", value: "36.5", unit: "°C", collectedAt: new Date().toISOString(), createdBy: "ai" },
-      { id: "5", field: "Frequência Cardíaca", value: "75", unit: "bpm", collectedAt: new Date().toISOString(), createdBy: "human" },
-      { id: "6", field: "Frequência Respiratória", value: "16", unit: "irpm", collectedAt: new Date().toISOString(), createdBy: "ai" },
-      { id: "7", field: "Saturação O2", value: "98", unit: "%", collectedAt: new Date().toISOString(), createdBy: "human" },
-      { id: "8", field: "Glicemia", value: "95", unit: "mg/dL", collectedAt: new Date().toISOString(), createdBy: "ai" },
+      { id: "1", field: "Peso", value: "72 kg", unit: "kg", collectedAt: new Date().toISOString() },
+      { id: "2", field: "Altura", value: "175", unit: "cm", collectedAt: new Date().toISOString() },
+      { id: "3", field: "Pressão Arterial", value: "120/80", unit: "mmHg", collectedAt: new Date().toISOString() },
+      { id: "4", field: "Temperatura", value: "36.5", unit: "°C", collectedAt: new Date().toISOString() },
+      { id: "5", field: "Frequência Cardíaca", value: "75", unit: "bpm", collectedAt: new Date().toISOString() },
+      { id: "6", field: "Frequência Respiratória", value: "16", unit: "irpm", collectedAt: new Date().toISOString() },
+      { id: "7", field: "Saturação O2", value: "98", unit: "%", collectedAt: new Date().toISOString() },
+      { id: "8", field: "Glicemia", value: "95", unit: "mg/dL", collectedAt: new Date().toISOString() },
     ] 
   },
   { 
@@ -111,7 +111,7 @@ const initialGroups = [
     name: "Histórico Familiar",
     isDefault: true,
     parameters: [
-      { id: "9", field: "Diabetes na família", value: "Sim", unit: "", collectedAt: new Date().toISOString(), createdBy: "human" },
+      { id: "9", field: "Diabetes na família", value: "Sim", unit: "", collectedAt: new Date().toISOString() },
     ]
   },
   { 
@@ -119,8 +119,8 @@ const initialGroups = [
     name: "Estilo de vida",
     isDefault: true,
     parameters: [
-      { id: "10", field: "Atividade física", value: "2x/semana", unit: "", collectedAt: new Date().toISOString(), createdBy: "ai" },
-      { id: "11", field: "Tabagismo", value: "Não", unit: "", collectedAt: new Date().toISOString(), createdBy: "human" },
+      { id: "10", field: "Atividade física", value: "2x/semana", unit: "", collectedAt: new Date().toISOString() },
+      { id: "11", field: "Tabagismo", value: "Não", unit: "", collectedAt: new Date().toISOString() },
     ]
   },
   { 
@@ -128,18 +128,10 @@ const initialGroups = [
     name: "Sexual e reprodutivo",
     isDefault: true,
     parameters: [
-      { id: "12", field: "Ciclo menstrual", value: "Regular", unit: "", collectedAt: new Date().toISOString(), createdBy: "ai" },
+      { id: "12", field: "Ciclo menstrual", value: "Regular", unit: "", collectedAt: new Date().toISOString() },
     ]
   },
 ];
-
-// Also update the historicalData to include the createdBy property
-for (const id in historicalData) {
-  historicalData[id as keyof typeof historicalData].forEach((item, index) => {
-    // Alternate between human and AI for the historical data
-    item.createdBy = index % 2 === 0 ? "human" : "ai";
-  });
-}
 
 export const PreConsultationTab: React.FC = () => {
   const [groups, setGroups] = useState(initialGroups);
@@ -158,8 +150,7 @@ export const PreConsultationTab: React.FC = () => {
     field: "",
     value: "",
     unit: "",
-    collectedAt: new Date().toISOString(),
-    createdBy: "human" // Default to human for new parameters
+    collectedAt: new Date().toISOString()
   });
 
   // Handle group editing
@@ -277,8 +268,7 @@ export const PreConsultationTab: React.FC = () => {
                 field: newParameter.field,
                 value: newParameter.value,
                 unit: newParameter.unit,
-                collectedAt: new Date().toISOString(),
-                createdBy: newParameter.createdBy
+                collectedAt: new Date().toISOString()
               },
               ...group.parameters
             ]
@@ -292,8 +282,7 @@ export const PreConsultationTab: React.FC = () => {
         field: "",
         value: "",
         unit: "",
-        collectedAt: new Date().toISOString(),
-        createdBy: "human"
+        collectedAt: new Date().toISOString()
       });
     }
   };
@@ -410,7 +399,6 @@ export const PreConsultationTab: React.FC = () => {
                         <TableHead>Valor</TableHead>
                         <TableHead>Unidade</TableHead>
                         <TableHead>Data de Registro</TableHead>
-                        <TableHead>Origem</TableHead>
                         <TableHead className="w-[100px]">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -442,26 +430,6 @@ export const PreConsultationTab: React.FC = () => {
                             />
                           </TableCell>
                           <TableCell>{formatDateLocal(newParameter.collectedAt)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={`h-8 w-8 p-0 ${newParameter.createdBy === "human" ? "bg-blue-100" : ""}`}
-                                onClick={() => setNewParameter({...newParameter, createdBy: "human"})}
-                              >
-                                <UserIcon className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={`h-8 w-8 p-0 ${newParameter.createdBy === "ai" ? "bg-green-100" : ""}`}
-                                onClick={() => setNewParameter({...newParameter, createdBy: "ai"})}
-                              >
-                                <BotIcon className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
                           <TableCell>
                             <div className="flex space-x-1">
                               <Button
@@ -511,31 +479,8 @@ export const PreConsultationTab: React.FC = () => {
                                       {getParameterHistory(item.id).length > 0 ? (
                                         <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                                           <div className="flex justify-between items-center text-sm bg-blue-50 p-2 rounded border border-blue-200">
-                                            <div className="flex items-center space-x-2">
+                                            <div>
                                               <span className="font-medium">{item.value}</span> {item.unit}
-                                              {item.createdBy === "human" ? (
-                                                <TooltipProvider>
-                                                  <Tooltip>
-                                                    <TooltipTrigger>
-                                                      <UserIcon className="h-3.5 w-3.5 text-blue-600" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                      <p>Input humano</p>
-                                                    </TooltipContent>
-                                                  </Tooltip>
-                                                </TooltipProvider>
-                                              ) : (
-                                                <TooltipProvider>
-                                                  <Tooltip>
-                                                    <TooltipTrigger>
-                                                      <BotIcon className="h-3.5 w-3.5 text-green-600" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                      <p>Assistente IA</p>
-                                                    </TooltipContent>
-                                                  </Tooltip>
-                                                </TooltipProvider>
-                                              )}
                                             </div>
                                             <div className="text-xs text-muted-foreground flex items-center">
                                               <span className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded mr-1">Atual</span>
@@ -544,31 +489,8 @@ export const PreConsultationTab: React.FC = () => {
                                           </div>
                                           {getParameterHistory(item.id).map((historyItem, index) => (
                                             <div key={index} className="flex justify-between items-center text-sm bg-muted/50 p-2 rounded">
-                                              <div className="flex items-center space-x-2">
+                                              <div>
                                                 <span className="font-medium">{historyItem.value}</span> {historyItem.unit}
-                                                {historyItem.createdBy === "human" ? (
-                                                  <TooltipProvider>
-                                                    <Tooltip>
-                                                      <TooltipTrigger>
-                                                        <UserIcon className="h-3.5 w-3.5 text-blue-600" />
-                                                      </TooltipTrigger>
-                                                      <TooltipContent>
-                                                        <p>Input humano</p>
-                                                      </TooltipContent>
-                                                    </Tooltip>
-                                                  </TooltipProvider>
-                                                ) : (
-                                                  <TooltipProvider>
-                                                    <Tooltip>
-                                                      <TooltipTrigger>
-                                                        <BotIcon className="h-3.5 w-3.5 text-green-600" />
-                                                      </TooltipTrigger>
-                                                      <TooltipContent>
-                                                        <p>Assistente IA</p>
-                                                      </TooltipContent>
-                                                    </Tooltip>
-                                                  </TooltipProvider>
-                                                )}
                                               </div>
                                               <div className="text-xs text-muted-foreground">
                                                 {formatDateLocal(historyItem.collectedAt)}
@@ -610,22 +532,6 @@ export const PreConsultationTab: React.FC = () => {
                             )}
                           </TableCell>
                           <TableCell>{formatDateLocal(item.collectedAt)}</TableCell>
-                          <TableCell>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  {item.createdBy === "human" ? (
-                                    <UserIcon className="h-4 w-4 text-blue-600" />
-                                  ) : (
-                                    <BotIcon className="h-4 w-4 text-green-600" />
-                                  )}
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{item.createdBy === "human" ? "Input humano" : "Assistente IA"}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </TableCell>
                           <TableCell>
                             {editingId === item.id ? (
                               <div className="flex space-x-1">
