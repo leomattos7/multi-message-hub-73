@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -71,21 +70,20 @@ export default function SignUp() {
         return;
       }
       
-      // Create employee record
-      const { error: empError } = await supabase
-        .from("employees")
+      // Create profile record
+      const { error: profileError } = await supabase
+        .from("profiles")
         .insert([
           {
             id: authData.user.id,
-            name: data.name,
-            email: data.email,
-            role: "admin", // Using the standardized role
-            status: "active"
+            full_name: data.name,
+            role: "admin", // Using the standardized role in the profiles table
+            phone: data.phone || null
           }
         ]);
         
-      if (empError) {
-        console.error("Error creating employee record:", empError);
+      if (profileError) {
+        console.error("Error creating profile record:", profileError);
         // Continue anyway since the auth user was created
       }
       
@@ -101,19 +99,6 @@ export default function SignUp() {
         };
         
         localStorage.setItem("user", JSON.stringify(userData));
-        
-        // Initialize collections if they don't exist
-        if (!localStorage.getItem("patients")) {
-          localStorage.setItem("patients", "[]");
-        }
-        
-        if (!localStorage.getItem("appointments")) {
-          localStorage.setItem("appointments", "[]");
-        }
-        
-        if (!localStorage.getItem("conversations")) {
-          localStorage.setItem("conversations", "[]");
-        }
       
         toast.success("Conta criada com sucesso!");
         // Navigate directly to home page after signup

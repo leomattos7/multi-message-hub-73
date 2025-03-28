@@ -6,10 +6,10 @@ export interface Patient {
   address?: any;
   notes?: string;
   date_of_birth?: string;
-  biological_sex?: string;
-  gender_identity?: string;
+  biological_sex?: "Masculino" | "Feminino" | "Intersexo" | "Não Informado";
+  gender_identity?: "Não Informado" | "Homem" | "Mulher" | "Não-Binário" | "Outro";
   cpf?: string;
-  payment_form?: string;
+  payment_form?: "Particular" | "Convênio";
   full_name: string;
   doctor_id?: string;
   created_at?: string;
@@ -20,6 +20,7 @@ export interface Patient {
   birth_date?: string;
   insurance_name?: string;
   payment_method?: string;
+  record_count?: number;
 }
 
 export interface MedicalRecord {

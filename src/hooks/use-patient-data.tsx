@@ -48,10 +48,10 @@ export const usePatientData = (patientId?: string) => {
         address: updatedPatient.address || null,
         notes: updatedPatient.notes || null,
         date_of_birth: updatedPatient.birth_date || updatedPatient.date_of_birth || null,
-        biological_sex: updatedPatient.biological_sex || null,
-        gender_identity: updatedPatient.gender_identity || null,
+        biological_sex: updatedPatient.biological_sex as "Masculino" | "Feminino" | "Intersexo" | "Não Informado" || null,
+        gender_identity: updatedPatient.gender_identity as "Não Informado" | "Homem" | "Mulher" | "Não-Binário" | "Outro" || null,
         cpf: updatedPatient.cpf || null,
-        payment_form: updatedPatient.payment_method || updatedPatient.payment_form || null
+        payment_form: updatedPatient.payment_method || updatedPatient.payment_form as "Particular" | "Convênio" || null
       })
       .eq("id", patientId);
 

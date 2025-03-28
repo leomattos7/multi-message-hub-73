@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -71,19 +70,6 @@ export default function SignIn() {
       
       // Store user in localStorage
       localStorage.setItem("user", JSON.stringify(userData));
-      
-      // Initialize collections if they don't exist
-      if (!localStorage.getItem("patients")) {
-        localStorage.setItem("patients", JSON.stringify([]));
-      }
-      
-      if (!localStorage.getItem("appointments")) {
-        localStorage.setItem("appointments", JSON.stringify([]));
-      }
-      
-      if (!localStorage.getItem("conversations")) {
-        localStorage.setItem("conversations", JSON.stringify([]));
-      }
       
       toast.success("Login realizado com sucesso!");
       navigate("/");

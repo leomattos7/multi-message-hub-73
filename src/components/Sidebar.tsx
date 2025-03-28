@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
+import { User as UserType } from "./AuthGuard";
 
 // Default navigation items
 const sidebarItems = [
@@ -51,15 +52,42 @@ export function Sidebar() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(!isMobile);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserType | null>(null);
 
-  // Load user data from localStorage
+  // Load user data from localStorage and set up auth listener
   useEffect(() => {
-    const userString = localStorage.getItem("user");
-    if (userString) {
-      const user = JSON.parse(userString);
-      setUserData(user);
-    }
+    const checkUser = async () => {
+      try {
+        // Check for current session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          const userData: UserType = {
+            id: session.user.id,
+            name: session.user.user_metadata?.name || "Usuário",
+            email: session.user.email || "",
+            role: session.user.user_metadata?.role || "admin",
+            phone: session.user.user_metadata?.phone
+          };
+          setUserData(userData);
+        } else {
+          // Fallback to localStorage
+          const userString = localStorage.getItem("user");
+          if (userString) {
+            try {
+              const user = JSON.parse(userString);
+              setUserData(user);
+            } catch (error) {
+              console.error("Error parsing user data:", error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking user:", error);
+      }
+    };
+    
+    checkUser();
     
     // Setup auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -72,6 +100,7 @@ export function Sidebar() {
             name: session.user.user_metadata?.name || "Usuário",
             email: session.user.email || "",
             role: session.user.user_metadata?.role || "admin",
+            phone: session.user.user_metadata?.phone
           };
           setUserData(userData);
         }

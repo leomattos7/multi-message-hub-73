@@ -55,19 +55,6 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
         // Store user in localStorage for backward compatibility
         localStorage.setItem("user", JSON.stringify(userData));
         
-        // Initialize collections if they don't exist
-        if (!localStorage.getItem("patients")) {
-          localStorage.setItem("patients", "[]");
-        }
-        
-        if (!localStorage.getItem("appointments")) {
-          localStorage.setItem("appointments", "[]");
-        }
-        
-        if (!localStorage.getItem("conversations")) {
-          localStorage.setItem("conversations", "[]");
-        }
-        
         // If a specific role is required and the user doesn't have it, redirect
         if (requiredRole && userData.role !== requiredRole) {
           navigate("/secretaria");
