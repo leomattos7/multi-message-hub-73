@@ -7,6 +7,8 @@ import { PencilIcon, CheckIcon, XIcon, PlusIcon, HistoryIcon } from "lucide-reac
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatDate } from "@/utils/records-utils";
 
 // Mock historical data for each parameter
 const historicalData = {
@@ -139,13 +141,18 @@ export const PreConsultationTab: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDateLocal = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
   };
 
-  // Get historic data for a parameter
+  // Get historic data for a parameter and sort by date (newest first)
   const getParameterHistory = (id: string) => {
-    return historicalData[id as keyof typeof historicalData] || [];
+    const history = historicalData[id as keyof typeof historicalData] || [];
+    
+    // Sort history by date, newest first
+    return [...history].sort((a, b) => {
+      return new Date(b.collectedAt).getTime() - new Date(a.collectedAt).getTime();
+    });
   };
 
   return (
@@ -201,7 +208,7 @@ export const PreConsultationTab: React.FC = () => {
                     className="w-full"
                   />
                 </TableCell>
-                <TableCell>{formatDate(newParameter.collectedAt)}</TableCell>
+                <TableCell>{formatDateLocal(newParameter.collectedAt)}</TableCell>
                 <TableCell>
                   <div className="flex space-x-1">
                     <Button
@@ -250,25 +257,25 @@ export const PreConsultationTab: React.FC = () => {
                           <div className="border-t pt-2 mt-2">
                             {getParameterHistory(item.id).length > 0 ? (
                               <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                                {getParameterHistory(item.id).map((historyItem, index) => (
-                                  <div key={index} className="flex justify-between items-center text-sm bg-muted/50 p-2 rounded">
-                                    <div>
-                                      <span className="font-medium">{historyItem.value}</span> {historyItem.unit}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {formatDate(historyItem.collectedAt)}
-                                    </div>
-                                  </div>
-                                ))}
                                 <div className="flex justify-between items-center text-sm bg-blue-50 p-2 rounded border border-blue-200">
                                   <div>
                                     <span className="font-medium">{item.value}</span> {item.unit}
                                   </div>
                                   <div className="text-xs text-muted-foreground flex items-center">
                                     <span className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded mr-1">Atual</span>
-                                    {formatDate(item.collectedAt)}
+                                    {formatDateLocal(item.collectedAt)}
                                   </div>
                                 </div>
+                                {getParameterHistory(item.id).map((historyItem, index) => (
+                                  <div key={index} className="flex justify-between items-center text-sm bg-muted/50 p-2 rounded">
+                                    <div>
+                                      <span className="font-medium">{historyItem.value}</span> {historyItem.unit}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {formatDateLocal(historyItem.collectedAt)}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             ) : (
                               <div className="text-sm text-muted-foreground py-2">
@@ -303,7 +310,7 @@ export const PreConsultationTab: React.FC = () => {
                     item.unit
                   )}
                 </TableCell>
-                <TableCell>{formatDate(item.collectedAt)}</TableCell>
+                <TableCell>{formatDateLocal(item.collectedAt)}</TableCell>
                 <TableCell>
                   {editingId === item.id ? (
                     <div className="flex space-x-1">
