@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -74,14 +75,14 @@ export const PreConsultationTab: React.FC = () => {
     if (newParameter.field.trim() !== "") {
       const newId = (preConsultData.length + 1).toString();
       setPreConsultData([
-        ...preConsultData,
         {
           id: newId,
           field: newParameter.field,
           value: newParameter.value,
           unit: newParameter.unit,
           collectedAt: new Date().toISOString()
-        }
+        },
+        ...preConsultData
       ]);
       setIsAddingNew(false);
       setNewParameter({
@@ -124,6 +125,53 @@ export const PreConsultationTab: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {isAddingNew && (
+              <TableRow>
+                <TableCell>
+                  <Input
+                    value={newParameter.field}
+                    onChange={(e) => setNewParameter({...newParameter, field: e.target.value})}
+                    placeholder="Nome do parâmetro"
+                    className="w-full"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={newParameter.value}
+                    onChange={(e) => setNewParameter({...newParameter, value: e.target.value})}
+                    placeholder="Valor"
+                    className="w-full"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={newParameter.unit}
+                    onChange={(e) => setNewParameter({...newParameter, unit: e.target.value})}
+                    placeholder="Unidade"
+                    className="w-full"
+                  />
+                </TableCell>
+                <TableCell>{formatDate(newParameter.collectedAt)}</TableCell>
+                <TableCell>
+                  <div className="flex space-x-1">
+                    <Button
+                      size="sm" 
+                      variant="ghost"
+                      onClick={handleSaveNew}
+                    >
+                      <CheckIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCancel}
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
             {preConsultData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">
@@ -190,53 +238,6 @@ export const PreConsultationTab: React.FC = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {isAddingNew && (
-              <TableRow>
-                <TableCell>
-                  <Input
-                    value={newParameter.field}
-                    onChange={(e) => setNewParameter({...newParameter, field: e.target.value})}
-                    placeholder="Nome do parâmetro"
-                    className="w-full"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Input
-                    value={newParameter.value}
-                    onChange={(e) => setNewParameter({...newParameter, value: e.target.value})}
-                    placeholder="Valor"
-                    className="w-full"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Input
-                    value={newParameter.unit}
-                    onChange={(e) => setNewParameter({...newParameter, unit: e.target.value})}
-                    placeholder="Unidade"
-                    className="w-full"
-                  />
-                </TableCell>
-                <TableCell>{formatDate(newParameter.collectedAt)}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-1">
-                    <Button
-                      size="sm" 
-                      variant="ghost"
-                      onClick={handleSaveNew}
-                    >
-                      <CheckIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCancel}
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </div>
