@@ -29,7 +29,7 @@ export default function MedicalRecords() {
         
         <Button onClick={() => setIsAddPatientOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Novo Paciente
+          Novo Prontuário
         </Button>
         
         <AddPatientDialog
