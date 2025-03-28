@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SoapNotes } from "./soap/SoapNotesForm";
 import { RecordsListDisplay } from "./RecordsListDisplay";
 import { TodayConsultationTab } from "./TodayConsultationTab";
+import { PreConsultationTab } from "./PreConsultationTab";
 import { TasksTab } from "./TasksTab";
 import { formatDate, extractSummary, recordTypeDisplay, isToday } from "@/utils/records-utils";
 
@@ -47,10 +48,15 @@ export const RecordsList = ({
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="w-full flex overflow-x-auto mb-6">
+        <TabsTrigger value="preconsult" className="flex-1">Pré Consulta</TabsTrigger>
         <TabsTrigger value="today" className="flex-1">Consulta de hoje</TabsTrigger>
         <TabsTrigger value="history" className="flex-1">Histórico</TabsTrigger>
         <TabsTrigger value="tasks" className="flex-1">Tarefas</TabsTrigger>
       </TabsList>
+      
+      <TabsContent value="preconsult" className="mt-0">
+        <PreConsultationTab />
+      </TabsContent>
       
       <TabsContent value="today" className="mt-0">
         <TodayConsultationTab

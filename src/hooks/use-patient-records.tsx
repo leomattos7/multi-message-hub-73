@@ -6,7 +6,7 @@ import { usePatientRecordsData } from "./use-patient-records-data";
 import { renderPatientSectionContent } from "@/utils/patientSectionContent";
 
 export const usePatientRecords = (patientId?: string) => {
-  const [activeTab, setActiveTab] = useState<string>("today");
+  const [activeTab, setActiveTab] = useState<string>("preconsult");
   
   // Patient operations
   const {
