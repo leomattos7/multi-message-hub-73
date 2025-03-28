@@ -1,18 +1,17 @@
-import { createClient } from "@supabase/supabase-js";
-import { mockSupabase, getMockData, createMockData, updateMockData, deleteMockData } from "@/utils/mock-data-provider";
 
-// This is a placeholder that returns the mock Supabase client
-export const supabase = mockSupabase;
+import { createClient } from '@supabase/supabase-js';
+import { Database } from './types';
+import { mockSupabase } from '@/utils/mock-data-provider';
 
-// Define service objects that provide mock data instead of actual DB queries
-export const doctorProfileService = {
+// Create a mock doctor service
+export const doctorService = {
   getProfileByDoctorId: async (doctorId: string) => {
-    const { data, error } = getMockData("doctor_profiles");
+    const { data } = mockSupabase.from('doctor_profiles').select().eq('doctor_id', doctorId).single();
     return data;
   },
   
   createProfile: async (doctorId: string, profileData: any) => {
-    const { data, error } = createMockData("doctor_profiles", {
+    const { data } = mockSupabase.from('doctor_profiles').insert({
       doctor_id: doctorId,
       ...profileData
     });
@@ -20,104 +19,59 @@ export const doctorProfileService = {
   },
   
   updateProfile: async (doctorId: string, profileData: any) => {
-    const { data, error } = updateMockData("doctor_profiles", "dp1", profileData);
+    const { data } = mockSupabase.from('doctor_profiles').update(profileData).eq('doctor_id', doctorId);
     return data;
   },
   
   getProfileBySlug: async (slug: string) => {
-    const { data, error } = getMockData("doctor_profiles");
+    const { data } = mockSupabase.from('doctor_profiles').select().eq('public_url_slug', slug).single();
     return data;
-  }
-};
-
-export const doctorLinksService = {
+  },
+  
+  // Add missing methods related to links
   getLinksByDoctorId: async (doctorId: string) => {
-    const { data, error } = getMockData("doctor_links");
+    const { data } = mockSupabase.from('doctor_links').select().eq('doctor_id', doctorId);
     return data;
   },
   
   createLink: async (linkData: any) => {
-    const { data, error } = createMockData("doctor_links", linkData);
+    const { data } = mockSupabase.from('doctor_links').insert(linkData);
     return data;
   },
   
   updateLink: async (linkId: string, linkData: any) => {
-    const { data, error } = updateMockData("doctor_links", linkId, linkData);
+    const { data } = mockSupabase.from('doctor_links').update(linkData).eq('id', linkId);
     return data;
   },
   
   deleteLink: async (linkId: string) => {
-    const { data, error } = deleteMockData("doctor_links", linkId);
+    const { data } = mockSupabase.from('doctor_links').delete().eq('id', linkId);
     return data;
-  },
-  
-  updateLinkOrder: async (links: any[]) => {
-    return { success: true };
   }
 };
 
-export const conversationService = {
-  getConversations: async () => {
-    const { data, error } = getMockData("conversations");
+// Create a mock tag service
+export const tagService = {
+  getTagsByDoctorId: async (doctorId: string) => {
+    const { data } = mockSupabase.from('conversation_tags').select().eq('doctor_id', doctorId);
+    return data || [];
+  },
+  
+  createTag: async (tagData: any) => {
+    const { data } = mockSupabase.from('conversation_tags').insert(tagData);
     return data;
   },
   
-  getConversation: async (conversationId: string) => {
-    const { data, error } = getMockData("conversations", conversationId);
+  updateTag: async (tagId: string, tagData: any) => {
+    const { data } = mockSupabase.from('conversation_tags').update(tagData).eq('id', tagId);
     return data;
   },
   
-  sendMessage: async (conversationId: string, content: string) => {
-    const newMessage = {
-      conversation_id: conversationId,
-      content,
-      is_outgoing: true,
-      status: 'delivered',
-      created_at: new Date().toISOString()
-    };
-    
-    const { data, error } = createMockData("messages", newMessage);
+  deleteTag: async (tagId: string) => {
+    const { data } = mockSupabase.from('conversation_tags').delete().eq('id', tagId);
     return data;
-  },
-  
-  getTags: async () => {
-    const { data, error } = getMockData("conversation_tags");
-    return data;
-  },
-  
-  getConversationTags: async (conversationId: string) => {
-    const { data, error } = getMockData("conversation_tags");
-    // Just return a few random tags for mock purposes
-    return data.slice(0, 2);
-  },
-  
-  addTagToConversation: async (conversationId: string, tagId: string) => {
-    return { success: true };
-  },
-  
-  removeTagFromConversation: async (conversationId: string, tagId: string) => {
-    return { success: true };
   }
 };
 
-export const employeeService = {
-  getEmployees: async () => {
-    const { data, error } = getMockData("employees");
-    return data;
-  },
-  
-  createEmployee: async (employeeData: any) => {
-    const { data, error } = createMockData("employees", employeeData);
-    return data;
-  },
-  
-  updateEmployee: async (employeeId: string, employeeData: any) => {
-    const { data, error } = updateMockData("employees", employeeId, employeeData);
-    return data;
-  },
-  
-  deleteEmployee: async (employeeId: string) => {
-    const { data, error } = deleteMockData("employees", employeeId);
-    return { success: true };
-  }
-};
+// Use mock Supabase client
+export const supabase = mockSupabase;

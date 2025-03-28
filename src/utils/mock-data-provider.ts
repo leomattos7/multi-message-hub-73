@@ -592,6 +592,37 @@ export const mockSupabase = {
         }
       },
       error: null
-    })
+    }),
+    // Add missing auth methods for compatibility with other parts of code
+    getSession: () => ({
+      data: {
+        session: {
+          access_token: 'mock-token',
+          refresh_token: 'mock-refresh-token',
+          expires_at: Date.now() + 3600,
+        }
+      }
+    }),
+    onAuthStateChange: (callback: Function) => {
+      // Mock implementation that immediately calls the callback
+      callback('SIGNED_IN', {
+        user: { 
+          id: 'd1', 
+          email: 'doctor@example.com',
+          app_metadata: {},
+          user_metadata: {},
+          aud: '',
+          created_at: '',
+        },
+        session: {
+          access_token: 'mock-token',
+          refresh_token: 'mock-refresh-token',
+          expires_at: Date.now() + 3600,
+        }
+      });
+      // Return a mock unsubscribe function
+      return { data: { subscription: { unsubscribe: () => {} } } };
+    },
+    signOut: () => ({ error: null })
   }
 };
