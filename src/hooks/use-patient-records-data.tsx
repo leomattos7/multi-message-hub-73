@@ -162,8 +162,8 @@ ${item.plan || "Não informado"}
             .insert({
               record_id: patientId,
               name: medicationData.name,
-              dosage: medicationData.dosage,
-              frequency: medicationData.frequency
+              dosage: medicationData.dosage || null,
+              frequency: medicationData.frequency || null
             });
         } catch (e) {
           // Fallback for non-JSON content
@@ -184,8 +184,8 @@ ${item.plan || "Não informado"}
             .insert({
               record_id: patientId,
               name: problemData.name,
-              cid: problemData.cid,
-              ciap: problemData.ciap
+              cid: problemData.cid || null,
+              ciap: problemData.ciap || null
             });
         } catch (e) {
           // Fallback for non-JSON content
@@ -218,6 +218,12 @@ ${item.plan || "Não informado"}
             ? content.split("**Plano:**")[1].trim()
             : "";
             
+          // Get the current date/time
+          const now = new Date();
+          const start_time = now.toISOString();
+          // Default end time is 30 minutes later
+          const end_time = new Date(now.getTime() + 30 * 60000).toISOString();
+          
           result = await supabase
             .from("consultations")
             .insert({
@@ -225,16 +231,24 @@ ${item.plan || "Não informado"}
               subjective,
               objective,
               assessment,
-              plan
+              plan,
+              start_time,
+              end_time
             });
         } catch (e) {
           // Fallback - save as a generic consultation
+          const now = new Date();
+          const start_time = now.toISOString();
+          const end_time = new Date(now.getTime() + 30 * 60000).toISOString();
+          
           result = await supabase
             .from("consultations")
             .insert({
               patient_id: patientId,
               subjective: "Consulta registrada",
-              plan: content
+              plan: content,
+              start_time,
+              end_time
             });
         }
         break;
@@ -243,12 +257,18 @@ ${item.plan || "Não informado"}
       case "historico_familiar":
       default:
         // For other types, store in consultations as a note
+        const now = new Date();
+        const start_time = now.toISOString();
+        const end_time = new Date(now.getTime() + 15 * 60000).toISOString();
+        
         result = await supabase
           .from("consultations")
           .insert({
             patient_id: patientId,
             subjective: `Registro de ${type}`,
-            plan: content
+            plan: content,
+            start_time,
+            end_time
           });
         break;
     }

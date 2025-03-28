@@ -20,28 +20,38 @@ export const usePatientData = (patientId?: string) => {
         .single();
       
       if (error) throw error;
-      return data as Patient;
+      
+      // Transform to match the expected Patient interface
+      return {
+        ...data,
+        // Map fields for backward compatibility
+        name: data.full_name,
+        birth_date: data.date_of_birth,
+        payment_method: data.payment_form,
+        insurance_name: ""  // No direct equivalent in new schema
+      } as Patient;
     },
     enabled: !!patientId
   });
 
   const updatePatient = async (updatedPatient: Patient) => {
-    if (!patientId || !updatedPatient || !updatedPatient.name.trim()) {
+    if (!patientId || !updatedPatient || !(updatedPatient.full_name || updatedPatient.name).trim()) {
       throw new Error("Patient ID and name are required");
     }
 
     const { error } = await supabase
       .from("patients")
       .update({
-        name: updatedPatient.name,
+        full_name: updatedPatient.name || updatedPatient.full_name,
         email: updatedPatient.email || null,
         phone: updatedPatient.phone || null,
         address: updatedPatient.address || null,
         notes: updatedPatient.notes || null,
-        birth_date: updatedPatient.birth_date || null,
+        date_of_birth: updatedPatient.birth_date || updatedPatient.date_of_birth || null,
         biological_sex: updatedPatient.biological_sex || null,
         gender_identity: updatedPatient.gender_identity || null,
-        cpf: updatedPatient.cpf || null
+        cpf: updatedPatient.cpf || null,
+        payment_form: updatedPatient.payment_method || updatedPatient.payment_form || null
       })
       .eq("id", patientId);
 

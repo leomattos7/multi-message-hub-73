@@ -1,19 +1,25 @@
 
 export interface Patient {
   id: string;
-  name: string;
   email?: string;
   phone?: string;
-  address?: string;
+  address?: any;
   notes?: string;
-  birth_date?: string;
+  date_of_birth?: string;
   biological_sex?: string;
   gender_identity?: string;
   cpf?: string;
-  payment_method?: string;
-  insurance_name?: string;
+  payment_form?: string;
+  full_name: string;
+  doctor_id?: string;
+  created_at?: string;
   lastMessageDate?: Date | null;
   lastAppointmentDate?: Date | null;
+  // For backward compatibility with old code
+  name?: string;
+  birth_date?: string;
+  insurance_name?: string;
+  payment_method?: string;
 }
 
 export interface MedicalRecord {
