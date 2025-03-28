@@ -9,30 +9,40 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 interface DeletePatientDialogProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (isOpen: boolean) => void;
   onDelete: () => void;
+  isProcessing?: boolean;
 }
 
 export const DeletePatientDialog = ({
   isOpen,
   onOpenChange,
-  onDelete
+  onDelete,
+  isProcessing = false
 }: DeletePatientDialogProps) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
           <AlertDialogDescription>
-            Você tem certeza que deseja excluir este contato? Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir este contato? Essa ação não pode ser desfeita 
+            e removerá todas as consultas e mensagens associadas a este contato.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => onOpenChange(false)}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={onDelete}>Excluir</AlertDialogAction>
+          <AlertDialogCancel disabled={isProcessing}>Cancelar</AlertDialogCancel>
+          <Button 
+            variant="destructive" 
+            onClick={onDelete} 
+            disabled={isProcessing}
+          >
+            {isProcessing ? "Excluindo..." : "Excluir"}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
