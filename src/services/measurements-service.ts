@@ -1,22 +1,13 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { Measurement } from "@/types/measurement";
+import { measurementService } from "@/integrations/supabase/services/measurementService";
 import { toast } from "@/components/ui/use-toast";
 
 /**
  * Fetches all measurements for a patient
  */
 export const fetchPatientMeasurements = async (patientId: string): Promise<Measurement[]> => {
-  if (!patientId) throw new Error("Patient ID is required");
-  
-  const { data, error } = await supabase
-    .from("measurements")
-    .select("*")
-    .eq("patient_id", patientId)
-    .order("created_at", { ascending: false });
-  
-  if (error) throw error;
-  return data as Measurement[];
+  return measurementService.getPatientMeasurements(patientId);
 };
 
 /**
@@ -47,53 +38,7 @@ export const saveMeasurement = async (
   }
 
   try {
-    // For patient measurements, we're bypassing auth requirements since this is an admin functionality
-    // where doctors or healthcare providers are adding measurements for patients
-    
-    // First check if this measurement already exists
-    const { data: existingMeasurement, error: fetchError } = await supabase
-      .from("measurements")
-      .select("*")
-      .eq("patient_id", patientId)
-      .eq("name", name.toLowerCase())
-      .maybeSingle();
-    
-    if (fetchError) {
-      console.error("Erro ao verificar medição existente:", fetchError);
-      throw fetchError;
-    }
-    
-    let result;
-    
-    if (existingMeasurement) {
-      // Update existing measurement
-      result = await supabase
-        .from("measurements")
-        .update({
-          value: value,
-          unit: unit,
-          date: new Date().toISOString(),
-        })
-        .eq("id", existingMeasurement.id);
-    } else {
-      // Insert new measurement
-      result = await supabase
-        .from("measurements")
-        .insert([
-          {
-            patient_id: patientId,
-            name: name.toLowerCase(),
-            value: value,
-            unit: unit,
-            date: new Date().toISOString(),
-          }
-        ]);
-    }
-
-    if (result.error) {
-      console.error("Erro na operação de banco de dados:", result.error);
-      throw result.error;
-    }
+    await measurementService.saveMeasurement(patientId, name, value, unit);
     
     toast({
       title: "Sucesso",

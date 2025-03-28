@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { appointmentService } from "@/integrations/supabase/services/appointmentService";
+import { patientService } from "@/integrations/supabase/services/patientService";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface AppointmentSubmissionProps {
@@ -45,35 +46,18 @@ export function useAppointmentSubmission() {
       // Check if we're editing an existing appointment
       if (appointment) {
         // Update the appointment
-        const { error: appointmentError } = await supabase
-          .from("appointments")
-          .update({
-            type: type,
-            status: status,
-            payment_method: paymentMethod,
-            notes: notes,
-            time: startTime,
-            end_time: endTime,
-            date: format(selectedDate, "yyyy-MM-dd")
-          })
-          .eq('id', appointment.id);
-          
-        if (appointmentError) {
-          toast.error("Erro ao atualizar consulta");
-          setIsLoading(false);
-          return;
-        }
+        await appointmentService.updateAppointment(appointment.id, {
+          status: status as 'aguardando' | 'confirmado' | 'cancelado',
+          payment_method: paymentMethod as 'Particular' | 'Convênio',
+          notes: notes,
+          start_time: `${format(selectedDate, "yyyy-MM-dd")}T${startTime}:00`,
+          end_time: `${format(selectedDate, "yyyy-MM-dd")}T${endTime}:00`
+        });
         
         toast.success("Consulta atualizada com sucesso");
       } else {
         // Creating a new appointment - First, create a patient record if it doesn't exist
-        const { data: patientData, error: patientError } = await supabase
-          .from("patients")
-          .select("id")
-          .eq("name", patientName)
-          .maybeSingle();
-          
-        let patientId;
+        const { data: patientData, error: patientError } = await patientService.getPatients();
         
         if (patientError) {
           toast.error("Erro ao verificar paciente");
@@ -81,47 +65,33 @@ export function useAppointmentSubmission() {
           return;
         }
         
-        // If patient doesn't exist, create one
-        if (!patientData) {
-          const { data: newPatient, error: createError } = await supabase
-            .from("patients")
-            .insert({ name: patientName })
-            .select("id")
-            .single();
-            
-          if (createError) {
-            toast.error("Erro ao criar paciente");
-            setIsLoading(false);
-            return;
-          }
+        // Find existing patient or create new one
+        let patientId;
+        const existingPatient = patientData.find(p => p.full_name === patientName);
+        
+        if (!existingPatient) {
+          // Create new patient
+          const newPatient = await patientService.createPatient({ 
+            full_name: patientName
+          });
           
           patientId = newPatient.id;
         } else {
-          patientId = patientData.id;
+          patientId = existingPatient.id;
         }
         
         // Now create the appointment
-        const formattedDate = format(selectedDate, "yyyy-MM-dd");
+        const formattedStartTime = `${format(selectedDate, "yyyy-MM-dd")}T${startTime}:00`;
+        const formattedEndTime = `${format(selectedDate, "yyyy-MM-dd")}T${endTime}:00`;
         
-        const { error: appointmentError } = await supabase
-          .from("appointments")
-          .insert({
-            patient_id: patientId,
-            date: formattedDate,
-            time: startTime,
-            end_time: endTime,
-            type: type,
-            status: status,
-            payment_method: paymentMethod,
-            notes: notes
-          });
-          
-        if (appointmentError) {
-          toast.error("Erro ao agendar consulta");
-          console.error("Error creating appointment:", appointmentError);
-          setIsLoading(false);
-          return;
-        }
+        await appointmentService.createAppointment({
+          patient_id: patientId,
+          start_time: formattedStartTime,
+          end_time: formattedEndTime,
+          status: status as 'aguardando' | 'confirmado' | 'cancelado',
+          payment_method: paymentMethod as 'Particular' | 'Convênio',
+          notes: notes
+        });
         
         toast.success(`Consulta agendada com sucesso`);
       }

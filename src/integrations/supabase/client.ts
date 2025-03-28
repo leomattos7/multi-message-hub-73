@@ -28,3 +28,7 @@ export * from './services/conversationService';
 export * from './services/doctorProfileService';
 export * from './services/tagService';
 export * from './services/employeeService';
+export * from './services/patientService';
+export * from './services/appointmentService';
+export * from './services/medicalRecordService';
+export * from './services/measurementService';
