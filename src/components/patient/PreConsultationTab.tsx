@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -120,7 +119,7 @@ export const PreConsultationTab: React.FC = () => {
               <TableHead>Parâmetro</TableHead>
               <TableHead>Valor</TableHead>
               <TableHead>Unidade</TableHead>
-              <TableHead>Data de Coleta</TableHead>
+              <TableHead>Data de Registro</TableHead>
               <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
