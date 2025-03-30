@@ -52,15 +52,7 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "appointments_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       calendar_events: {
         Row: {
@@ -189,22 +181,7 @@ export type Database = {
           created_at?: string
           tag_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_to_tag_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversation_to_tag_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "conversation_tags"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       conversations: {
         Row: {
@@ -237,15 +214,7 @@ export type Database = {
           patient_id?: string
           unread?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       doctor_availability: {
         Row: {
@@ -311,15 +280,7 @@ export type Database = {
           updated_at?: string
           url?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "doctor_links_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "doctor_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       doctor_profiles: {
         Row: {
@@ -424,15 +385,7 @@ export type Database = {
           reference_range?: string | null
           result?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "lab_exams_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       measurements: {
         Row: {
@@ -462,15 +415,7 @@ export type Database = {
           unit?: string
           value?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "measurements_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       messages: {
         Row: {
@@ -497,15 +442,7 @@ export type Database = {
           status?: string
           timestamp?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       organizations: {
         Row: {
@@ -556,15 +493,7 @@ export type Database = {
           record_type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "patient_records_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       patients: {
         Row: {
@@ -651,62 +580,26 @@ export type Database = {
           role?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      create_doctor_profile: {
-        Args: {
-          p_id: string
-          p_bio: string
-          p_specialty: string
-          p_name: string
-          p_email: string
-          p_phone: string
-          p_address: string
-          p_profile_image_url: string
-          p_public_url_slug: string
-          p_theme: string
-        }
-        Returns: undefined
-      }
-      get_user_organization_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      is_employee_of: {
-        Args: {
-          doctor_id: string
-        }
-        Returns: boolean
-      }
-      update_doctor_profile: {
-        Args: {
-          p_id: string
-          p_bio: string
-          p_specialty: string
-          p_name: string
-          p_email: string
-          p_phone: string
-          p_address: string
-          p_profile_image_url: string
-          p_theme: string
-        }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
+      app_role: "owner" | "doctor" | "secretary"
+      biological_sex: "Masculino" | "Feminino" | "Intersexo" | "Não Informado"
+      consultation_status: "aguardando" | "confirmado" | "cancelado"
+      gender_identity:
+        | "Homem"
+        | "Mulher"
+        | "Não-Binário"
+        | "Outro"
+        | "Não Informado"
+      payment_form: "Particular" | "Convênio"
       user_role: "admin" | "employee" | "owner"
     }
     CompositeTypes: {

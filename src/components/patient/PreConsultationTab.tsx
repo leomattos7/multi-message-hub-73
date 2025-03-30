@@ -32,60 +32,60 @@ import {
 // Mock historical data for each parameter
 const historicalData = {
   "1": [
-    { value: "70 kg", unit: "kg", collectedAt: new Date(2023, 11, 15).toISOString() },
-    { value: "71 kg", unit: "kg", collectedAt: new Date(2023, 10, 20).toISOString() },
-    { value: "73 kg", unit: "kg", collectedAt: new Date(2023, 9, 5).toISOString() },
+    { value: "70 kg", collectedAt: new Date(2023, 11, 15).toISOString() },
+    { value: "71 kg", collectedAt: new Date(2023, 10, 20).toISOString() },
+    { value: "73 kg", collectedAt: new Date(2023, 9, 5).toISOString() },
   ],
   "2": [
-    { value: "174", unit: "cm", collectedAt: new Date(2023, 10, 15).toISOString() },
-    { value: "175", unit: "cm", collectedAt: new Date(2023, 6, 10).toISOString() },
+    { value: "174 cm", collectedAt: new Date(2023, 10, 15).toISOString() },
+    { value: "175 cm", collectedAt: new Date(2023, 6, 10).toISOString() },
   ],
   "3": [
-    { value: "118/78", unit: "mmHg", collectedAt: new Date(2023, 11, 10).toISOString() },
-    { value: "120/82", unit: "mmHg", collectedAt: new Date(2023, 10, 5).toISOString() },
-    { value: "125/85", unit: "mmHg", collectedAt: new Date(2023, 9, 1).toISOString() },
-    { value: "130/90", unit: "mmHg", collectedAt: new Date(2023, 8, 15).toISOString() },
+    { value: "118/78 mmHg", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "120/82 mmHg", collectedAt: new Date(2023, 10, 5).toISOString() },
+    { value: "125/85 mmHg", collectedAt: new Date(2023, 9, 1).toISOString() },
+    { value: "130/90 mmHg", collectedAt: new Date(2023, 8, 15).toISOString() },
   ],
   "4": [
-    { value: "36.7", unit: "°C", collectedAt: new Date(2023, 11, 5).toISOString() },
-    { value: "37.1", unit: "°C", collectedAt: new Date(2023, 10, 20).toISOString() },
-    { value: "36.5", unit: "°C", collectedAt: new Date(2023, 9, 10).toISOString() },
+    { value: "36.7 °C", collectedAt: new Date(2023, 11, 5).toISOString() },
+    { value: "37.1 °C", collectedAt: new Date(2023, 10, 20).toISOString() },
+    { value: "36.5 °C", collectedAt: new Date(2023, 9, 10).toISOString() },
   ],
   "5": [
-    { value: "72", unit: "bpm", collectedAt: new Date(2023, 11, 5).toISOString() },
-    { value: "76", unit: "bpm", collectedAt: new Date(2023, 10, 15).toISOString() },
-    { value: "75", unit: "bpm", collectedAt: new Date(2023, 9, 1).toISOString() },
+    { value: "72 bpm", collectedAt: new Date(2023, 11, 5).toISOString() },
+    { value: "76 bpm", collectedAt: new Date(2023, 10, 15).toISOString() },
+    { value: "75 bpm", collectedAt: new Date(2023, 9, 1).toISOString() },
   ],
   "6": [
-    { value: "15", unit: "irpm", collectedAt: new Date(2023, 11, 10).toISOString() },
-    { value: "16", unit: "irpm", collectedAt: new Date(2023, 9, 15).toISOString() },
+    { value: "15 irpm", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "16 irpm", collectedAt: new Date(2023, 9, 15).toISOString() },
   ],
   "7": [
-    { value: "97", unit: "%", collectedAt: new Date(2023, 11, 10).toISOString() },
-    { value: "98", unit: "%", collectedAt: new Date(2023, 9, 5).toISOString() },
-    { value: "96", unit: "%", collectedAt: new Date(2023, 7, 20).toISOString() },
+    { value: "97%", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "98%", collectedAt: new Date(2023, 9, 5).toISOString() },
+    { value: "96%", collectedAt: new Date(2023, 7, 20).toISOString() },
   ],
   "8": [
-    { value: "92", unit: "mg/dL", collectedAt: new Date(2023, 11, 5).toISOString() },
-    { value: "95", unit: "mg/dL", collectedAt: new Date(2023, 9, 10).toISOString() },
-    { value: "98", unit: "mg/dL", collectedAt: new Date(2023, 7, 15).toISOString() },
-    { value: "100", unit: "mg/dL", collectedAt: new Date(2023, 5, 1).toISOString() },
+    { value: "92 mg/dL", collectedAt: new Date(2023, 11, 5).toISOString() },
+    { value: "95 mg/dL", collectedAt: new Date(2023, 9, 10).toISOString() },
+    { value: "98 mg/dL", collectedAt: new Date(2023, 7, 15).toISOString() },
+    { value: "100 mg/dL", collectedAt: new Date(2023, 5, 1).toISOString() },
   ],
   "9": [
-    { value: "Sim", unit: "", collectedAt: new Date(2023, 11, 10).toISOString() },
-    { value: "Não", unit: "", collectedAt: new Date(2023, 8, 15).toISOString() },
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 8, 15).toISOString() },
   ],
   "10": [
-    { value: "2x/semana", unit: "", collectedAt: new Date(2023, 11, 5).toISOString() },
-    { value: "3x/semana", unit: "", collectedAt: new Date(2023, 8, 20).toISOString() },
+    { value: "2x/semana", collectedAt: new Date(2023, 11, 5).toISOString() },
+    { value: "3x/semana", collectedAt: new Date(2023, 8, 20).toISOString() },
   ],
   "11": [
-    { value: "Sim", unit: "", collectedAt: new Date(2023, 11, 10).toISOString() },
-    { value: "Não", unit: "", collectedAt: new Date(2023, 9, 1).toISOString() },
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 1).toISOString() },
   ],
   "12": [
-    { value: "Regular", unit: "", collectedAt: new Date(2023, 11, 15).toISOString() },
-    { value: "Irregular", unit: "", collectedAt: new Date(2023, 7, 10).toISOString() },
+    { value: "Regular", collectedAt: new Date(2023, 11, 15).toISOString() },
+    { value: "Irregular", collectedAt: new Date(2023, 7, 10).toISOString() },
   ],
 };
 
@@ -96,14 +96,14 @@ const initialGroups = [
     name: "Dados gerais",
     isDefault: true,
     parameters: [
-      { id: "1", field: "Peso", value: "72 kg", unit: "kg", collectedAt: new Date().toISOString() },
-      { id: "2", field: "Altura", value: "175", unit: "cm", collectedAt: new Date().toISOString() },
-      { id: "3", field: "Pressão Arterial", value: "120/80", unit: "mmHg", collectedAt: new Date().toISOString() },
-      { id: "4", field: "Temperatura", value: "36.5", unit: "°C", collectedAt: new Date().toISOString() },
-      { id: "5", field: "Frequência Cardíaca", value: "75", unit: "bpm", collectedAt: new Date().toISOString() },
-      { id: "6", field: "Frequência Respiratória", value: "16", unit: "irpm", collectedAt: new Date().toISOString() },
-      { id: "7", field: "Saturação O2", value: "98", unit: "%", collectedAt: new Date().toISOString() },
-      { id: "8", field: "Glicemia", value: "95", unit: "mg/dL", collectedAt: new Date().toISOString() },
+      { id: "1", field: "Peso", value: "72 kg", collectedAt: new Date().toISOString() },
+      { id: "2", field: "Altura", value: "175 cm", collectedAt: new Date().toISOString() },
+      { id: "3", field: "Pressão Arterial", value: "120/80 mmHg", collectedAt: new Date().toISOString() },
+      { id: "4", field: "Temperatura", value: "36.5 °C", collectedAt: new Date().toISOString() },
+      { id: "5", field: "Frequência Cardíaca", value: "75 bpm", collectedAt: new Date().toISOString() },
+      { id: "6", field: "Frequência Respiratória", value: "16 irpm", collectedAt: new Date().toISOString() },
+      { id: "7", field: "Saturação O2", value: "98%", collectedAt: new Date().toISOString() },
+      { id: "8", field: "Glicemia", value: "95 mg/dL", collectedAt: new Date().toISOString() },
     ] 
   },
   { 
@@ -111,7 +111,7 @@ const initialGroups = [
     name: "Histórico Familiar",
     isDefault: true,
     parameters: [
-      { id: "9", field: "Diabetes na família", value: "Sim", unit: "", collectedAt: new Date().toISOString() },
+      { id: "9", field: "Diabetes na família", value: "Sim", collectedAt: new Date().toISOString() },
     ]
   },
   { 
@@ -119,8 +119,8 @@ const initialGroups = [
     name: "Estilo de vida",
     isDefault: true,
     parameters: [
-      { id: "10", field: "Atividade física", value: "2x/semana", unit: "", collectedAt: new Date().toISOString() },
-      { id: "11", field: "Tabagismo", value: "Não", unit: "", collectedAt: new Date().toISOString() },
+      { id: "10", field: "Atividade física", value: "2x/semana", collectedAt: new Date().toISOString() },
+      { id: "11", field: "Tabagismo", value: "Não", collectedAt: new Date().toISOString() },
     ]
   },
   { 
@@ -128,7 +128,7 @@ const initialGroups = [
     name: "Sexual e reprodutivo",
     isDefault: true,
     parameters: [
-      { id: "12", field: "Ciclo menstrual", value: "Regular", unit: "", collectedAt: new Date().toISOString() },
+      { id: "12", field: "Ciclo menstrual", value: "Regular", collectedAt: new Date().toISOString() },
     ]
   },
 ];
@@ -142,14 +142,12 @@ export const PreConsultationTab: React.FC = () => {
   
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
-  const [editingUnit, setEditingUnit] = useState("");
   const [editingField, setEditingField] = useState("");
   
   const [addingToGroupId, setAddingToGroupId] = useState<string | null>(null);
   const [newParameter, setNewParameter] = useState({
     field: "",
     value: "",
-    unit: "",
     collectedAt: new Date().toISOString()
   });
 
@@ -190,14 +188,13 @@ export const PreConsultationTab: React.FC = () => {
   };
 
   // Handle parameter editing
-  const handleEdit = (groupId: string, id: string, field: string, value: string, unit: string) => {
+  const handleEdit = (groupId: string, id: string, field: string, value: string) => {
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
     
     setEditingId(id);
     setEditingField(field);
     setEditingValue(value);
-    setEditingUnit(unit);
   };
 
   const handleSave = (groupId: string, id: string) => {
@@ -209,8 +206,7 @@ export const PreConsultationTab: React.FC = () => {
             item.id === id ? { 
               ...item, 
               field: editingField,
-              value: editingValue, 
-              unit: editingUnit 
+              value: editingValue
             } : item
           )
         };
@@ -227,7 +223,6 @@ export const PreConsultationTab: React.FC = () => {
       setNewParameter({
         field: "",
         value: "",
-        unit: "",
         collectedAt: new Date().toISOString()
       });
     }
@@ -238,7 +233,6 @@ export const PreConsultationTab: React.FC = () => {
     setNewParameter({
       field: "",
       value: "",
-      unit: "",
       collectedAt: new Date().toISOString()
     });
   };
@@ -267,7 +261,6 @@ export const PreConsultationTab: React.FC = () => {
                 id: newId,
                 field: newParameter.field,
                 value: newParameter.value,
-                unit: newParameter.unit,
                 collectedAt: new Date().toISOString()
               },
               ...group.parameters
@@ -281,7 +274,6 @@ export const PreConsultationTab: React.FC = () => {
       setNewParameter({
         field: "",
         value: "",
-        unit: "",
         collectedAt: new Date().toISOString()
       });
     }
@@ -396,8 +388,7 @@ export const PreConsultationTab: React.FC = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Parâmetro</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Unidade</TableHead>
+                        <TableHead>{group.id === "1" ? "Descrição" : "Valor"}</TableHead>
                         <TableHead>Data de Registro</TableHead>
                         <TableHead className="w-[100px]">Ações</TableHead>
                       </TableRow>
@@ -417,15 +408,7 @@ export const PreConsultationTab: React.FC = () => {
                             <Input
                               value={newParameter.value}
                               onChange={(e) => setNewParameter({...newParameter, value: e.target.value})}
-                              placeholder="Valor"
-                              className="w-full"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={newParameter.unit}
-                              onChange={(e) => setNewParameter({...newParameter, unit: e.target.value})}
-                              placeholder="Unidade"
+                              placeholder={group.id === "1" ? "Descrição" : "Valor"}
                               className="w-full"
                             />
                           </TableCell>
@@ -480,7 +463,7 @@ export const PreConsultationTab: React.FC = () => {
                                         <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                                           <div className="flex justify-between items-center text-sm bg-blue-50 p-2 rounded border border-blue-200">
                                             <div>
-                                              <span className="font-medium">{item.value}</span> {item.unit}
+                                              <span className="font-medium">{item.value}</span>
                                             </div>
                                             <div className="text-xs text-muted-foreground flex items-center">
                                               <span className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded mr-1">Atual</span>
@@ -490,7 +473,7 @@ export const PreConsultationTab: React.FC = () => {
                                           {getParameterHistory(item.id).map((historyItem, index) => (
                                             <div key={index} className="flex justify-between items-center text-sm bg-muted/50 p-2 rounded">
                                               <div>
-                                                <span className="font-medium">{historyItem.value}</span> {historyItem.unit}
+                                                <span className="font-medium">{historyItem.value}</span>
                                               </div>
                                               <div className="text-xs text-muted-foreground">
                                                 {formatDateLocal(historyItem.collectedAt)}
@@ -520,17 +503,6 @@ export const PreConsultationTab: React.FC = () => {
                               item.value
                             )}
                           </TableCell>
-                          <TableCell>
-                            {editingId === item.id ? (
-                              <Input
-                                value={editingUnit}
-                                onChange={(e) => setEditingUnit(e.target.value)}
-                                className="w-full"
-                              />
-                            ) : (
-                              item.unit
-                            )}
-                          </TableCell>
                           <TableCell>{formatDateLocal(item.collectedAt)}</TableCell>
                           <TableCell>
                             {editingId === item.id ? (
@@ -554,7 +526,7 @@ export const PreConsultationTab: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleEdit(group.id, item.id, item.field, item.value, item.unit)}
+                                onClick={() => handleEdit(group.id, item.id, item.field, item.value)}
                               >
                                 <PencilIcon className="h-4 w-4" />
                               </Button>
