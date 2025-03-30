@@ -28,7 +28,7 @@ export const FilterPatientDialog = ({
 }: FilterPatientDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Filtrar Contatos</DialogTitle>
           <DialogDescription>
@@ -44,11 +44,6 @@ export const FilterPatientDialog = ({
           onApplyFilters={() => onOpenChange(false)}
           onResetFilters={onResetFilters}
         />
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onResetFilters}>Limpar Filtros</Button>
-          <Button onClick={() => onOpenChange(false)}>Aplicar</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

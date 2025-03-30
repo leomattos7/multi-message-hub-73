@@ -76,7 +76,7 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
           full_name: newPatient.name,
           email: newPatient.email || null,
           phone: newPatient.phone || null,
-          address: newPatient.address ? { full_address: newPatient.address } : null,
+          address: newPatient.address ? JSON.stringify({ full_address: newPatient.address }) : null,
           notes: newPatient.notes || null,
           payment_form: newPatient.payment_method || "particular",
           insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
