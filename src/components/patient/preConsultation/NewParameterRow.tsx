@@ -13,7 +13,7 @@ interface NewParameterRowProps {
     value: string;
     collectedAt: string;
   };
-  onParameterChange: (field: keyof typeof newParameter, value: string) => void;
+  onParameterChange: (field: keyof { field: string; value: string; collectedAt: string }, value: string) => void;
   onSave: (groupId: string) => void;
   onCancel: () => void;
 }

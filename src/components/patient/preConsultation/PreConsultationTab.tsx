@@ -4,11 +4,11 @@ import { Accordion } from "@/components/ui/accordion";
 import { AddGroupDialog } from "./AddGroupDialog";
 import { ParameterGroup } from "./ParameterGroup";
 import { usePreConsultation } from "./usePreConsultation";
-import { historicalData } from "./mockData";
 
 export const PreConsultationTab: React.FC = () => {
   const {
     groups,
+    historicalData,
     editingGroupId,
     editingGroupName,
     editingId,

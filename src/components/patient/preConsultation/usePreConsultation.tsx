@@ -1,10 +1,11 @@
 
 import { useState } from "react";
-import { ParameterGroup, ParameterItem } from "./types";
-import { initialGroups } from "./mockData";
+import { ParameterGroup, ParameterItem, HistoricalDataMap } from "./types";
+import { initialGroups, historicalData as initialHistoricalData } from "./mockData";
 
 export const usePreConsultation = () => {
   const [groups, setGroups] = useState<ParameterGroup[]>(initialGroups);
+  const [historicalData, setHistoricalData] = useState<HistoricalDataMap>(initialHistoricalData);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [editingGroupName, setEditingGroupName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -62,6 +63,28 @@ export const usePreConsultation = () => {
   };
 
   const handleSave = (groupId: string, id: string) => {
+    // Find the parameter to update
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    const parameter = group.parameters.find(p => p.id === id);
+    if (!parameter) return;
+    
+    // Save current value to history before updating
+    const updatedHistoricalData = { ...historicalData };
+    
+    // Initialize history array if it doesn't exist
+    if (!updatedHistoricalData[id]) {
+      updatedHistoricalData[id] = [];
+    }
+    
+    // Add current value to history
+    updatedHistoricalData[id].unshift({
+      value: parameter.value,
+      collectedAt: parameter.collectedAt
+    });
+    
+    // Update the parameter with new values
     setGroups(groups.map(group => {
       if (group.id === groupId) {
         return {
@@ -70,13 +93,19 @@ export const usePreConsultation = () => {
             item.id === id ? { 
               ...item, 
               field: editingField,
-              value: editingValue
+              value: editingValue,
+              collectedAt: new Date().toISOString()
             } : item
           )
         };
       }
       return group;
     }));
+    
+    // Update historical data
+    setHistoricalData(updatedHistoricalData);
+    
+    // Clear editing state
     setEditingId(null);
   };
 
@@ -123,6 +152,9 @@ export const usePreConsultation = () => {
 
       const newId = (maxId + 1).toString();
       
+      const currentTimestamp = new Date().toISOString();
+      
+      // Update groups with new parameter
       setGroups(groups.map(group => {
         if (group.id === groupId) {
           return {
@@ -132,7 +164,7 @@ export const usePreConsultation = () => {
                 id: newId,
                 field: newParameter.field,
                 value: newParameter.value,
-                collectedAt: new Date().toISOString()
+                collectedAt: currentTimestamp
               },
               ...group.parameters
             ]
@@ -141,6 +173,13 @@ export const usePreConsultation = () => {
         return group;
       }));
       
+      // Initialize history for new parameter
+      setHistoricalData(prev => ({
+        ...prev,
+        [newId]: []
+      }));
+      
+      // Reset form state
       setAddingToGroupId(null);
       setNewParameter({
         field: "",
@@ -152,6 +191,7 @@ export const usePreConsultation = () => {
 
   return {
     groups,
+    historicalData,
     editingGroupId,
     editingGroupName,
     editingId,
