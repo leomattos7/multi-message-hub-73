@@ -30,9 +30,9 @@ export const FilterPatientDialog = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Filtrar Contatos</DialogTitle>
+          <DialogTitle>Filtrar Pacientes</DialogTitle>
           <DialogDescription>
-            Defina os critérios para filtrar a lista de contatos.
+            Defina os critérios para filtrar a lista de pacientes.
           </DialogDescription>
         </DialogHeader>
         
