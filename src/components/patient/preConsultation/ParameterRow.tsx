@@ -3,7 +3,7 @@ import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PencilIcon, CheckIcon, XIcon, PlusCircleIcon } from "lucide-react";
+import { PencilIcon, CheckIcon, XIcon, PlusCircleIcon, CalendarIcon } from "lucide-react";
 import { ParameterHistory } from "./ParameterHistory";
 import { HistoricalDataMap, ParameterItem } from "./types";
 import { formatDateLocal } from "./utils";
@@ -60,7 +60,20 @@ export const ParameterRow: React.FC<ParameterRowProps> = ({
           item.value
         )}
       </TableCell>
-      <TableCell>{formatDateLocal(item.collectedAt)}</TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex justify-center">
+                <CalendarIcon className="h-5 w-5 text-gray-500" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{formatDateLocal(item.collectedAt)}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
       <TableCell>
         {isEditing ? (
           <div className="flex space-x-1">
