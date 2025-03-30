@@ -25,7 +25,8 @@ export const PreConsultationTab: React.FC = () => {
     handleCancel,
     handleAddNewParameter,
     handleParameterChange,
-    handleSaveNewParameter
+    handleSaveNewParameter,
+    handleAddNewRecord
   } = usePreConsultation();
 
   return (
@@ -58,6 +59,7 @@ export const PreConsultationTab: React.FC = () => {
               onAddNewParameter={handleAddNewParameter}
               onParameterChange={handleParameterChange}
               onSaveNewParameter={handleSaveNewParameter}
+              onAddNewRecord={handleAddNewRecord}
             />
           ))}
         </Accordion>

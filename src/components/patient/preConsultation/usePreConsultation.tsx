@@ -189,6 +189,55 @@ export const usePreConsultation = () => {
     }
   };
 
+  // Add a new record for an existing parameter
+  const handleAddNewRecord = (groupId: string, parameterId: string) => {
+    // Find the parameter
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    const parameter = group.parameters.find(p => p.id === parameterId);
+    if (!parameter) return;
+    
+    // Save current value to history
+    const updatedHistoricalData = { ...historicalData };
+    
+    // Initialize history array if it doesn't exist
+    if (!updatedHistoricalData[parameterId]) {
+      updatedHistoricalData[parameterId] = [];
+    }
+    
+    // Add current value to history
+    updatedHistoricalData[parameterId].unshift({
+      value: parameter.value,
+      collectedAt: parameter.collectedAt
+    });
+    
+    // Update the parameter with new values
+    setGroups(groups.map(group => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          parameters: group.parameters.map(item => 
+            item.id === parameterId ? { 
+              ...item,
+              value: "", // Clear the value for user to input
+              collectedAt: new Date().toISOString()
+            } : item
+          )
+        };
+      }
+      return group;
+    }));
+    
+    // Update historical data
+    setHistoricalData(updatedHistoricalData);
+    
+    // Set to editing mode for the parameter
+    setEditingId(parameterId);
+    setEditingField(parameter.field);
+    setEditingValue("");
+  };
+
   return {
     groups,
     historicalData,
@@ -208,6 +257,7 @@ export const usePreConsultation = () => {
     handleCancel,
     handleAddNewParameter,
     handleParameterChange,
-    handleSaveNewParameter
+    handleSaveNewParameter,
+    handleAddNewRecord
   };
 };

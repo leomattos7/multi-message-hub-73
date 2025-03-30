@@ -26,8 +26,9 @@ interface ParameterGroupProps {
   onSave: (groupId: string, id: string) => void;
   onCancel: () => void;
   onAddNewParameter: (groupId: string) => void;
-  onParameterChange: (field: keyof typeof newParameter, value: string) => void;
+  onParameterChange: (field: keyof { field: string; value: string; collectedAt: string }, value: string) => void;
   onSaveNewParameter: (groupId: string) => void;
+  onAddNewRecord: (groupId: string, parameterId: string) => void;
 }
 
 export const ParameterGroup: React.FC<ParameterGroupProps> = ({
@@ -48,7 +49,8 @@ export const ParameterGroup: React.FC<ParameterGroupProps> = ({
   onCancel,
   onAddNewParameter,
   onParameterChange,
-  onSaveNewParameter
+  onSaveNewParameter,
+  onAddNewRecord
 }) => {
   return (
     <AccordionItem key={group.id} value={group.id} className="border rounded-md">
@@ -136,6 +138,7 @@ export const ParameterGroup: React.FC<ParameterGroupProps> = ({
                   onEdit={onEdit}
                   onSave={onSave}
                   onCancel={onCancel}
+                  onAddNewRecord={onAddNewRecord}
                 />
               ))}
             </TableBody>
