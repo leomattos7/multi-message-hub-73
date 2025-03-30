@@ -73,14 +73,14 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
       const { data, error } = await supabase
         .from("patients")
         .insert({
-          name: newPatient.name,
+          full_name: newPatient.name,
           email: newPatient.email || null,
           phone: newPatient.phone || null,
-          address: newPatient.address || null,
+          address: newPatient.address ? { full_address: newPatient.address } : null,
           notes: newPatient.notes || null,
-          payment_method: newPatient.payment_method || "particular",
+          payment_form: newPatient.payment_method || "particular",
           insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
-          birth_date: newPatient.birth_date || null,
+          date_of_birth: newPatient.birth_date || null,
           biological_sex: newPatient.biological_sex || null,
           gender_identity: newPatient.gender_identity || null,
           cpf: newPatient.cpf || null
