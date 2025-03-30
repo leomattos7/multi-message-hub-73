@@ -23,13 +23,7 @@ export const usePatientList = () => {
     sortBy: "name",
     sortOrder: "asc",
     address: "",
-    notes: "",
-    biologicalSex: "",
-    genderIdentity: "",
-    paymentMethod: "",
-    insuranceName: "",
-    cpf: "",
-    birthDate: ""
+    notes: ""
   });
 
   const [editingPatient, setEditingPatient] = useState({
@@ -377,50 +371,38 @@ export const usePatientList = () => {
     if (searchTerm) {
       filtered = filtered.filter(patient => 
         patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.phone?.includes(searchTerm)
+        patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.phone.includes(searchTerm)
       );
     }
     
-    const textFilters = [
-      { field: 'name', value: patientFilters.name },
-      { field: 'email', value: patientFilters.email },
-      { field: 'phone', value: patientFilters.phone },
-      { field: 'address', value: patientFilters.address },
-      { field: 'notes', value: patientFilters.notes },
-      { field: 'cpf', value: patientFilters.cpf },
-      { field: 'insurance_name', value: patientFilters.insuranceName }
-    ];
-    
-    textFilters.forEach(filter => {
-      if (filter.value) {
-        filtered = filtered.filter(patient => 
-          patient[filter.field as keyof Patient]?.toString().toLowerCase().includes(filter.value.toLowerCase())
-        );
-      }
-    });
-    
-    if (patientFilters.birthDate) {
+    if (patientFilters.name) {
       filtered = filtered.filter(patient => 
-        patient.birth_date?.includes(patientFilters.birthDate)
+        patient.name.toLowerCase().includes(patientFilters.name.toLowerCase())
       );
     }
     
-    if (patientFilters.biologicalSex) {
+    if (patientFilters.email) {
       filtered = filtered.filter(patient => 
-        patient.biological_sex === patientFilters.biologicalSex
+        patient.email.toLowerCase().includes(patientFilters.email.toLowerCase())
       );
     }
     
-    if (patientFilters.genderIdentity) {
+    if (patientFilters.phone) {
       filtered = filtered.filter(patient => 
-        patient.gender_identity === patientFilters.genderIdentity
+        patient.phone.includes(patientFilters.phone)
       );
     }
     
-    if (patientFilters.paymentMethod) {
+    if (patientFilters.address) {
       filtered = filtered.filter(patient => 
-        patient.payment_method === patientFilters.paymentMethod
+        patient.address?.toLowerCase().includes(patientFilters.address.toLowerCase())
+      );
+    }
+    
+    if (patientFilters.notes) {
+      filtered = filtered.filter(patient => 
+        patient.notes?.toLowerCase().includes(patientFilters.notes.toLowerCase())
       );
     }
     
@@ -483,13 +465,7 @@ export const usePatientList = () => {
       sortBy: "name",
       sortOrder: "asc",
       address: "",
-      notes: "",
-      biologicalSex: "",
-      genderIdentity: "",
-      paymentMethod: "",
-      insuranceName: "",
-      cpf: "",
-      birthDate: ""
+      notes: ""
     });
   };
 

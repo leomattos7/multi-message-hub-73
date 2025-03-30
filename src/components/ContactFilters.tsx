@@ -39,12 +39,6 @@ export interface PatientFilters {
   sortOrder: "asc" | "desc";
   address: string;
   notes: string;
-  biologicalSex: string;
-  genderIdentity: string;
-  paymentMethod: string;
-  insuranceName: string;
-  cpf: string;
-  birthDate: string;
 }
 
 export function ContactFilters({ 
@@ -64,7 +58,7 @@ export function ContactFilters({
     onFiltersChange({ ...filters, [field]: value });
   };
 
-  const handleSelectChange = (field: "sortBy" | "sortOrder" | "biologicalSex" | "genderIdentity" | "paymentMethod", value: string) => {
+  const handleSelectChange = (field: "sortBy" | "sortOrder", value: string) => {
     onFiltersChange({ 
       ...filters, 
       [field]: value 
@@ -129,28 +123,6 @@ export function ContactFilters({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="cpf">CPF</Label>
-              <Input 
-                id="cpf"
-                name="cpf"
-                placeholder="Filtrar por CPF" 
-                value={filters.cpf || ""} 
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="birthDate">Data de Nascimento</Label>
-              <Input 
-                id="birthDate"
-                name="birthDate"
-                placeholder="AAAA-MM-DD" 
-                value={filters.birthDate || ""} 
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
               <Label htmlFor="notes">Anotações</Label>
               <Input 
                 id="notes"
@@ -164,75 +136,6 @@ export function ContactFilters({
           
           {/* Right Column */}
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="biologicalSex">Sexo Biológico</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange("biologicalSex", value)}
-                value={filters.biologicalSex || ""}
-              >
-                <SelectTrigger id="biologicalSex">
-                  <SelectValue placeholder="Selecione o sexo biológico" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
-                  <SelectItem value="male">Masculino</SelectItem>
-                  <SelectItem value="female">Feminino</SelectItem>
-                  <SelectItem value="intersex">Intersexo</SelectItem>
-                  <SelectItem value="not_informed">Não Informado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="genderIdentity">Identidade de Gênero</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange("genderIdentity", value)}
-                value={filters.genderIdentity || ""}
-              >
-                <SelectTrigger id="genderIdentity">
-                  <SelectValue placeholder="Selecione a identidade de gênero" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
-                  <SelectItem value="man">Homem</SelectItem>
-                  <SelectItem value="woman">Mulher</SelectItem>
-                  <SelectItem value="non_binary">Não-Binário</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
-                  <SelectItem value="not_informed">Não Informado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange("paymentMethod", value)}
-                value={filters.paymentMethod || ""}
-              >
-                <SelectTrigger id="paymentMethod">
-                  <SelectValue placeholder="Selecione a forma de pagamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
-                  <SelectItem value="particular">Particular</SelectItem>
-                  <SelectItem value="convenio">Convênio</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {filters.paymentMethod === "convenio" && (
-              <div className="space-y-2">
-                <Label htmlFor="insuranceName">Nome do Convênio</Label>
-                <Input 
-                  id="insuranceName"
-                  name="insuranceName"
-                  placeholder="Filtrar por convênio" 
-                  value={filters.insuranceName || ""} 
-                  onChange={handleInputChange}
-                />
-              </div>
-            )}
-            
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="hasAppointment" 
@@ -258,7 +161,7 @@ export function ContactFilters({
             <div className="space-y-2">
               <Label htmlFor="sortBy">Ordenar por</Label>
               <Select 
-                onValueChange={(value) => handleSelectChange("sortBy", value as "name" | "lastAppointment" | "lastMessage")}
+                onValueChange={(value) => handleSelectChange("sortBy", value)}
                 value={filters.sortBy}
               >
                 <SelectTrigger id="sortBy">
