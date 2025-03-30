@@ -34,42 +34,72 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
   const dialogTitle = isEditMode ? "Editar Consulta" : "Agendar Consulta";
 
   return (
-    <DialogContent className="sm:max-w-[425px]">
+    <DialogContent className="sm:max-w-[650px]">
       <DialogHeader>
         <DialogTitle>{dialogTitle}</DialogTitle>
       </DialogHeader>
-      <div className="grid gap-4 py-4">
-        <DatePickerField 
-          selectedDate={formState.selectedDate}
-          onChange={(date) => date && setField("selectedDate", date)}
-          label="Data"
-        />
-        
-        <div>
-          <p className="font-medium mb-1">Horário da Consulta:</p>
-          <TimeRangeSelector 
-            startTime={formState.startTime} 
-            endTime={formState.endTime} 
-            onTimeChange={handleTimeChange}
-          />
+      <div className="py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Left Column */}
+          <div className="space-y-4">
+            <DatePickerField 
+              selectedDate={formState.selectedDate}
+              onChange={(date) => date && setField("selectedDate", date)}
+              label="Data"
+            />
+            
+            <div>
+              <p className="font-medium mb-1">Horário da Consulta:</p>
+              <TimeRangeSelector 
+                startTime={formState.startTime} 
+                endTime={formState.endTime} 
+                onTimeChange={handleTimeChange}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="status" className="font-medium mb-1 block">Status:</label>
+              <PatientInfoFields
+                patientName={formState.patientName}
+                setPatientName={(value) => setField("patientName", value)}
+                status={formState.status}
+                setStatus={(value) => setField("status", value)}
+                type={formState.type}
+                setType={(value) => setField("type", value)}
+                paymentMethod={formState.paymentMethod}
+                setPaymentMethod={(value) => setField("paymentMethod", value)}
+                isEditMode={isEditMode}
+                renderPatientField={false}
+                renderStatusTypePayment={true}
+              />
+            </div>
+          </div>
+          
+          {/* Right Column */}
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="patientName" className="font-medium mb-1 block">Nome do Paciente:</label>
+              <PatientInfoFields
+                patientName={formState.patientName}
+                setPatientName={(value) => setField("patientName", value)}
+                status={formState.status}
+                setStatus={(value) => setField("status", value)}
+                type={formState.type}
+                setType={(value) => setField("type", value)}
+                paymentMethod={formState.paymentMethod}
+                setPaymentMethod={(value) => setField("paymentMethod", value)}
+                isEditMode={isEditMode}
+                renderPatientField={true}
+                renderStatusTypePayment={false}
+              />
+            </div>
+            
+            <NotesField
+              notes={formState.notes}
+              setNotes={(value) => setField("notes", value)}
+            />
+          </div>
         </div>
-        
-        <PatientInfoFields
-          patientName={formState.patientName}
-          setPatientName={(value) => setField("patientName", value)}
-          status={formState.status}
-          setStatus={(value) => setField("status", value)}
-          type={formState.type}
-          setType={(value) => setField("type", value)}
-          paymentMethod={formState.paymentMethod}
-          setPaymentMethod={(value) => setField("paymentMethod", value)}
-          isEditMode={isEditMode}
-        />
-        
-        <NotesField
-          notes={formState.notes}
-          setNotes={(value) => setField("notes", value)}
-        />
       </div>
       
       <DialogActionButtons
