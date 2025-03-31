@@ -26,33 +26,21 @@ const mockPatients = [
     name: "Maria Silva",
     email: "maria.silva@example.com",
     phone: "(11) 98765-4321",
-    record_count: 5,
-    birth_date: "1985-05-15",
-    cpf: "123.456.789-00",
-    biological_sex: "female",
-    gender_identity: "woman"
+    record_count: 5
   },
   {
     id: "mock-2",
     name: "João Santos",
     email: "joao.santos@example.com",
     phone: "(21) 99876-5432",
-    record_count: 3,
-    birth_date: "1990-08-23",
-    cpf: "987.654.321-00",
-    biological_sex: "male",
-    gender_identity: "man"
+    record_count: 3
   },
   {
     id: "mock-3",
     name: "Ana Oliveira",
     email: "ana.oliveira@example.com",
     phone: "(31) 97654-3210",
-    record_count: 8,
-    birth_date: "1978-11-30",
-    cpf: "456.789.123-00",
-    biological_sex: "female",
-    gender_identity: "woman"
+    record_count: 8
   }
 ];
 
@@ -62,7 +50,7 @@ export const PatientList: React.FC<PatientListProps> = ({
   searchQuery, 
   onPatientClick 
 }) => {
-  const [showMockData, setShowMockData] = useState(true); // Set to true by default for debugging
+  const [showMockData, setShowMockData] = useState(false);
   
   if (isLoading) {
     return (

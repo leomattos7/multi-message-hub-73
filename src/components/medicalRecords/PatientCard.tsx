@@ -39,7 +39,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) =>
         <div className="flex items-center">
           <div className="mr-4 text-right">
             <span className="text-sm text-gray-500">Registros</span>
-            <p className="font-medium">{patient.record_count || 0}</p>
+            <p className="font-medium">{patient.record_count}</p>
           </div>
           <ChevronRight className="h-5 w-5 text-gray-400" />
         </div>
