@@ -51,15 +51,8 @@ const AppointmentDialog = ({ date, time, onClose, appointment }: AppointmentDial
               <PatientInfoFields
                 patientName={formState.patientName}
                 setPatientName={(value) => setField("patientName", value)}
-                status={formState.status}
-                setStatus={(value) => setField("status", value)}
-                type={formState.type}
-                setType={(value) => setField("type", value)}
-                paymentMethod={formState.paymentMethod}
-                setPaymentMethod={(value) => setField("paymentMethod", value)}
                 isEditMode={isEditMode}
                 renderPatientField={true}
-                renderStatusTypePayment={false}
               />
             </div>
             
