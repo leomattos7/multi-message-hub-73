@@ -7,6 +7,7 @@ import { MedicalRecordStats } from "@/components/medicalRecords/MedicalRecordSta
 import { PatientSearchBar } from "@/components/medicalRecords/PatientSearchBar";
 import { PatientList } from "@/components/medicalRecords/PatientList";
 import { AddPatientDialog } from "@/components/medicalRecords/AddPatientDialog";
+import { toast } from "sonner";
 
 export default function MedicalRecords() {
   const {
@@ -22,20 +23,27 @@ export default function MedicalRecords() {
     navigateToNewPatient
   } = useMedicalRecords();
 
+  const handleAddPatient = () => {
+    setIsAddPatientOpen(true);
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Prontuário Eletrônico</h1>
         
-        <Button onClick={() => setIsAddPatientOpen(true)}>
+        <Button onClick={handleAddPatient}>
           <Plus className="h-4 w-4 mr-2" />
-          Novo Prontuário
+          Novo Paciente
         </Button>
         
         <AddPatientDialog
           isOpen={isAddPatientOpen}
           onOpenChange={setIsAddPatientOpen}
-          onSuccess={navigateToNewPatient}
+          onSuccess={(patientId) => {
+            toast.success("Paciente adicionado com sucesso!");
+            navigateToNewPatient(patientId);
+          }}
           onRefetch={refetchPatients}
         />
       </div>

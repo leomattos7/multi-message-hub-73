@@ -50,7 +50,7 @@ export const PatientList: React.FC<PatientListProps> = ({
   searchQuery, 
   onPatientClick 
 }) => {
-  const [showMockData, setShowMockData] = useState(false);
+  const [showMockData, setShowMockData] = useState(true);
   
   if (isLoading) {
     return (
