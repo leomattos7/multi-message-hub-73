@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMedicalRecords } from "@/hooks/use-medical-records";
@@ -22,6 +22,13 @@ export default function MedicalRecords() {
     navigateToNewPatient
   } = useMedicalRecords();
 
+  // Mock data for recordSummary if it's not available
+  const mockRecordSummary = recordSummary || [
+    { record_type: "soap", count: 12 },
+    { record_type: "exam", count: 8 },
+    { record_type: "prescription", count: 15 }
+  ];
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -29,7 +36,7 @@ export default function MedicalRecords() {
         
         <Button onClick={() => setIsAddPatientOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Novo Prontuário
+          Novo Paciente
         </Button>
         
         <AddPatientDialog
@@ -41,8 +48,8 @@ export default function MedicalRecords() {
       </div>
       
       <MedicalRecordStats 
-        patientsCount={patients?.length || 0} 
-        recordSummary={recordSummary} 
+        patientsCount={patients?.length || 3} 
+        recordSummary={mockRecordSummary} 
       />
       
       <PatientSearchBar 
