@@ -53,9 +53,15 @@ export function useConversation(initialConversation: any, useMockData = false) {
         
         return Promise.resolve({ success: true });
       }
-      return conversationService.sendMessage(conversation.id, content).then(result => {
-        return { success: true, ...result };
-      });
+      
+      try {
+        return conversationService.sendMessage(conversation.id, content).then(result => {
+          return { success: true, ...result };
+        });
+      } catch (error) {
+        console.error("Error sending message:", error);
+        return Promise.reject(error);
+      }
     },
     onSuccess: () => {
       if (!useMockData) {

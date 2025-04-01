@@ -4,15 +4,19 @@ import { MessageCircle, Inbox } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { mockConversations } from "@/data/mockData";
 
 export default function Index() {
   const isMobile = useIsMobile();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showConversation, setShowConversation] = useState(!isMobile);
+  const [useMockData, setUseMockData] = useState(true); // Enable mock data by default
 
-  // Get conversations from localStorage instead of using mock data
-  const conversationsFromStorage = JSON.parse(localStorage.getItem("conversations") || "[]");
-  const conversations = conversationsFromStorage;
+  // Get conversations from localStorage or use mock data
+  const conversations = useMockData 
+    ? mockConversations 
+    : JSON.parse(localStorage.getItem("conversations") || "[]");
+    
   const isLoading = false;
   const error = null;
 
@@ -27,6 +31,12 @@ export default function Index() {
 
   const handleBackToList = () => {
     setShowConversation(false);
+  };
+
+  const toggleMockData = () => {
+    setUseMockData(!useMockData);
+    // Reset selection when toggling data source
+    setSelectedConversationId(null);
   };
 
   if (isLoading) {
@@ -55,12 +65,18 @@ export default function Index() {
                   </span>
                 )}
               </h2>
+              <button 
+                onClick={toggleMockData} 
+                className="text-xs bg-secondary px-2 py-1 rounded"
+              >
+                {useMockData ? "Usar dados reais" : "Usar dados de exemplo"}
+              </button>
             </div>
             <ConversationList 
               onSelectConversation={handleSelectConversation}
               selectedConversationId={selectedConversationId}
               className="flex-1"
-              useMockData={false} // Set to false to use real data from localStorage
+              useMockData={useMockData}
             />
           </div>
         )}
@@ -71,7 +87,7 @@ export default function Index() {
               <ConversationView 
                 conversation={selectedConversation}
                 onBackClick={isMobile ? handleBackToList : undefined}
-                useMockData={false} // Set to false to use real data
+                useMockData={useMockData}
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">

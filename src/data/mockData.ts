@@ -1,4 +1,3 @@
-
 export type ChannelType = 'whatsapp' | 'instagram' | 'facebook' | 'email';
 
 export interface Message {
@@ -76,6 +75,102 @@ export const mockConversations: Conversation[] = [
         timestamp: generateRandomTime(1),
         isOutgoing: false,
         status: 'read',
+      },
+    ],
+  },
+  {
+    id: '6',
+    contact: {
+      id: '106',
+      name: 'Roberto Almeida',
+      avatar: 'https://i.pravatar.cc/150?img=12',
+    },
+    channel: 'whatsapp',
+    unread: 1,
+    lastActivity: generateRandomTime(0.5),
+    messages: [
+      {
+        id: '6001',
+        content: 'Olá, preciso remarcar minha consulta de hoje para semana que vem.',
+        timestamp: generateRandomTime(3),
+        isOutgoing: false,
+        status: 'read',
+      },
+      {
+        id: '6002',
+        content: 'Olá Roberto, sem problemas. Para qual dia gostaria de remarcar?',
+        timestamp: generateRandomTime(2.5),
+        isOutgoing: true,
+        status: 'read',
+      },
+      {
+        id: '6003',
+        content: 'Quarta-feira às 14h seria possível?',
+        timestamp: generateRandomTime(2),
+        isOutgoing: false,
+        status: 'read',
+      },
+      {
+        id: '6004',
+        content: 'Sim, temos disponibilidade. Vou fazer a remarcação agora.',
+        timestamp: generateRandomTime(1.5),
+        isOutgoing: true,
+        status: 'read',
+      },
+      {
+        id: '6005',
+        content: 'Perfeito! O pagamento será da mesma forma que o anterior?',
+        timestamp: generateRandomTime(0.5),
+        isOutgoing: false,
+        status: 'delivered',
+      },
+    ],
+  },
+  {
+    id: '7',
+    contact: {
+      id: '107',
+      name: 'Paula Martins',
+      avatar: 'https://i.pravatar.cc/150?img=4',
+    },
+    channel: 'whatsapp',
+    unread: 3,
+    lastActivity: generateRandomTime(0.2),
+    messages: [
+      {
+        id: '7001',
+        content: 'Boa tarde, tenho os resultados dos exames solicitados. Como posso enviá-los?',
+        timestamp: generateRandomTime(4),
+        isOutgoing: false,
+        status: 'read',
+      },
+      {
+        id: '7002',
+        content: 'Boa tarde, Paula! Você pode enviar por WhatsApp mesmo ou trazer impresso na próxima consulta.',
+        timestamp: generateRandomTime(3.5),
+        isOutgoing: true,
+        status: 'read',
+      },
+      {
+        id: '7003',
+        content: 'Vou enviar por aqui mesmo então. Quando posso marcar a próxima consulta para análise?',
+        timestamp: generateRandomTime(0.3),
+        isOutgoing: false,
+        status: 'delivered',
+      },
+      {
+        id: '7004',
+        content: 'Após confirmar o recebimento dos exames, o médico analisará e entraremos em contato para agendar.',
+        timestamp: generateRandomTime(0.2),
+        isOutgoing: false,
+        status: 'delivered',
+      },
+      {
+        id: '7005',
+        content: 'Quero agendar o mais rápido possível, como está a agenda para os próximos dias?',
+        timestamp: generateRandomTime(0.1),
+        isOutgoing: false,
+        status: 'delivered',
       },
     ],
   },
