@@ -36,24 +36,32 @@ export const useMedicalRecord = (recordId?: string) => {
 
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        // First, fetch the record
+        const { data: recordData, error: recordError } = await supabase
           .from("patient_records")
-          .select(`
-            *,
-            patient:patient_id (
-              id,
-              name,
-              email,
-              phone
-            )
-          `)
+          .select(`*`)
           .eq("id", recordId)
           .single();
 
-        if (error) throw error;
+        if (recordError) throw recordError;
         
-        setRecord(data as MedicalRecordWithPatient);
-        setEditedContent(data.content);
+        // Then fetch the patient separately
+        const { data: patientData, error: patientError } = await supabase
+          .from("patients")
+          .select(`id, name, email, phone`)
+          .eq("id", recordData.patient_id)
+          .single();
+        
+        if (patientError) throw patientError;
+        
+        // Combine the data
+        const completeRecord: MedicalRecordWithPatient = {
+          ...recordData,
+          patient: patientData
+        };
+        
+        setRecord(completeRecord);
+        setEditedContent(completeRecord.content);
       } catch (error) {
         console.error("Error fetching record:", error);
         toast({

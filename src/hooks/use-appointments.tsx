@@ -7,7 +7,7 @@ export type Appointment = {
   patient_id: string;
   date: string;
   time: string;
-  end_time?: string; // Add end_time as optional field
+  end_time?: string;
   type: string;
   status: string;
   payment_method?: string;
@@ -41,7 +41,19 @@ export function useAppointments(date?: Date) {
       const { data, error } = await query.order("time");
       
       if (error) throw error;
-      return data as Appointment[];
+      
+      // Cast the data to make TypeScript happy
+      return (data as any[]).map(appointment => {
+        // Handle potentially errored relations
+        const patientData = typeof appointment.patient === 'object' && appointment.patient !== null
+          ? appointment.patient
+          : { name: "Unknown", email: "", phone: "" };
+          
+        return {
+          ...appointment,
+          patient: patientData
+        };
+      }) as Appointment[];
     },
   });
 

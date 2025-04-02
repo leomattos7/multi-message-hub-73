@@ -7,13 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Calendar, Facebook, Instagram, Link, Loader2, Mail, MapPin, Phone, Twitter, Youtube, User, Building, MapPinned } from 'lucide-react';
+import { DoctorProfile, DoctorLink } from './types';
+
+interface ProfileWithLinks extends DoctorProfile {
+  doctor_links?: DoctorLink[];
+}
 
 export const PublicPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [links, setLinks] = useState<any[]>([]);
+  const [profile, setProfile] = useState<ProfileWithLinks | null>(null);
+  const [links, setLinks] = useState<DoctorLink[]>([]);
 
   useEffect(() => {
     if (slug) {
