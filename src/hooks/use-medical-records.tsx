@@ -44,7 +44,7 @@ export const useMedicalRecords = () => {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          console.log("User not authenticated, using empty array");
+          console.log("User not authenticated, returning empty array");
           return [];
         }
         
@@ -64,6 +64,7 @@ export const useMedicalRecords = () => {
         
         if (patientsError) {
           console.error("Error fetching patients:", patientsError);
+          toast.error("Erro ao carregar pacientes");
           return [];
         }
         
@@ -78,6 +79,7 @@ export const useMedicalRecords = () => {
         return patientsWithRecordCounts as Patient[];
       } catch (error) {
         console.error("Error in queryFn:", error);
+        toast.error("Erro ao carregar pacientes");
         // Return empty array instead of throwing to avoid breaking the UI
         return [];
       }
