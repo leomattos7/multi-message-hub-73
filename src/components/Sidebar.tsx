@@ -11,6 +11,8 @@ import {
   Calendar,
   LogOut,
   FileText,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -57,6 +59,7 @@ export function Sidebar() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(!isMobile);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [userData, setUserData] = useState<any>(null);
 
   // Load user data from localStorage
@@ -92,6 +95,11 @@ export function Sidebar() {
   // Toggle the sidebar on mobile
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  // Toggle collapse sidebar
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
   // Handle logout
@@ -133,21 +141,39 @@ export function Sidebar() {
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen bg-white border-r shadow-sm",
+          "fixed top-0 left-0 z-40 h-screen bg-white border-r shadow-sm transition-all duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          isMobile ? "w-64" : "w-64",
-          "transition-transform duration-300 ease-in-out"
+          isCollapsed ? "w-20" : "w-64"
         )}
       >
-        <div className="flex flex-col h-full px-3 py-6">
-          <div className="flex items-center justify-start mb-8 px-2">
-            <Link to="/" className="flex items-center">
+        <div className="flex flex-col h-full px-3 py-6 relative">
+          {/* Collapse/Expand button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-3 right-3 h-8 w-8"
+            onClick={toggleCollapse}
+            aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+
+          <div className={cn(
+            "flex items-center mb-8 px-2",
+            isCollapsed ? "justify-center" : "justify-start"
+          )}>
+            <Link to="/" className={cn(
+              "flex items-center",
+              isCollapsed && "flex-col"
+            )}>
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
                 {userData?.name?.charAt(0) || "U"}
               </div>
-              <span className="ml-2 text-lg font-semibold">
-                {userData?.name || "Médico"}
-              </span>
+              {!isCollapsed && (
+                <span className="ml-2 text-lg font-semibold">
+                  {userData?.name || "Médico"}
+                </span>
+              )}
             </Link>
           </div>
 
@@ -158,12 +184,13 @@ export function Sidebar() {
                 <Link
                   to={item.href}
                   className={cn(
-                    "flex items-center px-2 py-3 rounded-lg hover:bg-gray-100",
-                    pathname === item.href && "bg-gray-100 text-blue-600"
+                    "flex items-center rounded-lg hover:bg-gray-100",
+                    pathname === item.href && "bg-gray-100 text-blue-600",
+                    isCollapsed ? "justify-center px-2 py-3" : "px-2 py-3"
                   )}
                 >
                   <span className="w-6 h-6">{item.icon}</span>
-                  <span className="ml-3">{item.name}</span>
+                  {!isCollapsed && <span className="ml-3">{item.name}</span>}
                 </Link>
               </li>
             ))}
@@ -173,11 +200,14 @@ export function Sidebar() {
           <div className="pt-4 mt-4 border-t border-gray-200">
             <Button
               variant="ghost"
-              className="w-full justify-start px-2 py-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+              className={cn(
+                "w-full text-red-600 hover:text-red-700 hover:bg-red-50",
+                isCollapsed ? "justify-center px-2 py-3" : "justify-start px-2 py-3"
+              )}
               onClick={handleLogout}
             >
-              <LogOut className="w-5 h-5 mr-3" />
-              Sair
+              <LogOut className="w-5 h-5" />
+              {!isCollapsed && <span className="ml-3">Sair</span>}
             </Button>
           </div>
         </div>
@@ -186,7 +216,7 @@ export function Sidebar() {
       {/* Spacer div to ensure content doesn't overlap with sidebar */}
       <div className={cn(
         "transition-all duration-300",
-        isOpen ? "ml-64" : "ml-0",
+        isOpen && !isCollapsed ? "ml-64" : (isOpen && isCollapsed ? "ml-20" : "ml-0"),
         isMobile && "ml-0"
       )} />
     </>
