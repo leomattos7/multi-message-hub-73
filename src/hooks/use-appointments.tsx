@@ -45,7 +45,7 @@ export function useAppointments(date?: Date) {
       // Cast the data to make TypeScript happy
       return (data as any[]).map(appointment => {
         // Handle potentially errored relations
-        const patientData = appointment.patient && typeof appointment.patient === 'object' && !('error' in appointment.patient)
+        const patientData = typeof appointment.patient === 'object' && appointment.patient !== null
           ? appointment.patient
           : { name: "Unknown", email: "", phone: "" };
           

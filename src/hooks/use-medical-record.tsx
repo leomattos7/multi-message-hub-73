@@ -52,26 +52,7 @@ export const useMedicalRecord = (recordId?: string) => {
           .eq("id", recordData.patient_id)
           .single();
         
-        if (patientError) {
-          // If there's an error fetching the patient, create a fallback patient object
-          const fallbackPatient = {
-            id: recordData.patient_id,
-            name: "Nome não disponível",
-            email: "",
-            phone: ""
-          };
-          
-          const completeRecord: MedicalRecordWithPatient = {
-            ...recordData,
-            patient: fallbackPatient
-          };
-          
-          setRecord(completeRecord);
-          setEditedContent(completeRecord.content);
-          
-          console.error("Error fetching patient data:", patientError);
-          return;
-        }
+        if (patientError) throw patientError;
         
         // Combine the data
         const completeRecord: MedicalRecordWithPatient = {
