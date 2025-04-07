@@ -7,8 +7,9 @@ import { PlusIcon, CheckIcon, XIcon, PencilIcon, ChevronDownIcon } from "lucide-
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { ParameterRow } from "./ParameterRow";
 import { NewParameterRow } from "./NewParameterRow";
-import { HistoricalDataMap, ParameterGroup as ParameterGroupType, ParameterSubgroup } from "./types";
+import { HistoricalDataMap, NewSubgroupData, ParameterGroup as ParameterGroupType, ParameterSubgroup } from "./types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AddSubgroupDialog } from "./AddSubgroupDialog";
 
 interface ParameterGroupProps {
   group: ParameterGroupType;
@@ -30,6 +31,7 @@ interface ParameterGroupProps {
   onParameterChange: (field: keyof { field: string; value: string; collectedAt: string }, value: string) => void;
   onSaveNewParameter: (groupId: string) => void;
   onAddNewRecord: (groupId: string, parameterId: string) => void;
+  onAddSubgroup?: (groupId: string, subgroupData: NewSubgroupData) => void;
 }
 
 export const ParameterGroup: React.FC<ParameterGroupProps> = ({
@@ -51,8 +53,18 @@ export const ParameterGroup: React.FC<ParameterGroupProps> = ({
   onAddNewParameter,
   onParameterChange,
   onSaveNewParameter,
-  onAddNewRecord
+  onAddNewRecord,
+  onAddSubgroup
 }) => {
+  const hasSubgroups = group.subgroups && group.subgroups.length > 0;
+  const isLifestyleGroup = group.id === "3"; // "Estilo de vida" group ID
+
+  const handleAddSubgroup = (subgroupData: NewSubgroupData) => {
+    if (onAddSubgroup) {
+      onAddSubgroup(group.id, subgroupData);
+    }
+  };
+
   return (
     <AccordionItem key={group.id} value={group.id} className="border rounded-md">
       <div className="flex justify-between items-center px-4">
@@ -107,9 +119,9 @@ export const ParameterGroup: React.FC<ParameterGroupProps> = ({
         </div>
       </div>
       <AccordionContent className="px-4 pb-4">
-        {group.subgroups && group.subgroups.length > 0 ? (
+        {hasSubgroups ? (
           <div className="space-y-4">
-            {group.subgroups.map((subgroup) => (
+            {group.subgroups?.map((subgroup) => (
               <SubgroupSection 
                 key={subgroup.id}
                 groupId={group.id}
@@ -122,6 +134,7 @@ export const ParameterGroup: React.FC<ParameterGroupProps> = ({
                 onSave={onSave}
                 onCancel={onCancel}
                 onAddNewRecord={onAddNewRecord}
+                onAddNewParameter={onAddNewParameter}
               />
             ))}
           </div>
@@ -166,15 +179,19 @@ export const ParameterGroup: React.FC<ParameterGroupProps> = ({
           </div>
         )}
         <div className="flex justify-center mt-3">
-          <Button 
-            onClick={() => onAddNewParameter(group.id)} 
-            variant="outline" 
-            size="sm"
-            disabled={addingToGroupId === group.id}
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Novo Parâmetro
-          </Button>
+          {isLifestyleGroup && hasSubgroups ? (
+            <AddSubgroupDialog onAddSubgroup={handleAddSubgroup} />
+          ) : (
+            <Button 
+              onClick={() => onAddNewParameter(group.id)} 
+              variant="outline" 
+              size="sm"
+              disabled={addingToGroupId === group.id}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Novo Parâmetro
+            </Button>
+          )}
         </div>
       </AccordionContent>
     </AccordionItem>
@@ -192,6 +209,7 @@ interface SubgroupSectionProps {
   onSave: (groupId: string, id: string) => void;
   onCancel: () => void;
   onAddNewRecord: (groupId: string, parameterId: string) => void;
+  onAddNewParameter: (subgroupId: string) => void;
 }
 
 const SubgroupSection: React.FC<SubgroupSectionProps> = ({
@@ -204,7 +222,8 @@ const SubgroupSection: React.FC<SubgroupSectionProps> = ({
   onEdit,
   onSave,
   onCancel,
-  onAddNewRecord
+  onAddNewRecord,
+  onAddNewParameter
 }) => {
   const [isOpen, setIsOpen] = React.useState(true);
 
@@ -248,6 +267,16 @@ const SubgroupSection: React.FC<SubgroupSectionProps> = ({
                 ))}
               </TableBody>
             </Table>
+          </div>
+          <div className="flex justify-center mt-3">
+            <Button 
+              onClick={() => onAddNewParameter(groupId)} 
+              variant="outline" 
+              size="sm"
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Novo Parâmetro
+            </Button>
           </div>
         </CollapsibleContent>
       </Collapsible>

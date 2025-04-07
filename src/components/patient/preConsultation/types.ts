@@ -28,3 +28,7 @@ export interface ParameterGroup {
 export type HistoricalDataMap = {
   [key: string]: ParameterHistoryItem[];
 };
+
+export interface NewSubgroupData {
+  name: string;
+}

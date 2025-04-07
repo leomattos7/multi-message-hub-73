@@ -20,6 +20,7 @@ export const PreConsultationTab: React.FC = () => {
     handleSaveGroupName,
     handleCancelEditGroup,
     handleAddGroup,
+    handleAddSubgroup,
     handleEdit,
     handleSave,
     handleCancel,
@@ -60,6 +61,7 @@ export const PreConsultationTab: React.FC = () => {
               onParameterChange={handleParameterChange}
               onSaveNewParameter={handleSaveNewParameter}
               onAddNewRecord={handleAddNewRecord}
+              onAddSubgroup={handleAddSubgroup}
             />
           ))}
         </Accordion>

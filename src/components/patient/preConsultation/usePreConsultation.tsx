@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ParameterGroup, ParameterItem, HistoricalDataMap } from "./types";
+import { NewSubgroupData, ParameterGroup, ParameterItem, HistoricalDataMap } from "./types";
 import { initialGroups, historicalData as initialHistoricalData } from "./mockData";
 
 export const usePreConsultation = () => {
@@ -52,6 +52,31 @@ export const usePreConsultation = () => {
     }
   };
 
+  // Add a new subgroup to a specific group
+  const handleAddSubgroup = (groupId: string, subgroupData: NewSubgroupData) => {
+    if (subgroupData.name.trim() === "") return;
+    
+    setGroups(groups.map(group => {
+      if (group.id === groupId) {
+        const subgroups = group.subgroups || [];
+        const newSubgroupId = `${groupId}-${(subgroups.length + 1)}`;
+        
+        return {
+          ...group,
+          subgroups: [
+            ...subgroups,
+            {
+              id: newSubgroupId,
+              name: subgroupData.name,
+              parameters: []
+            }
+          ]
+        };
+      }
+      return group;
+    }));
+  };
+
   // Handle parameter editing
   const handleEdit = (groupId: string, id: string, field: string, value: string) => {
     const group = groups.find(g => g.id === groupId);
@@ -64,10 +89,26 @@ export const usePreConsultation = () => {
 
   const handleSave = (groupId: string, id: string) => {
     // Find the parameter to update
+    let parameter: ParameterItem | undefined;
+    let foundInSubgroup = false;
+    
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
     
-    const parameter = group.parameters.find(p => p.id === id);
+    // Check if the parameter is in the main parameters array
+    parameter = group.parameters.find(p => p.id === id);
+    
+    // If not found in main parameters, check in subgroups
+    if (!parameter && group.subgroups) {
+      for (const subgroup of group.subgroups) {
+        parameter = subgroup.parameters.find(p => p.id === id);
+        if (parameter) {
+          foundInSubgroup = true;
+          break;
+        }
+      }
+    }
+    
     if (!parameter) return;
     
     // Save current value to history before updating
@@ -87,17 +128,37 @@ export const usePreConsultation = () => {
     // Update the parameter with new values
     setGroups(groups.map(group => {
       if (group.id === groupId) {
-        return {
-          ...group,
-          parameters: group.parameters.map(item => 
-            item.id === id ? { 
-              ...item, 
-              field: editingField,
-              value: editingValue,
-              collectedAt: new Date().toISOString()
-            } : item
-          )
-        };
+        // If parameter is in main parameters array
+        if (!foundInSubgroup) {
+          return {
+            ...group,
+            parameters: group.parameters.map(item => 
+              item.id === id ? { 
+                ...item, 
+                field: editingField,
+                value: editingValue,
+                collectedAt: new Date().toISOString()
+              } : item
+            )
+          };
+        } 
+        // If parameter is in a subgroup
+        else if (group.subgroups) {
+          return {
+            ...group,
+            subgroups: group.subgroups.map(subgroup => ({
+              ...subgroup,
+              parameters: subgroup.parameters.map(item => 
+                item.id === id ? { 
+                  ...item, 
+                  field: editingField,
+                  value: editingValue,
+                  collectedAt: new Date().toISOString()
+                } : item
+              )
+            }))
+          };
+        }
       }
       return group;
     }));
@@ -148,15 +209,29 @@ export const usePreConsultation = () => {
             maxId = paramId;
           }
         });
+        
+        if (group.subgroups) {
+          group.subgroups.forEach(subgroup => {
+            subgroup.parameters.forEach(param => {
+              const paramId = parseInt(param.id);
+              if (!isNaN(paramId) && paramId > maxId) {
+                maxId = paramId;
+              }
+            });
+          });
+        }
       });
 
       const newId = (maxId + 1).toString();
-      
       const currentTimestamp = new Date().toISOString();
+      
+      // Check if we're adding to a subgroup
+      const [parentGroupId, subgroupId] = groupId.includes('-') ? groupId.split('-') : [groupId, null];
       
       // Update groups with new parameter
       setGroups(groups.map(group => {
-        if (group.id === groupId) {
+        // If adding to main group
+        if (group.id === groupId && !subgroupId) {
           return {
             ...group,
             parameters: [
@@ -168,6 +243,26 @@ export const usePreConsultation = () => {
               },
               ...group.parameters
             ]
+          };
+        }
+        // If adding to a subgroup
+        else if (group.id === parentGroupId && subgroupId && group.subgroups) {
+          return {
+            ...group,
+            subgroups: group.subgroups.map(subgroup => 
+              subgroup.id === groupId ? {
+                ...subgroup,
+                parameters: [
+                  {
+                    id: newId,
+                    field: newParameter.field,
+                    value: newParameter.value,
+                    collectedAt: currentTimestamp
+                  },
+                  ...subgroup.parameters
+                ]
+              } : subgroup
+            )
           };
         }
         return group;
@@ -192,10 +287,28 @@ export const usePreConsultation = () => {
   // Add a new record for an existing parameter
   const handleAddNewRecord = (groupId: string, parameterId: string) => {
     // Find the parameter
+    let parameter: ParameterItem | undefined;
+    let foundInSubgroup = false;
+    let subgroupId: string | null = null;
+    
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
     
-    const parameter = group.parameters.find(p => p.id === parameterId);
+    // Check if the parameter is in the main parameters array
+    parameter = group.parameters.find(p => p.id === parameterId);
+    
+    // If not found in main parameters, check in subgroups
+    if (!parameter && group.subgroups) {
+      for (const subgroup of group.subgroups) {
+        parameter = subgroup.parameters.find(p => p.id === parameterId);
+        if (parameter) {
+          foundInSubgroup = true;
+          subgroupId = subgroup.id;
+          break;
+        }
+      }
+    }
+    
     if (!parameter) return;
     
     // Save current value to history
@@ -215,16 +328,34 @@ export const usePreConsultation = () => {
     // Update the parameter with new values
     setGroups(groups.map(group => {
       if (group.id === groupId) {
-        return {
-          ...group,
-          parameters: group.parameters.map(item => 
-            item.id === parameterId ? { 
-              ...item,
-              value: "", // Clear the value for user to input
-              collectedAt: new Date().toISOString()
-            } : item
-          )
-        };
+        if (!foundInSubgroup) {
+          return {
+            ...group,
+            parameters: group.parameters.map(item => 
+              item.id === parameterId ? { 
+                ...item,
+                value: "", // Clear the value for user to input
+                collectedAt: new Date().toISOString()
+              } : item
+            )
+          };
+        } else if (group.subgroups && subgroupId) {
+          return {
+            ...group,
+            subgroups: group.subgroups.map(subgroup => 
+              subgroup.id === subgroupId ? {
+                ...subgroup,
+                parameters: subgroup.parameters.map(item => 
+                  item.id === parameterId ? { 
+                    ...item,
+                    value: "", // Clear the value for user to input
+                    collectedAt: new Date().toISOString()
+                  } : item
+                )
+              } : subgroup
+            )
+          };
+        }
       }
       return group;
     }));
@@ -252,6 +383,7 @@ export const usePreConsultation = () => {
     handleSaveGroupName,
     handleCancelEditGroup,
     handleAddGroup,
+    handleAddSubgroup,
     handleEdit,
     handleSave,
     handleCancel,
