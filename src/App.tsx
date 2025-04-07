@@ -18,6 +18,7 @@ import MedicalRecords from "./pages/MedicalRecords";
 import MedicalRecordDetail from "./pages/MedicalRecordDetail";
 import PatientMedicalRecords from "./pages/PatientMedicalRecords";
 import SchedulePage from "./pages/SchedulePage";
+import Policies from "./pages/Policies";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,18 @@ function App() {
                   <Sidebar />
                   <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
                     <PatientMedicalRecords />
+                  </main>
+                </div>
+              </AuthGuard>
+            } />
+            
+            {/* Add the new Policies route */}
+            <Route path="/politicas" element={
+              <AuthGuard>
+                <div className="flex h-screen w-full overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+                    <Policies />
                   </main>
                 </div>
               </AuthGuard>
