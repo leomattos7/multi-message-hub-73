@@ -16,6 +16,7 @@ interface LabExamsSectionProps {
 
 export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [examToEdit, setExamToEdit] = useState<LabExam | null>(null);
   const [examToDelete, setExamToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -74,6 +75,47 @@ export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
     },
   });
 
+  // Mutation to update an existing lab exam
+  const updateExamMutation = useMutation({
+    mutationFn: async ({ 
+      examId, 
+      examData 
+    }: { 
+      examId: string; 
+      examData: Omit<LabExam, "id" | "created_at" | "patient_id">;
+    }) => {
+      if (!patientId) throw new Error("Patient ID is required");
+      
+      const { data, error } = await supabase
+        .from("lab_exams")
+        .update(examData)
+        .eq("id", examId)
+        .eq("patient_id", patientId)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lab-exams", patientId] });
+      setExamToEdit(null);
+      setIsDialogOpen(false);
+      toast({
+        title: "Exame atualizado",
+        description: "O exame foi atualizado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating lab exam:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao atualizar o exame.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation to delete a lab exam
   const deleteExamMutation = useMutation({
     mutationFn: async (examId: string) => {
@@ -106,8 +148,22 @@ export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
     },
   });
 
-  const handleAddExam = (examData: Omit<LabExam, "id" | "created_at" | "patient_id">) => {
-    addExamMutation.mutate(examData);
+  const handleSaveExam = (examData: Omit<LabExam, "id" | "created_at" | "patient_id">) => {
+    if (examToEdit) {
+      // Update existing exam
+      updateExamMutation.mutate({ 
+        examId: examToEdit.id, 
+        examData 
+      });
+    } else {
+      // Add new exam
+      addExamMutation.mutate(examData);
+    }
+  };
+
+  const handleEditExam = (exam: LabExam) => {
+    setExamToEdit(exam);
+    setIsDialogOpen(true);
   };
 
   const handleDeleteExam = (examId: string) => {
@@ -132,7 +188,10 @@ export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
           variant="ghost"
           size="sm"
           className="h-8 flex items-center gap-1"
-          onClick={() => setIsDialogOpen(true)}
+          onClick={() => {
+            setExamToEdit(null);
+            setIsDialogOpen(true);
+          }}
         >
           <Plus size={16} />
           <span className="text-xs">Adicionar</span>
@@ -148,6 +207,7 @@ export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
               key={exam.id}
               exam={exam}
               onDelete={handleDeleteExam}
+              onEdit={handleEditExam}
             />
           ))}
         </div>
@@ -160,7 +220,9 @@ export const LabExamsSection = ({ patientId }: LabExamsSectionProps) => {
       <LabExamDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onAdd={handleAddExam}
+        exam={examToEdit || undefined}
+        title={examToEdit ? "Editar exame" : "Adicionar novo exame"}
+        onSave={handleSaveExam}
       />
 
       <DeleteLabExamDialog

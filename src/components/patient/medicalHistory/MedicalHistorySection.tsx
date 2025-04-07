@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { usePatientRecordsData } from "@/hooks/use-patient-records-data";
@@ -15,50 +15,43 @@ interface MedicalHistorySectionProps {
 
 export const MedicalHistorySection = ({ patientId }: MedicalHistorySectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newRecord, setNewRecord] = useState("");
-  const [cid, setCid] = useState("");
-  const [ciap, setCiap] = useState("");
+  const [medicalHistoryToEdit, setMedicalHistoryToEdit] = useState<MedicalHistoryItem | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   
   const { 
     records: medicalHistory, 
     recordsLoading, 
-    createRecord, 
+    createRecord,
+    updateRecord,
     deleteRecord 
   } = usePatientRecordsData(patientId, "antecedente_pessoal");
 
-  const handleAddRecord = async () => {
-    if (!newRecord.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "Descrição do antecedente pessoal é obrigatória.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const recordData = {
-      description: newRecord,
-      ...(cid ? { cid } : {}),
-      ...(ciap ? { ciap } : {})
-    };
-
+  const handleSaveMedicalHistory = async (medicalHistoryData: Partial<MedicalHistoryItem>) => {
     try {
-      await createRecord(JSON.stringify(recordData), "antecedente_pessoal");
-      setNewRecord("");
-      setCid("");
-      setCiap("");
-      setIsDialogOpen(false);
+      if (medicalHistoryData.id) {
+        // Update existing medical history
+        await updateRecord(medicalHistoryData.id, JSON.stringify(medicalHistoryData));
+        
+        toast({
+          title: "Antecedente atualizado",
+          description: "O antecedente pessoal foi atualizado com sucesso.",
+        });
+      } else {
+        // Add new medical history
+        await createRecord(JSON.stringify(medicalHistoryData), "antecedente_pessoal");
+        
+        toast({
+          title: "Antecedente adicionado",
+          description: "O antecedente pessoal foi adicionado com sucesso.",
+        });
+      }
       
-      toast({
-        title: "Antecedente adicionado",
-        description: "O antecedente pessoal foi adicionado com sucesso.",
-      });
+      setMedicalHistoryToEdit(null);
     } catch (error) {
-      console.error("Erro ao adicionar antecedente pessoal:", error);
+      console.error("Erro ao salvar antecedente pessoal:", error);
       toast({
-        title: "Erro ao adicionar antecedente",
-        description: "Houve um erro ao adicionar o antecedente pessoal. Tente novamente.",
+        title: "Erro ao salvar antecedente",
+        description: "Houve um erro ao salvar o antecedente pessoal. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -84,6 +77,11 @@ export const MedicalHistorySection = ({ patientId }: MedicalHistorySectionProps)
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditMedicalHistory = (medicalHistory: MedicalHistoryItem) => {
+    setMedicalHistoryToEdit(medicalHistory);
+    setIsDialogOpen(true);
   };
 
   // Parser function to handle different data formats
@@ -123,6 +121,7 @@ export const MedicalHistorySection = ({ patientId }: MedicalHistorySectionProps)
                   key={record.id} 
                   medicalHistory={historyData}
                   onDelete={(id) => setRecordToDelete(id)}
+                  onEdit={handleEditMedicalHistory}
                 />
               );
             })}
@@ -135,7 +134,10 @@ export const MedicalHistorySection = ({ patientId }: MedicalHistorySectionProps)
       {/* Add Record Button */}
       <div className="flex justify-center">
         <Button 
-          onClick={() => setIsDialogOpen(true)} 
+          onClick={() => {
+            setMedicalHistoryToEdit(null);
+            setIsDialogOpen(true);
+          }} 
           size="sm"
           className="rounded-full h-10 w-10 p-0 bg-blue-500 hover:bg-blue-600"
         >
@@ -143,17 +145,13 @@ export const MedicalHistorySection = ({ patientId }: MedicalHistorySectionProps)
         </Button>
       </div>
 
-      {/* Add Record Dialog */}
+      {/* Add/Edit Medical History Dialog */}
       <MedicalHistoryDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        newRecord={newRecord}
-        setNewRecord={setNewRecord}
-        cid={cid}
-        setCid={setCid}
-        ciap={ciap}
-        setCiap={setCiap}
-        onAdd={handleAddRecord}
+        medicalHistory={medicalHistoryToEdit || undefined}
+        title={medicalHistoryToEdit ? "Editar antecedente pessoal" : "Adicionar antecedente pessoal"}
+        onSave={handleSaveMedicalHistory}
       />
 
       {/* Delete Confirmation Dialog */}

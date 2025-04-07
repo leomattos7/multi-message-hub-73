@@ -15,53 +15,43 @@ interface FamilyHistorySectionProps {
 
 export const FamilyHistorySection = ({ patientId }: FamilyHistorySectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newRecord, setNewRecord] = useState("");
-  const [relationship, setRelationship] = useState("");
-  const [cid, setCid] = useState("");
-  const [ciap, setCiap] = useState("");
+  const [familyHistoryToEdit, setFamilyHistoryToEdit] = useState<FamilyHistoryItem | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   
   const { 
     records: familyHistory, 
     recordsLoading, 
-    createRecord, 
+    createRecord,
+    updateRecord,
     deleteRecord 
   } = usePatientRecordsData(patientId, "historico_familiar");
 
-  const handleAddRecord = async () => {
-    if (!newRecord.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "Descrição da condição ou doença é obrigatória.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const recordData = {
-      description: newRecord,
-      ...(relationship ? { relationship } : {}),
-      ...(cid ? { cid } : {}),
-      ...(ciap ? { ciap } : {})
-    };
-
+  const handleSaveFamilyHistory = async (familyHistoryData: Partial<FamilyHistoryItem>) => {
     try {
-      await createRecord(JSON.stringify(recordData), "historico_familiar");
-      setNewRecord("");
-      setRelationship("");
-      setCid("");
-      setCiap("");
-      setIsDialogOpen(false);
+      if (familyHistoryData.id) {
+        // Update existing family history
+        await updateRecord(familyHistoryData.id, JSON.stringify(familyHistoryData));
+        
+        toast({
+          title: "Histórico atualizado",
+          description: "O histórico familiar foi atualizado com sucesso.",
+        });
+      } else {
+        // Add new family history
+        await createRecord(JSON.stringify(familyHistoryData), "historico_familiar");
+        
+        toast({
+          title: "Histórico adicionado",
+          description: "O histórico familiar foi adicionado com sucesso.",
+        });
+      }
       
-      toast({
-        title: "Histórico adicionado",
-        description: "O histórico familiar foi adicionado com sucesso.",
-      });
+      setFamilyHistoryToEdit(null);
     } catch (error) {
-      console.error("Erro ao adicionar histórico familiar:", error);
+      console.error("Erro ao salvar histórico familiar:", error);
       toast({
-        title: "Erro ao adicionar histórico",
-        description: "Houve um erro ao adicionar o histórico familiar. Tente novamente.",
+        title: "Erro ao salvar histórico",
+        description: "Houve um erro ao salvar o histórico familiar. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -87,6 +77,11 @@ export const FamilyHistorySection = ({ patientId }: FamilyHistorySectionProps) =
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditFamilyHistory = (familyHistory: FamilyHistoryItem) => {
+    setFamilyHistoryToEdit(familyHistory);
+    setIsDialogOpen(true);
   };
 
   // Parser function to handle different data formats
@@ -126,6 +121,7 @@ export const FamilyHistorySection = ({ patientId }: FamilyHistorySectionProps) =
                   key={record.id} 
                   familyHistory={historyData}
                   onDelete={(id) => setRecordToDelete(id)}
+                  onEdit={handleEditFamilyHistory}
                 />
               );
             })}
@@ -138,7 +134,10 @@ export const FamilyHistorySection = ({ patientId }: FamilyHistorySectionProps) =
       {/* Add Record Button */}
       <div className="flex justify-center">
         <Button 
-          onClick={() => setIsDialogOpen(true)} 
+          onClick={() => {
+            setFamilyHistoryToEdit(null);
+            setIsDialogOpen(true);
+          }} 
           size="sm"
           className="rounded-full h-10 w-10 p-0 bg-blue-500 hover:bg-blue-600"
         >
@@ -146,19 +145,13 @@ export const FamilyHistorySection = ({ patientId }: FamilyHistorySectionProps) =
         </Button>
       </div>
 
-      {/* Add Record Dialog */}
+      {/* Add/Edit Family History Dialog */}
       <FamilyHistoryDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        newRecord={newRecord}
-        setNewRecord={setNewRecord}
-        relationship={relationship}
-        setRelationship={setRelationship}
-        cid={cid}
-        setCid={setCid}
-        ciap={ciap}
-        setCiap={setCiap}
-        onAdd={handleAddRecord}
+        familyHistory={familyHistoryToEdit || undefined}
+        title={familyHistoryToEdit ? "Editar histórico familiar" : "Adicionar histórico familiar"}
+        onSave={handleSaveFamilyHistory}
       />
 
       {/* Delete Confirmation Dialog */}
