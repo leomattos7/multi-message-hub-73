@@ -1,3 +1,4 @@
+
 import { HistoricalDataMap, ParameterGroup } from "./types";
 
 // Mock historical data for each parameter
@@ -232,7 +233,7 @@ export const initialGroups: ParameterGroup[] = [
         id: "4-1",
         name: "Vida Sexual",
         parameters: [
-          { id: "23", field: "Posso fazer perguntas sobre a sua vida sexual?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "23", field: "Permite falar sobre vida sexual?", value: "Sim", collectedAt: new Date().toISOString() },
           { id: "24", field: "Iniciou a vida sexual?", value: "Sim", collectedAt: new Date().toISOString() },
           { id: "25", field: "Se sim, faz sexo com:", value: "Ambos", collectedAt: new Date().toISOString() },
         ]
