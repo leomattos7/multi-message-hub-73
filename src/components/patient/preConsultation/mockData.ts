@@ -1,4 +1,3 @@
-
 import { HistoricalDataMap, ParameterGroup } from "./types";
 
 // Mock historical data for each parameter
@@ -61,31 +60,8 @@ export const historicalData: HistoricalDataMap = {
   ],
 };
 
-// Initial groups
+// Initial groups - removed "Dados gerais" and "Histórico Familiar", only keeping "Estilo de vida" and "Sexual e reprodutivo"
 export const initialGroups: ParameterGroup[] = [
-  { 
-    id: "1", 
-    name: "Dados gerais",
-    isDefault: true,
-    parameters: [
-      { id: "1", field: "Peso", value: "72 kg", collectedAt: new Date().toISOString() },
-      { id: "2", field: "Altura", value: "175 cm", collectedAt: new Date().toISOString() },
-      { id: "3", field: "Pressão Arterial", value: "120/80 mmHg", collectedAt: new Date().toISOString() },
-      { id: "4", field: "Temperatura", value: "36.5 °C", collectedAt: new Date().toISOString() },
-      { id: "5", field: "Frequência Cardíaca", value: "75 bpm", collectedAt: new Date().toISOString() },
-      { id: "6", field: "Frequência Respiratória", value: "16 irpm", collectedAt: new Date().toISOString() },
-      { id: "7", field: "Saturação O2", value: "98%", collectedAt: new Date().toISOString() },
-      { id: "8", field: "Glicemia", value: "95 mg/dL", collectedAt: new Date().toISOString() },
-    ] 
-  },
-  { 
-    id: "2", 
-    name: "Histórico Familiar",
-    isDefault: true,
-    parameters: [
-      { id: "9", field: "Diabetes na família", value: "Sim", collectedAt: new Date().toISOString() },
-    ]
-  },
   { 
     id: "3", 
     name: "Estilo de vida",
