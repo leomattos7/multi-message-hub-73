@@ -259,8 +259,8 @@ export const initialGroups: ParameterGroup[] = [
         id: "4-4",
         name: "Menstruação",
         parameters: [
-          { id: "31", field: "Quando foi sua última menstruação?", value: "15/03/2024", collectedAt: new Date().toISOString() },
           { id: "32", field: "Você já menstruou?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "31", field: "Quando foi sua última menstruação?", value: "15/03/2024", collectedAt: new Date().toISOString() },
         ]
       },
       {
