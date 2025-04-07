@@ -11,11 +11,18 @@ export interface ParameterHistoryItem {
   collectedAt: string;
 }
 
+export interface ParameterSubgroup {
+  id: string;
+  name: string;
+  parameters: ParameterItem[];
+}
+
 export interface ParameterGroup {
   id: string;
   name: string;
   isDefault: boolean;
   parameters: ParameterItem[];
+  subgroups?: ParameterSubgroup[];
 }
 
 export type HistoricalDataMap = {
