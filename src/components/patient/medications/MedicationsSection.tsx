@@ -8,6 +8,7 @@ import { usePatientRecordsData } from "@/hooks/use-patient-records-data";
 import { MedicationItem } from "@/types/medication";
 import { MedicationCard } from "./MedicationCard";
 import { DeleteMedicationDialog } from "./DeleteMedicationDialog";
+import { MedicationDialog } from "./MedicationDialog";
 
 interface MedicationsSectionProps {
   patientId?: string;
@@ -17,12 +18,15 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
   const [showForm, setShowForm] = useState(false);
   const [newMedication, setNewMedication] = useState("");
   const [medicationToDelete, setMedicationToDelete] = useState<string | null>(null);
+  const [medicationToEdit, setMedicationToEdit] = useState<MedicationItem | null>(null);
+  const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
   
   const { 
     records: medications, 
     recordsLoading, 
     createRecord, 
-    deleteRecord 
+    deleteRecord,
+    updateRecord
   } = usePatientRecordsData(patientId, "medicacao");
 
   const resetForm = () => {
@@ -56,6 +60,37 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
       toast({
         title: "Erro ao adicionar medicação",
         description: "Houve um erro ao adicionar a medicação. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveMedication = async (medicationData: Partial<MedicationItem>) => {
+    try {
+      if (medicationData.id) {
+        // Update existing medication
+        await updateRecord(medicationData.id, JSON.stringify(medicationData));
+        
+        toast({
+          title: "Medicação atualizada",
+          description: "A medicação foi atualizada com sucesso.",
+        });
+      } else {
+        // Add new medication
+        await createRecord(JSON.stringify(medicationData), "medicacao");
+        
+        toast({
+          title: "Medicação adicionada",
+          description: "A medicação foi adicionada com sucesso.",
+        });
+      }
+      
+      setMedicationToEdit(null);
+    } catch (error) {
+      console.error("Erro ao salvar medicação:", error);
+      toast({
+        title: "Erro ao salvar medicação",
+        description: "Houve um erro ao salvar a medicação. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -111,6 +146,11 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
     };
   };
 
+  const handleEditMedication = (medication: MedicationItem) => {
+    setMedicationToEdit(medication);
+    setIsMedicationDialogOpen(true);
+  };
+
   return (
     <div className="space-y-4">
       {/* Medications List */}
@@ -127,6 +167,7 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
                   key={med.id} 
                   medication={medicationData}
                   onDelete={(id) => setMedicationToDelete(id)}
+                  onEdit={handleEditMedication}
                 />
               );
             })}
@@ -180,7 +221,11 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
       ) : (
         <div className="flex justify-center">
           <Button 
-            onClick={() => setShowForm(true)} 
+            onClick={() => {
+              setShowForm(false);
+              setMedicationToEdit(null);
+              setIsMedicationDialogOpen(true);
+            }} 
             size="sm"
             className="rounded-full h-10 w-10 p-0 bg-blue-500 hover:bg-blue-600"
           >
@@ -188,6 +233,15 @@ export const MedicationsSection = ({ patientId }: MedicationsSectionProps) => {
           </Button>
         </div>
       )}
+
+      {/* Medication Dialog (Add/Edit) */}
+      <MedicationDialog
+        isOpen={isMedicationDialogOpen}
+        onOpenChange={setIsMedicationDialogOpen}
+        onSave={handleSaveMedication}
+        medication={medicationToEdit || undefined}
+        title={medicationToEdit ? "Editar Medicação" : "Nova Medicação"}
+      />
 
       {/* Delete Confirmation Dialog */}
       <DeleteMedicationDialog
