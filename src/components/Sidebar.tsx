@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Calendar,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,11 @@ const sidebarItems = [
     name: "Funcionários",
     href: "/funcionarios",
     icon: <Briefcase />,
+  },
+  {
+    name: "Políticas",
+    href: "/politicas",
+    icon: <Settings />,
   },
 ];
 
