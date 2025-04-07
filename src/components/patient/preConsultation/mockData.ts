@@ -59,40 +59,70 @@ export const historicalData: HistoricalDataMap = {
     { value: "Regular", collectedAt: new Date(2023, 11, 15).toISOString() },
     { value: "Irregular", collectedAt: new Date(2023, 7, 10).toISOString() },
   ],
+  // Adding additional historical data for the existing lifestyle parameters
+  "13": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "14": [
+    { value: "Caminhada, Natação", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Caminhada", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "15": [
+    { value: "120", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "90", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "16": [
+    { value: "Não", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Sim", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "17": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "18": [
+    { value: "Não", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "19": [
+    { value: "3", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "2", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "20": [
+    { value: "5", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "3", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "21": [
+    { value: "2", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "4", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "22": [
+    { value: "3", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "6", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
 };
 
-// Initial groups
+// Initial groups - removed "Dados gerais" group
 export const initialGroups: ParameterGroup[] = [
-  { 
-    id: "1", 
-    name: "Dados gerais",
-    isDefault: true,
-    parameters: [
-      { id: "1", field: "Peso", value: "72 kg", collectedAt: new Date().toISOString() },
-      { id: "2", field: "Altura", value: "175 cm", collectedAt: new Date().toISOString() },
-      { id: "3", field: "Pressão Arterial", value: "120/80 mmHg", collectedAt: new Date().toISOString() },
-      { id: "4", field: "Temperatura", value: "36.5 °C", collectedAt: new Date().toISOString() },
-      { id: "5", field: "Frequência Cardíaca", value: "75 bpm", collectedAt: new Date().toISOString() },
-      { id: "6", field: "Frequência Respiratória", value: "16 irpm", collectedAt: new Date().toISOString() },
-      { id: "7", field: "Saturação O2", value: "98%", collectedAt: new Date().toISOString() },
-      { id: "8", field: "Glicemia", value: "95 mg/dL", collectedAt: new Date().toISOString() },
-    ] 
-  },
-  { 
-    id: "2", 
-    name: "Histórico Familiar",
-    isDefault: true,
-    parameters: [
-      { id: "9", field: "Diabetes na família", value: "Sim", collectedAt: new Date().toISOString() },
-    ]
-  },
   { 
     id: "3", 
     name: "Estilo de vida",
     isDefault: true,
     parameters: [
+      // Basic lifestyle parameters
       { id: "10", field: "Atividade física", value: "2x/semana", collectedAt: new Date().toISOString() },
       { id: "11", field: "Tabagismo", value: "Não", collectedAt: new Date().toISOString() },
+      // New lifestyle parameters
+      { id: "13", field: "Fisicamente ativo?", value: "Sim", collectedAt: new Date().toISOString() },
+      { id: "14", field: "Atividades realizadas", value: "Caminhada, Natação", collectedAt: new Date().toISOString() },
+      { id: "15", field: "Tempo de atividade física por semana (em minutos)", value: "120", collectedAt: new Date().toISOString() },
+      { id: "16", field: "Fuma?", value: "Não", collectedAt: new Date().toISOString() },
+      { id: "17", field: "Bebe?", value: "Sim", collectedAt: new Date().toISOString() },
+      { id: "18", field: "Usa algum tipo de droga?", value: "Não", collectedAt: new Date().toISOString() },
+      { id: "19", field: "Porções de frutas por semana", value: "3", collectedAt: new Date().toISOString() },
+      { id: "20", field: "Porções de legumes e verduras por semana", value: "5", collectedAt: new Date().toISOString() },
+      { id: "21", field: "Porções de frituras por semana", value: "2", collectedAt: new Date().toISOString() },
+      { id: "22", field: "Porções de ultraprocessados por semana", value: "3", collectedAt: new Date().toISOString() },
     ]
   },
   { 
