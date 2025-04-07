@@ -227,7 +227,8 @@ const SubgroupSection: React.FC<SubgroupSectionProps> = ({
   onAddNewRecord,
   onAddNewParameter
 }) => {
-  const [isOpen, setIsOpen] = React.useState(true);
+  // Changed initial state to false so subgroups start closed
+  const [isOpen, setIsOpen] = React.useState(false);
 
   return (
     <div className="border rounded-md">
