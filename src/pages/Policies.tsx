@@ -9,7 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Video, DollarSign, Info } from "lucide-react";
+import { Clock, Video, DollarSign, Info, Pencil } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Policies() {
   // Initial state for the policies
@@ -64,6 +74,20 @@ export default function Policies() {
     notes: ""
   });
 
+  // State for editing consultation type
+  const [editingConsultationType, setEditingConsultationType] = useState<null | {
+    id: string;
+    name: string;
+    duration: number;
+    inPerson: boolean;
+    telehealth: boolean;
+    price: number;
+    notes: string;
+  }>(null);
+
+  // State for dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   // Handle input changes
   const handleChange = (section: string, field: string, value: string) => {
     setPolicies({
@@ -81,6 +105,49 @@ export default function Policies() {
       ...newConsultationType,
       [field]: value,
     });
+  };
+
+  // Handle edit consultation type input changes
+  const handleEditConsultationTypeChange = (field: string, value: any) => {
+    if (editingConsultationType) {
+      setEditingConsultationType({
+        ...editingConsultationType,
+        [field]: value,
+      });
+    }
+  };
+
+  // Start editing a consultation type
+  const handleStartEdit = (id: string) => {
+    const typeToEdit = policies.consultationTypes.find(type => type.id === id);
+    
+    if (typeToEdit) {
+      setEditingConsultationType({ ...typeToEdit });
+      setIsEditDialogOpen(true);
+    }
+  };
+
+  // Save edited consultation type
+  const handleSaveEdit = () => {
+    if (!editingConsultationType) return;
+
+    if (!editingConsultationType.name) {
+      toast.error("O nome do tipo de consulta é obrigatório");
+      return;
+    }
+
+    const updatedTypes = policies.consultationTypes.map(type => 
+      type.id === editingConsultationType.id ? editingConsultationType : type
+    );
+
+    setPolicies({
+      ...policies,
+      consultationTypes: updatedTypes
+    });
+
+    setIsEditDialogOpen(false);
+    setEditingConsultationType(null);
+    toast.success("Tipo de consulta atualizado com sucesso!");
   };
 
   // Add new consultation type
@@ -310,14 +377,24 @@ export default function Policies() {
                   <div className="space-y-4">
                     {policies.consultationTypes.map((type) => (
                       <div key={type.id} className="border rounded-lg p-4 relative">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleRemoveConsultationType(type.id)}
-                        >
-                          Remover
-                        </Button>
+                        <div className="absolute top-2 right-2 flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleStartEdit(type.id)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleRemoveConsultationType(type.id)}
+                          >
+                            Remover
+                          </Button>
+                        </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                           <div>
@@ -458,6 +535,95 @@ export default function Policies() {
       <div className="mt-6 flex justify-end">
         <Button onClick={handleSave}>Salvar Políticas</Button>
       </div>
+
+      {/* Edit Consultation Type Dialog */}
+      <AlertDialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <AlertDialogContent className="max-w-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Editar Tipo de Consulta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Altere as informações do tipo de consulta abaixo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {editingConsultationType && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="space-y-3 md:col-span-2">
+                <Label htmlFor="edit-name">Nome do Tipo de Consulta</Label>
+                <Input
+                  id="edit-name"
+                  placeholder="Ex: Consulta Inicial, Retorno, etc."
+                  value={editingConsultationType.name}
+                  onChange={(e) => handleEditConsultationTypeChange("name", e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Label htmlFor="edit-duration">Duração (minutos)</Label>
+                <Input
+                  id="edit-duration"
+                  type="number"
+                  placeholder="60"
+                  min="10"
+                  step="5"
+                  value={editingConsultationType.duration}
+                  onChange={(e) => handleEditConsultationTypeChange("duration", parseInt(e.target.value) || 30)}
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Label htmlFor="edit-price">Preço (R$)</Label>
+                <Input
+                  id="edit-price"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={editingConsultationType.price}
+                  onChange={(e) => handleEditConsultationTypeChange("price", parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Label className="block mb-2">Modalidade</Label>
+                <div className="flex space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="edit-inPerson"
+                      checked={editingConsultationType.inPerson}
+                      onCheckedChange={(checked) => handleEditConsultationTypeChange("inPerson", checked)}
+                    />
+                    <Label htmlFor="edit-inPerson" className="cursor-pointer">Presencial</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="edit-telehealth"
+                      checked={editingConsultationType.telehealth}
+                      onCheckedChange={(checked) => handleEditConsultationTypeChange("telehealth", checked)}
+                    />
+                    <Label htmlFor="edit-telehealth" className="cursor-pointer">Teleatendimento</Label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3 md:col-span-2">
+                <Label htmlFor="edit-notes">Observações</Label>
+                <Textarea
+                  id="edit-notes"
+                  placeholder="Ex: Consulta gratuita em caso de retorno em 30 dias..."
+                  value={editingConsultationType.notes}
+                  onChange={(e) => handleEditConsultationTypeChange("notes", e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveEdit}>Salvar Alterações</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
