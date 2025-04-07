@@ -15,50 +15,43 @@ interface ProblemsSectionProps {
 
 export const ProblemsSection = ({ patientId }: ProblemsSectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newProblem, setNewProblem] = useState("");
-  const [problemCID, setProblemCID] = useState("");
-  const [problemCIAP, setProblemCIAP] = useState("");
+  const [problemToEdit, setProblemToEdit] = useState<ProblemItem | null>(null);
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
   
   const { 
     records: problems, 
     recordsLoading, 
     createRecord, 
+    updateRecord,
     deleteRecord 
   } = usePatientRecordsData(patientId, "problema");
 
-  const handleAddProblem = async () => {
-    if (!newProblem.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "Nome do problema/diagnóstico é obrigatório.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const problemData = {
-      name: newProblem,
-      cid: problemCID || "",
-      ciap: problemCIAP || ""
-    };
-
+  const handleSaveProblem = async (problemData: Partial<ProblemItem>) => {
     try {
-      await createRecord(JSON.stringify(problemData), "problema");
-      setNewProblem("");
-      setProblemCID("");
-      setProblemCIAP("");
-      setIsDialogOpen(false);
+      if (problemData.id) {
+        // Update existing problem
+        await updateRecord(problemData.id, JSON.stringify(problemData));
+        
+        toast({
+          title: "Problema atualizado",
+          description: "O problema/diagnóstico foi atualizado com sucesso.",
+        });
+      } else {
+        // Add new problem
+        await createRecord(JSON.stringify(problemData), "problema");
+        
+        toast({
+          title: "Problema adicionado",
+          description: "O problema/diagnóstico foi adicionado com sucesso.",
+        });
+      }
       
-      toast({
-        title: "Problema adicionado",
-        description: "O problema/diagnóstico foi adicionado com sucesso.",
-      });
+      setProblemToEdit(null);
     } catch (error) {
-      console.error("Erro ao adicionar problema:", error);
+      console.error("Erro ao salvar problema:", error);
       toast({
-        title: "Erro ao adicionar problema",
-        description: "Houve um erro ao adicionar o problema/diagnóstico. Tente novamente.",
+        title: "Erro ao salvar problema",
+        description: "Houve um erro ao salvar o problema/diagnóstico. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -84,6 +77,11 @@ export const ProblemsSection = ({ patientId }: ProblemsSectionProps) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditProblem = (problem: ProblemItem) => {
+    setProblemToEdit(problem);
+    setIsDialogOpen(true);
   };
 
   // Parser function to handle different problem data formats
@@ -123,6 +121,7 @@ export const ProblemsSection = ({ patientId }: ProblemsSectionProps) => {
                   key={prob.id} 
                   problem={problemData}
                   onDelete={(id) => setProblemToDelete(id)}
+                  onEdit={handleEditProblem}
                 />
               );
             })}
@@ -135,7 +134,10 @@ export const ProblemsSection = ({ patientId }: ProblemsSectionProps) => {
       {/* Add Problem Button */}
       <div className="flex justify-center">
         <Button 
-          onClick={() => setIsDialogOpen(true)} 
+          onClick={() => {
+            setProblemToEdit(null);
+            setIsDialogOpen(true);
+          }} 
           size="sm"
           className="rounded-full h-10 w-10 p-0 bg-blue-500 hover:bg-blue-600"
         >
@@ -143,17 +145,13 @@ export const ProblemsSection = ({ patientId }: ProblemsSectionProps) => {
         </Button>
       </div>
 
-      {/* Add Problem Dialog */}
+      {/* Add/Edit Problem Dialog */}
       <ProblemDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        newProblem={newProblem}
-        setNewProblem={setNewProblem}
-        problemCID={problemCID}
-        setProblemCID={setProblemCID}
-        problemCIAP={problemCIAP}
-        setProblemCIAP={setProblemCIAP}
-        onAdd={handleAddProblem}
+        problem={problemToEdit || undefined}
+        title={problemToEdit ? "Editar problema" : "Adicionar novo problema"}
+        onSave={handleSaveProblem}
       />
 
       {/* Delete Confirmation Dialog */}
