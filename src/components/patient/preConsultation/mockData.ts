@@ -1,4 +1,3 @@
-
 import { HistoricalDataMap, ParameterGroup } from "./types";
 
 // Mock historical data for each parameter
@@ -59,7 +58,6 @@ export const historicalData: HistoricalDataMap = {
     { value: "Regular", collectedAt: new Date(2023, 11, 15).toISOString() },
     { value: "Irregular", collectedAt: new Date(2023, 7, 10).toISOString() },
   ],
-  // Historical data for the lifestyle parameters
   "13": [
     { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
     { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
@@ -99,6 +97,90 @@ export const historicalData: HistoricalDataMap = {
   "22": [
     { value: "3", collectedAt: new Date(2023, 11, 10).toISOString() },
     { value: "6", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "23": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Sim", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "24": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Sim", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "25": [
+    { value: "Ambos", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Homens", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "26": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "27": [
+    { value: "Pílula anticoncepcional", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Preservativo", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "28": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Sim", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "29": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "30": [
+    { value: "Janeiro 2023", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "31": [
+    { value: "15/03/2024", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "20/02/2023", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "32": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Sim", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "33": [
+    { value: "15/03/2024", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "20/02/2023", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "34": [
+    { value: "Janeiro 2024", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Março 2023", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "35": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Sim", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "36": [
+    { value: "2", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "1", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "37": [
+    { value: "Não", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "38": [
+    { value: "1", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "1", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "39": [
+    { value: "1", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "0", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "40": [
+    { value: "Não", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "41": [
+    { value: "Sim", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "Não", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "42": [
+    { value: "Fevereiro 2024", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "", collectedAt: new Date(2023, 9, 5).toISOString() },
+  ],
+  "43": [
+    { value: "Não", collectedAt: new Date(2023, 11, 10).toISOString() },
+    { value: "", collectedAt: new Date(2023, 9, 5).toISOString() },
   ],
 };
 
@@ -144,8 +226,71 @@ export const initialGroups: ParameterGroup[] = [
     id: "4", 
     name: "Sexual e reprodutivo",
     isDefault: true,
-    parameters: [
-      { id: "12", field: "Ciclo menstrual", value: "Regular", collectedAt: new Date().toISOString() },
+    parameters: [],
+    subgroups: [
+      {
+        id: "4-1",
+        name: "Vida Sexual",
+        parameters: [
+          { id: "23", field: "Posso fazer perguntas sobre a sua vida sexual?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "24", field: "Iniciou a vida sexual?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "25", field: "Se sim, faz sexo com:", value: "Ambos", collectedAt: new Date().toISOString() },
+        ]
+      },
+      {
+        id: "4-2",
+        name: "Métodos Contraceptivos",
+        parameters: [
+          { id: "26", field: "Você ou sua parceria utilizam algum método contraceptivo?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "27", field: "Se sim, qual?", value: "Pílula anticoncepcional", collectedAt: new Date().toISOString() },
+        ]
+      },
+      {
+        id: "4-3",
+        name: "Relações e Exames",
+        parameters: [
+          { id: "28", field: "Já teve relação de penetração com pênis alguma vez na vida?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "29", field: "Já fez exames para infecções sexualmente transmissíveis?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "30", field: "Se sim, quando?", value: "Janeiro 2023", collectedAt: new Date().toISOString() },
+        ]
+      },
+      {
+        id: "4-4",
+        name: "Menstruação",
+        parameters: [
+          { id: "31", field: "Quando foi sua última menstruação?", value: "15/03/2024", collectedAt: new Date().toISOString() },
+          { id: "32", field: "Você já menstruou?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "33", field: "Se sim, quando foi a última menstruação?", value: "15/03/2024", collectedAt: new Date().toISOString() },
+        ]
+      },
+      {
+        id: "4-5",
+        name: "Exames e Gravidez",
+        parameters: [
+          { id: "34", field: "Quando foi o seu último papanicolau?", value: "Janeiro 2024", collectedAt: new Date().toISOString() },
+          { id: "35", field: "Já engravidou?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "36", field: "Se sim, quantas vezes?", value: "2", collectedAt: new Date().toISOString() },
+          { id: "37", field: "Já teve algum aborto?", value: "Não", collectedAt: new Date().toISOString() },
+        ]
+      },
+      {
+        id: "4-6",
+        name: "Partos",
+        parameters: [
+          { id: "38", field: "Quantos partos normais você teve?", value: "1", collectedAt: new Date().toISOString() },
+          { id: "39", field: "Quantas cesarianas você teve?", value: "1", collectedAt: new Date().toISOString() },
+          { id: "40", field: "Teve algum problema na gestação?", value: "Não", collectedAt: new Date().toISOString() },
+        ]
+      },
+      {
+        id: "4-7",
+        name: "Mamografia",
+        parameters: [
+          { id: "41", field: "Já fez mamografia?", value: "Sim", collectedAt: new Date().toISOString() },
+          { id: "42", field: "Se sim, quando?", value: "Fevereiro 2024", collectedAt: new Date().toISOString() },
+          { id: "43", field: "Teve alguma alteração?", value: "Não", collectedAt: new Date().toISOString() },
+        ]
+      }
     ]
   },
 ];

@@ -58,6 +58,8 @@ export const ParameterGroup: React.FC<ParameterGroupProps> = ({
 }) => {
   const hasSubgroups = group.subgroups && group.subgroups.length > 0;
   const isLifestyleGroup = group.id === "3"; // "Estilo de vida" group ID
+  const isSexualReproductiveGroup = group.id === "4"; // "Sexual e reprodutivo" group ID
+  const supportsSubgroups = isLifestyleGroup || isSexualReproductiveGroup;
 
   const handleAddSubgroup = (subgroupData: NewSubgroupData) => {
     if (onAddSubgroup) {
@@ -179,7 +181,7 @@ export const ParameterGroup: React.FC<ParameterGroupProps> = ({
           </div>
         )}
         <div className="flex justify-center mt-3">
-          {isLifestyleGroup && hasSubgroups ? (
+          {supportsSubgroups && hasSubgroups ? (
             <AddSubgroupDialog onAddSubgroup={handleAddSubgroup} />
           ) : (
             <Button 
