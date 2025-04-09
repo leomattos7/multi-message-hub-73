@@ -147,11 +147,14 @@ export function Sidebar() {
         )}
       >
         <div className="flex flex-col h-full px-3 py-6 relative">
-          {/* Collapse/Expand button */}
+          {/* Collapse/Expand button - Moved to the bottom with better positioning */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 h-8 w-8"
+            className={cn(
+              "absolute h-8 w-8 right-3",
+              isCollapsed ? "bottom-24" : "bottom-24"
+            )}
             onClick={toggleCollapse}
             aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
           >
