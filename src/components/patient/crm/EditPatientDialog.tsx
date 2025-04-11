@@ -60,7 +60,7 @@ export const EditPatientDialog = ({
         
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-name">Nome completo *</Label>
               <Input
                 id="edit-name"
@@ -69,7 +69,7 @@ export const EditPatientDialog = ({
               />
             </div>
             
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-cpf">CPF</Label>
               <Input
                 id="edit-cpf"
@@ -79,7 +79,7 @@ export const EditPatientDialog = ({
               />
             </div>
             
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-birth_date">Data de Nascimento</Label>
               <Input
                 id="edit-birth_date"
@@ -89,7 +89,7 @@ export const EditPatientDialog = ({
               />
             </div>
             
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-biological_sex">Sexo Biológico</Label>
               <Select
                 value={editingPatient.biological_sex || ''}
@@ -107,7 +107,7 @@ export const EditPatientDialog = ({
               </Select>
             </div>
             
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-gender_identity">Identidade de Gênero</Label>
               <Select
                 value={editingPatient.gender_identity || ''}
@@ -128,7 +128,7 @@ export const EditPatientDialog = ({
           </div>
           
           <div className="space-y-4">
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-has_mobility_impairment">É PCD ou tem mobilidade reduzida?</Label>
               <RadioGroup 
                 value={editingPatient.has_mobility_impairment || 'no'} 
@@ -146,7 +146,7 @@ export const EditPatientDialog = ({
               </RadioGroup>
             </div>
             
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-phone">Telefone</Label>
               <Input
                 id="edit-phone"
@@ -155,7 +155,7 @@ export const EditPatientDialog = ({
               />
             </div>
             
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-address">Endereço</Label>
               <Input
                 id="edit-address"
@@ -164,7 +164,7 @@ export const EditPatientDialog = ({
               />
             </div>
             
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label>Forma de Pagamento</Label>
               <RadioGroup 
                 value={editingPatient.payment_method} 
@@ -183,7 +183,7 @@ export const EditPatientDialog = ({
             </div>
             
             {editingPatient.payment_method === "convenio" && (
-              <div className="grid gap-2">
+              <div className="space-y-2">
                 <Label htmlFor="edit-insurance_name">Nome do Convênio</Label>
                 <Input
                   id="edit-insurance_name"
@@ -194,7 +194,7 @@ export const EditPatientDialog = ({
               </div>
             )}
             
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="edit-notes">Anotações</Label>
               <Textarea
                 id="edit-notes"
