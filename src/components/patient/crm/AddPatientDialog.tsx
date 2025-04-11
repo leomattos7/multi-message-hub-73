@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +72,7 @@ export const AddPatientDialog = ({
         
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="name">Nome completo *</Label>
               <Input
                 id="name"
@@ -82,7 +81,7 @@ export const AddPatientDialog = ({
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="cpf">CPF</Label>
               <Input
                 id="cpf"
@@ -92,7 +91,7 @@ export const AddPatientDialog = ({
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="birth_date">Data de Nascimento</Label>
               <Input
                 id="birth_date"
@@ -102,7 +101,7 @@ export const AddPatientDialog = ({
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="biological_sex">Sexo Biológico</Label>
               <Select
                 value={newPatient.biological_sex}
@@ -120,7 +119,7 @@ export const AddPatientDialog = ({
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="gender_identity">Identidade de Gênero</Label>
               <Select
                 value={newPatient.gender_identity}
@@ -141,7 +140,7 @@ export const AddPatientDialog = ({
           </div>
           
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="has_mobility_impairment">É PCD ou tem mobilidade reduzida?</Label>
               <RadioGroup 
                 value={newPatient.has_mobility_impairment} 
@@ -159,7 +158,7 @@ export const AddPatientDialog = ({
               </RadioGroup>
             </div>
             
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="phone">Telefone</Label>
               <Input
                 id="phone"
@@ -168,7 +167,7 @@ export const AddPatientDialog = ({
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="address">Endereço</Label>
               <Input
                 id="address"
@@ -177,7 +176,7 @@ export const AddPatientDialog = ({
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label>Forma de Pagamento</Label>
               <RadioGroup 
                 value={newPatient.payment_method} 
@@ -196,7 +195,7 @@ export const AddPatientDialog = ({
             </div>
             
             {newPatient.payment_method === "convenio" && (
-              <div className="space-y-2">
+              <div className="grid gap-2">
                 <Label htmlFor="insurance_name">Nome do Convênio</Label>
                 <Input
                   id="insurance_name"
@@ -207,7 +206,7 @@ export const AddPatientDialog = ({
               </div>
             )}
             
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="notes">Anotações</Label>
               <Textarea
                 id="notes"

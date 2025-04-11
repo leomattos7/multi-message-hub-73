@@ -62,122 +62,119 @@ export const EditPatientDialog = ({
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          {/* Estrutura modificada para garantir o mesmo espaçamento em todos os campos */}
-          <div className="grid grid-cols-1 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo*</Label>
-              <Input
-                id="name"
-                value={patientData?.name || ''}
-                onChange={(e) => onPatientChange(patientData ? {...patientData, name: e.target.value} : null)}
-                placeholder="Digite o nome do paciente"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="cpf">CPF</Label>
-              <Input
-                id="cpf"
-                value={patientData?.cpf || ''}
-                onChange={(e) => onPatientChange(patientData ? {...patientData, cpf: e.target.value} : null)}
-                placeholder="Digite o CPF do paciente"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="birth_date">Data de Nascimento</Label>
-              <Input
-                id="birth_date"
-                type="date"
-                value={patientData?.birth_date ? patientData.birth_date.split('T')[0] : ''}
-                onChange={(e) => onPatientChange(patientData ? {...patientData, birth_date: e.target.value} : null)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="biological_sex">Sexo Biológico</Label>
-              <Select
-                value={patientData?.biological_sex || ''}
-                onValueChange={(value) => onPatientChange(patientData ? {...patientData, biological_sex: value} : null)}
-              >
-                <SelectTrigger id="biological_sex">
-                  <SelectValue placeholder="Selecione o sexo biológico" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Masculino</SelectItem>
-                  <SelectItem value="female">Feminino</SelectItem>
-                  <SelectItem value="intersex">Intersexo</SelectItem>
-                  <SelectItem value="not_informed">Não Informado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="gender_identity">Identidade de Gênero</Label>
-              <Select
-                value={patientData?.gender_identity || ''}
-                onValueChange={(value) => onPatientChange(patientData ? {...patientData, gender_identity: value} : null)}
-              >
-                <SelectTrigger id="gender_identity">
-                  <SelectValue placeholder="Selecione a identidade de gênero" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="man">Homem</SelectItem>
-                  <SelectItem value="woman">Mulher</SelectItem>
-                  <SelectItem value="non_binary">Não-Binário</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
-                  <SelectItem value="not_informed">Não Informado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="has_mobility_impairment">É PCD ou tem mobilidade reduzida?</Label>
-              <RadioGroup 
-                value={patientData?.has_mobility_impairment || 'no'} 
-                onValueChange={(value) => onPatientChange(patientData ? {...patientData, has_mobility_impairment: value} : null)}
-                className="flex space-x-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="edit-patient-mobility-yes" />
-                  <Label htmlFor="edit-patient-mobility-yes">Sim</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="edit-patient-mobility-no" />
-                  <Label htmlFor="edit-patient-mobility-no">Não</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={patientData?.phone || ''}
-                onChange={(e) => onPatientChange(patientData ? {...patientData, phone: e.target.value} : null)}
-                placeholder="Digite o telefone do paciente"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="address">Endereço</Label>
-              <Input
-                id="address"
-                value={patientData?.address || ''}
-                onChange={(e) => onPatientChange(patientData ? {...patientData, address: e.target.value} : null)}
-                placeholder="Digite o endereço do paciente"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="notes">Anotações</Label>
-              <Textarea
-                id="notes"
-                value={patientData?.notes || ''}
-                onChange={(e) => onPatientChange(patientData ? {...patientData, notes: e.target.value} : null)}
-                placeholder="Informações adicionais sobre o paciente"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome Completo*</Label>
+            <Input
+              id="name"
+              value={patientData?.name || ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, name: e.target.value} : null)}
+              placeholder="Digite o nome do paciente"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="cpf">CPF</Label>
+            <Input
+              id="cpf"
+              value={patientData?.cpf || ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, cpf: e.target.value} : null)}
+              placeholder="Digite o CPF do paciente"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="birth_date">Data de Nascimento</Label>
+            <Input
+              id="birth_date"
+              type="date"
+              value={patientData?.birth_date ? patientData.birth_date.split('T')[0] : ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, birth_date: e.target.value} : null)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="biological_sex">Sexo Biológico</Label>
+            <Select
+              value={patientData?.biological_sex || ''}
+              onValueChange={(value) => onPatientChange(patientData ? {...patientData, biological_sex: value} : null)}
+            >
+              <SelectTrigger id="biological_sex">
+                <SelectValue placeholder="Selecione o sexo biológico" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Masculino</SelectItem>
+                <SelectItem value="female">Feminino</SelectItem>
+                <SelectItem value="intersex">Intersexo</SelectItem>
+                <SelectItem value="not_informed">Não Informado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="gender_identity">Identidade de Gênero</Label>
+            <Select
+              value={patientData?.gender_identity || ''}
+              onValueChange={(value) => onPatientChange(patientData ? {...patientData, gender_identity: value} : null)}
+            >
+              <SelectTrigger id="gender_identity">
+                <SelectValue placeholder="Selecione a identidade de gênero" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="man">Homem</SelectItem>
+                <SelectItem value="woman">Mulher</SelectItem>
+                <SelectItem value="non_binary">Não-Binário</SelectItem>
+                <SelectItem value="other">Outro</SelectItem>
+                <SelectItem value="not_informed">Não Informado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="has_mobility_impairment">É PCD ou tem mobilidade reduzida?</Label>
+            <RadioGroup 
+              value={patientData?.has_mobility_impairment || 'no'} 
+              onValueChange={(value) => onPatientChange(patientData ? {...patientData, has_mobility_impairment: value} : null)}
+              className="flex space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="yes" id="edit-patient-mobility-yes" />
+                <Label htmlFor="edit-patient-mobility-yes">Sim</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="no" id="edit-patient-mobility-no" />
+                <Label htmlFor="edit-patient-mobility-no">Não</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone">Telefone</Label>
+            <Input
+              id="phone"
+              value={patientData?.phone || ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, phone: e.target.value} : null)}
+              placeholder="Digite o telefone do paciente"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="address">Endereço</Label>
+            <Input
+              id="address"
+              value={patientData?.address || ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, address: e.target.value} : null)}
+              placeholder="Digite o endereço do paciente"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="notes">Anotações</Label>
+            <Textarea
+              id="notes"
+              value={patientData?.notes || ''}
+              onChange={(e) => onPatientChange(patientData ? {...patientData, notes: e.target.value} : null)}
+              placeholder="Informações adicionais sobre o paciente"
+            />
           </div>
         </div>
         
