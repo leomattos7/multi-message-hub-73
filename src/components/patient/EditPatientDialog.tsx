@@ -13,11 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Patient {
   id: string;
   name: string;
-  email?: string;
   phone?: string;
   address?: string;
   notes?: string;
@@ -25,6 +25,7 @@ interface Patient {
   biological_sex?: string;
   gender_identity?: string;
   cpf?: string;
+  has_mobility_impairment?: string;
 }
 
 interface EditPatientDialogProps {
@@ -42,6 +43,14 @@ export const EditPatientDialog = ({
   onUpdate,
   onPatientChange,
 }: EditPatientDialogProps) => {
+  // Ensure has_mobility_impairment has a default value
+  if (patientData && patientData.has_mobility_impairment === undefined) {
+    onPatientChange({
+      ...patientData,
+      has_mobility_impairment: "no"
+    });
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -121,14 +130,21 @@ export const EditPatientDialog = ({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={patientData?.email || ''}
-              onChange={(e) => onPatientChange(patientData ? {...patientData, email: e.target.value} : null)}
-              placeholder="Digite o email do paciente"
-            />
+            <Label htmlFor="has_mobility_impairment">É PCD ou tem mobilidade reduzida?</Label>
+            <RadioGroup 
+              value={patientData?.has_mobility_impairment || 'no'} 
+              onValueChange={(value) => onPatientChange(patientData ? {...patientData, has_mobility_impairment: value} : null)}
+              className="flex space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="yes" id="edit-patient-mobility-yes" />
+                <Label htmlFor="edit-patient-mobility-yes">Sim</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="no" id="edit-patient-mobility-no" />
+                <Label htmlFor="edit-patient-mobility-no">Não</Label>
+              </div>
+            </RadioGroup>
           </div>
           
           <div className="space-y-2">

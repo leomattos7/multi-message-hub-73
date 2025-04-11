@@ -30,6 +30,7 @@ interface EditPatientDialogProps {
     birth_date: string;
     biological_sex: string;
     gender_identity: string;
+    has_mobility_impairment?: string;
   };
   setEditingPatient: (patient: any) => void;
   onUpdate: () => void;
@@ -42,6 +43,11 @@ export const EditPatientDialog = ({
   setEditingPatient,
   onUpdate
 }: EditPatientDialogProps) => {
+  // Ensure has_mobility_impairment has a default value
+  if (editingPatient.has_mobility_impairment === undefined) {
+    editingPatient.has_mobility_impairment = "no";
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px]">
@@ -123,13 +129,21 @@ export const EditPatientDialog = ({
           
           <div className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editingPatient.email}
-                onChange={(e) => setEditingPatient({...editingPatient, email: e.target.value})}
-              />
+              <Label htmlFor="edit-has_mobility_impairment">É PCD ou tem mobilidade reduzida?</Label>
+              <RadioGroup 
+                value={editingPatient.has_mobility_impairment || 'no'} 
+                onValueChange={(value) => setEditingPatient({...editingPatient, has_mobility_impairment: value})}
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="edit-mobility-yes" />
+                  <Label htmlFor="edit-mobility-yes">Sim</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="edit-mobility-no" />
+                  <Label htmlFor="edit-mobility-no">Não</Label>
+                </div>
+              </RadioGroup>
             </div>
             
             <div className="grid gap-2">

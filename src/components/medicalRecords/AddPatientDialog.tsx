@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Dialog,
@@ -19,7 +20,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface NewPatient {
   name: string;
-  email: string;
   phone: string;
   address: string;
   notes: string;
@@ -29,6 +29,7 @@ interface NewPatient {
   biological_sex: string;
   gender_identity: string;
   cpf: string;
+  has_mobility_impairment: string;
 }
 
 interface AddPatientDialogProps {
@@ -46,7 +47,6 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
 }) => {
   const [newPatient, setNewPatient] = useState<NewPatient>({
     name: "",
-    email: "",
     phone: "",
     address: "",
     notes: "",
@@ -55,7 +55,8 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
     birth_date: "",
     biological_sex: "",
     gender_identity: "",
-    cpf: ""
+    cpf: "",
+    has_mobility_impairment: "no"
   });
 
   const handleAddPatient = async () => {
@@ -69,20 +70,27 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
     }
 
     try {
+      // Add email field for backend compatibility
+      const patientWithEmail = {
+        ...newPatient,
+        email: null
+      };
+
       const { data, error } = await supabase
         .from("patients")
         .insert({
-          name: newPatient.name,
-          email: newPatient.email || null,
-          phone: newPatient.phone || null,
-          address: newPatient.address ? JSON.stringify({ full_address: newPatient.address }) : null,
-          notes: newPatient.notes || null,
-          payment_method: newPatient.payment_method || "particular",
-          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
-          birth_date: newPatient.birth_date || null,
-          biological_sex: newPatient.biological_sex || null,
-          gender_identity: newPatient.gender_identity || null,
-          cpf: newPatient.cpf || null
+          name: patientWithEmail.name,
+          email: patientWithEmail.email,
+          phone: patientWithEmail.phone || null,
+          address: patientWithEmail.address ? JSON.stringify({ full_address: patientWithEmail.address }) : null,
+          notes: patientWithEmail.notes || null,
+          payment_method: patientWithEmail.payment_method || "particular",
+          insurance_name: patientWithEmail.payment_method === "convenio" ? patientWithEmail.insurance_name || null : null,
+          birth_date: patientWithEmail.birth_date || null,
+          biological_sex: patientWithEmail.biological_sex || null,
+          gender_identity: patientWithEmail.gender_identity || null,
+          cpf: patientWithEmail.cpf || null,
+          // has_mobility_impairment will be stored in the frontend only for now
         })
         .select();
 
@@ -95,7 +103,6 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
 
       setNewPatient({
         name: "",
-        email: "",
         phone: "",
         address: "",
         notes: "",
@@ -104,7 +111,8 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
         birth_date: "",
         biological_sex: "",
         gender_identity: "",
-        cpf: ""
+        cpf: "",
+        has_mobility_impairment: "no"
       });
       
       onOpenChange(false);
@@ -205,14 +213,21 @@ export const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newPatient.email}
-                onChange={(e) => setNewPatient({...newPatient, email: e.target.value})}
-                placeholder="Digite o email do paciente"
-              />
+              <Label htmlFor="has_mobility_impairment">É PCD ou tem mobilidade reduzida?</Label>
+              <RadioGroup 
+                value={newPatient.has_mobility_impairment} 
+                onValueChange={(value) => setNewPatient({...newPatient, has_mobility_impairment: value})}
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="mobility-yes" />
+                  <Label htmlFor="mobility-yes">Sim</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="mobility-no" />
+                  <Label htmlFor="mobility-no">Não</Label>
+                </div>
+              </RadioGroup>
             </div>
           
             <div className="space-y-2">
