@@ -1,16 +1,19 @@
 
 import { useState } from "react";
-import { MessageCircle, Inbox } from "lucide-react";
+import { MessageCircle, Inbox, Share2 } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { mockConversations } from "@/data/mockData";
+import { SocialConnectionsDialog } from "@/components/SocialConnectionsDialog";
+import { Button } from "@/components/ui/button";
 
 export default function Index() {
   const isMobile = useIsMobile();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showConversation, setShowConversation] = useState(!isMobile);
   const [useMockData, setUseMockData] = useState(true); // Enable mock data by default
+  const [showConnectionsDialog, setShowConnectionsDialog] = useState(false);
 
   // Get conversations from localStorage or use mock data
   const conversations = useMockData 
@@ -65,12 +68,23 @@ export default function Index() {
                   </span>
                 )}
               </h2>
-              <button 
-                onClick={toggleMockData} 
-                className="text-xs bg-secondary px-2 py-1 rounded"
-              >
-                {useMockData ? "Usar dados reais" : "Usar dados de exemplo"}
-              </button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1 text-xs"
+                  onClick={() => setShowConnectionsDialog(true)}
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  Conectar canais
+                </Button>
+                <button 
+                  onClick={toggleMockData} 
+                  className="text-xs bg-secondary px-2 py-1 rounded"
+                >
+                  {useMockData ? "Usar dados reais" : "Usar dados de exemplo"}
+                </button>
+              </div>
             </div>
             <ConversationList 
               onSelectConversation={handleSelectConversation}
@@ -101,6 +115,11 @@ export default function Index() {
           </div>
         )}
       </div>
+      
+      <SocialConnectionsDialog 
+        isOpen={showConnectionsDialog} 
+        onOpenChange={setShowConnectionsDialog} 
+      />
     </div>
   );
 }

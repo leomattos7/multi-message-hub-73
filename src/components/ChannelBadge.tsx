@@ -53,8 +53,19 @@ export function ChannelBadge({
     lg: "h-6 w-6",
   };
 
+  const badgeClasses = {
+    sm: "py-0.5 px-1.5 text-xs",
+    md: "py-1 px-2 text-sm",
+    lg: "py-1.5 px-2.5 text-sm",
+  };
+
   return (
-    <span className={cn("channel-pill", config.color, className)}>
+    <span className={cn(
+      "channel-pill rounded-md inline-flex items-center gap-1.5", 
+      config.color, 
+      badgeClasses[size],
+      className
+    )}>
       <Icon className={sizeClasses[size]} />
       {showLabel && <span>{config.label}</span>}
     </span>
