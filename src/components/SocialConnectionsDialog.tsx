@@ -23,6 +23,7 @@ interface ChannelConnection {
   connected: boolean;
   status: "connected" | "disconnected" | "pending";
   lastSync?: string;
+  qrCodeUrl?: string; // Added optional QR code URL
 }
 
 interface SocialConnectionsDialogProps {
@@ -30,14 +31,15 @@ interface SocialConnectionsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Mock data for channel connections
+// Updated mock data for channel connections with mock QR code URLs
 const mockChannelConnections: ChannelConnection[] = [
   {
     id: "whatsapp-1",
     type: "whatsapp",
     name: "WhatsApp Business",
     connected: false,
-    status: "disconnected"
+    status: "disconnected",
+    qrCodeUrl: "/placeholder-qr-whatsapp.png" // Mock QR code image
   },
   {
     id: "instagram-1",
@@ -52,7 +54,8 @@ const mockChannelConnections: ChannelConnection[] = [
     type: "facebook",
     name: "Facebook Messenger",
     connected: false,
-    status: "disconnected"
+    status: "disconnected",
+    qrCodeUrl: "/placeholder-qr-facebook.png" // Mock QR code image
   }
 ];
 
@@ -180,7 +183,15 @@ export function SocialConnectionsDialog({ isOpen, onOpenChange }: SocialConnecti
           
           <div className="py-6 flex flex-col items-center justify-center">
             <div className="border border-gray-200 p-4 rounded-md mb-4">
-              <QrCode className="h-48 w-48 text-gray-800" />
+              {currentConnection?.qrCodeUrl ? (
+                <img 
+                  src={currentConnection.qrCodeUrl} 
+                  alt={`QR Code para ${currentConnection.name}`} 
+                  className="h-48 w-48 object-contain"
+                />
+              ) : (
+                <QrCode className="h-48 w-48 text-gray-800" />
+              )}
             </div>
             <p className="text-sm text-center text-muted-foreground mb-4">
               Abra o aplicativo{' '}
@@ -210,3 +221,4 @@ export function SocialConnectionsDialog({ isOpen, onOpenChange }: SocialConnecti
     </>
   );
 }
+
