@@ -1,0 +1,44 @@
+import { PatientRecord } from '../../types/patient-record';
+import { apiService } from '../../services/api-service';
+
+/**
+ * Create a new patient record
+ */
+export const createPatientRecord = async (patientId: string, doctorId: string, recordType: string, content: string) => {
+  const record = {
+    patient_id: patientId,
+    doctor_id: doctorId,
+    record_type: recordType,
+    record_date: new Date().toISOString(),
+    content
+  };
+  
+  return await apiService.post('/patient-records', record, doctorId);
+};
+
+/**
+ * Get patient records by patient ID and optional record type
+ */
+export const getPatientRecords = async (patientId: string, doctorId: string, recordType?: string) => {
+  const params: Record<string, string> = {
+    patientId,
+    doctorId
+  };
+  
+  if (recordType && recordType !== 'all') {
+    params.recordType = recordType;
+  }
+  
+  return await apiService.get('/patient-records', doctorId, params);
+};
+
+/**
+ * Delete a patient record by ID
+ */
+export const deletePatientRecord = async (recordId: string, patientId: string, doctorId: string) => {
+  await apiService.delete(`/patient-records/${recordId}`, doctorId, {
+    patientId,
+    doctorId
+  });
+  return true;
+};

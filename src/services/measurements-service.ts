@@ -1,22 +1,20 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { Measurement } from "@/types/measurement";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
+import { apiService } from "./api-service";
 
 /**
  * Fetches all measurements for a patient
  */
-export const fetchPatientMeasurements = async (patientId: string): Promise<Measurement[]> => {
+export const fetchPatientMeasurements = async (patientId: string, userId?: string): Promise<Measurement[]> => {
   if (!patientId) throw new Error("Patient ID is required");
   
-  const { data, error } = await supabase
-    .from("measurements")
-    .select("*")
-    .eq("patient_id", patientId)
-    .order("created_at", { ascending: false });
-  
-  if (error) throw error;
-  return data as Measurement[];
+  try {
+    return await apiService.get<Measurement[]>(`/measurements`, userId, { patientId });
+  } catch (error) {
+    console.error("Error fetching measurements:", error);
+    throw error;
+  }
 };
 
 /**
@@ -26,88 +24,34 @@ export const saveMeasurement = async (
   patientId: string,
   name: string, 
   value: number, 
-  unit: string
+  unit: string,
+  userId?: string
 ): Promise<boolean> => {
   if (!patientId) {
-    toast({
-      title: "Erro",
-      description: "ID do paciente não encontrado",
-      variant: "destructive",
-    });
+    toast.error("ID do paciente não encontrado");
     return false;
   }
 
   if (!name || value === null || value === undefined || isNaN(Number(value))) {
-    toast({
-      title: "Erro",
-      description: "Nome e valor são obrigatórios",
-      variant: "destructive",
-    });
+    toast.error("Nome e valor são obrigatórios");
     return false;
   }
 
   try {
-    // For patient measurements, we're bypassing auth requirements since this is an admin functionality
-    // where doctors or healthcare providers are adding measurements for patients
+    // Send the measurement to the Lambda API
+    await apiService.post('/measurements', {
+      patient_id: patientId,
+      name: name.toLowerCase(),
+      value: Number(value),
+      unit: unit,
+      date: new Date().toISOString()
+    }, userId);
     
-    // First check if this measurement already exists
-    const { data: existingMeasurement, error: fetchError } = await supabase
-      .from("measurements")
-      .select("*")
-      .eq("patient_id", patientId)
-      .eq("name", name.toLowerCase())
-      .maybeSingle();
-    
-    if (fetchError) {
-      console.error("Erro ao verificar medição existente:", fetchError);
-      throw fetchError;
-    }
-    
-    let result;
-    
-    if (existingMeasurement) {
-      // Update existing measurement
-      result = await supabase
-        .from("measurements")
-        .update({
-          value: value,
-          unit: unit,
-          date: new Date().toISOString(),
-        })
-        .eq("id", existingMeasurement.id);
-    } else {
-      // Insert new measurement
-      result = await supabase
-        .from("measurements")
-        .insert([
-          {
-            patient_id: patientId,
-            name: name.toLowerCase(),
-            value: value,
-            unit: unit,
-            date: new Date().toISOString(),
-          }
-        ]);
-    }
-
-    if (result.error) {
-      console.error("Erro na operação de banco de dados:", result.error);
-      throw result.error;
-    }
-    
-    toast({
-      title: "Sucesso",
-      description: "Medição salva com sucesso",
-    });
-    
+    toast.success("Medição salva com sucesso");
     return true;
   } catch (error) {
     console.error("Erro ao salvar medição:", error);
-    toast({
-      title: "Erro",
-      description: "Não foi possível salvar a medição",
-      variant: "destructive",
-    });
+    toast.error("Não foi possível salvar a medição");
     return false;
   }
 };

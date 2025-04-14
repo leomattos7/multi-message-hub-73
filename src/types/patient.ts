@@ -5,23 +5,21 @@ export interface Patient {
   email?: string;
   phone?: string;
   address?: string;
+  created_at: string;
+  updated_at: string;
+  avatar_url?: string;
   notes?: string;
+  doctor_id?: string;
+  organization_id?: string;
+  payment_method?: string;
+  insurance_name?: string;
   birth_date?: string;
   biological_sex?: string;
   gender_identity?: string;
+  gender?: string; // Added for backward compatibility
   cpf?: string;
-  payment_method?: string;
-  insurance_name?: string;
+  
+  // UI helper properties
   lastMessageDate?: Date | null;
   lastAppointmentDate?: Date | null;
-}
-
-export interface MedicalRecord {
-  id: string;
-  patient_id: string;
-  record_date: string;
-  record_type: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
 }

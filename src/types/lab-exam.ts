@@ -10,12 +10,6 @@ export interface LabExam {
   file_url?: string;
   created_at: string;
   updated_at: string;
-  
-  // Fields used in UI
-  name?: string;
-  result?: string;
-  reference_range?: string;
-  is_abnormal?: boolean;
 }
 
 export interface LabExamWithFile extends LabExam {
