@@ -1,12 +1,11 @@
-
 import axios from "axios";
 import { toast } from "sonner";
 
 // Base API URL for Lambda Express.js endpoint
-export const API_BASE_URL = 'https://2suwazl6jc.execute-api.sa-east-1.amazonaws.com/serveless_health_prod';
+export const API_BASE_URL = '';
 
 /**
- * Generic API service that adds the x-uuid header to all requests
+ * Generic API service for making API requests
  */
 export const apiService = {
   /**
@@ -14,7 +13,8 @@ export const apiService = {
    */
   async get<T>(endpoint: string, userId?: string, params?: Record<string, any>): Promise<T> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api${endpoint}`, {
+      console.log(`Fazendo requisição GET para: ${endpoint}`);
+      const response = await axios.get(endpoint, {
         params,
         headers: {
           'Content-Type': 'application/json',
@@ -33,7 +33,8 @@ export const apiService = {
    */
   async post<T>(endpoint: string, data: any, userId?: string): Promise<T> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api${endpoint}`, data, {
+      console.log(`Fazendo requisição POST para: ${endpoint}`);
+      const response = await axios.post(endpoint, data, {
         headers: {
           'Content-Type': 'application/json',
           'x-uuid': userId || '123'
@@ -51,7 +52,8 @@ export const apiService = {
    */
   async put<T>(endpoint: string, data: any, userId?: string): Promise<T> {
     try {
-      const response = await axios.put(`${API_BASE_URL}/api${endpoint}`, data, {
+      console.log(`Fazendo requisição PUT para: ${endpoint}`);
+      const response = await axios.put(endpoint, data, {
         headers: {
           'Content-Type': 'application/json',
           'x-uuid': userId || '123'
@@ -67,16 +69,16 @@ export const apiService = {
   /**
    * Make a DELETE request to the API
    */
-  async delete<T>(endpoint: string, userId?: string, params?: Record<string, any>): Promise<T> {
+  async delete(endpoint: string, userId?: string, params?: Record<string, any>): Promise<void> {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/api${endpoint}`, {
+      console.log(`Fazendo requisição DELETE para: ${endpoint}`);
+      await axios.delete(endpoint, {
         params,
         headers: {
           'Content-Type': 'application/json',
           'x-uuid': userId || '123'
         }
       });
-      return response.data as T;
     } catch (error) {
       console.error(`DELETE request failed for ${endpoint}:`, error);
       throw error;

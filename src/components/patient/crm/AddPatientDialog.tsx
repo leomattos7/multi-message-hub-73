@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -35,16 +36,26 @@ export const AddPatientDialog = ({
     cpf: "",
     birth_date: "",
     biological_sex: "",
-    gender_identity: "",
-    has_mobility_impairment: "no"
+    gender_identity: ""
   });
 
   const handleSubmit = () => {
-    const patientWithEmail = {
-      ...newPatient,
-      email: null
+    if (!newPatient.name.trim()) {
+      toast.error("Por favor, preencha o nome do paciente");
+      return;
+    }
+
+    // Enviar apenas os dados básicos
+    const patientData = {
+      name: newPatient.name,
+      phone: newPatient.phone,
+      address: newPatient.address,
+      notes: newPatient.notes
     };
-    onAdd(patientWithEmail);
+
+    onAdd(patientData);
+    
+    // Resetar o formulário
     setNewPatient({
       name: "",
       phone: "",
@@ -55,8 +66,7 @@ export const AddPatientDialog = ({
       cpf: "",
       birth_date: "",
       biological_sex: "",
-      gender_identity: "",
-      has_mobility_impairment: "no"
+      gender_identity: ""
     });
   };
 
@@ -140,24 +150,6 @@ export const AddPatientDialog = ({
           </div>
           
           <div className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="has_mobility_impairment">É PCD ou tem mobilidade reduzida?</Label>
-              <RadioGroup 
-                value={newPatient.has_mobility_impairment} 
-                onValueChange={(value) => setNewPatient({...newPatient, has_mobility_impairment: value})}
-                className="flex space-x-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="mobility-yes" />
-                  <Label htmlFor="mobility-yes">Sim</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="mobility-no" />
-                  <Label htmlFor="mobility-no">Não</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
             <div className="grid gap-2">
               <Label htmlFor="phone">Telefone</Label>
               <Input

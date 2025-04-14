@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";

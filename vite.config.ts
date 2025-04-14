@@ -8,6 +8,24 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/api': {
+        target: 'https://2suwazl6jc.execute-api.sa-east-1.amazonaws.com/serveless_health_prod',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Enviando requisição para:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Recebendo resposta de:', req.method, req.url, proxyRes.statusCode);
+          });
+        }
+      }
+    }
   },
   plugins: [
     react(),

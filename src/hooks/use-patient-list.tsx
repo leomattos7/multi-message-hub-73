@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Patient } from "@/types/patient";
+import { Patient, PatientApiResponse } from "@/types/patient";
 import { PatientFilters } from "@/components/ContactFilters";
+import { apiService } from "@/services/api-service";
 
 export const usePatientList = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -49,75 +49,26 @@ export const usePatientList = () => {
     try {
       setIsLoading(true);
       
-      const { data: appointments, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('patient_id, date')
-        .order('date', { ascending: false });
-
-      const { data: messages, error: messagesError } = await supabase
-        .from('messages')
-        .select('conversation_id, timestamp')
-        .order('timestamp', { ascending: false });
-
-      const { data: conversations, error: conversationsError } = await supabase
-        .from('conversations')
-        .select('id, patient_id');
-
-      const { data: patientsData, error: patientsError } = await supabase
-        .from('patients')
-        .select('id, name, email, phone, address, notes, payment_method, insurance_name, created_at, updated_at, cpf, birth_date, biological_sex, gender_identity');
-
-      if (patientsError) {
-        console.error("Error fetching patients:", patientsError);
-        toast.error("Erro ao carregar pacientes");
-        setIsLoading(false);
-        return;
-      }
-
+      // Usando o apiService para buscar os pacientes
+      // Tentando com o caminho correto da API
+      const patientsData = await apiService.get<PatientApiResponse[]>('/api/patients');
+      
       if (patientsData) {
-        const patientAppointments = new Map();
-        if (appointments) {
-          appointments.forEach(appointment => {
-            if (!patientAppointments.has(appointment.patient_id) || 
-                new Date(appointment.date) > new Date(patientAppointments.get(appointment.patient_id))) {
-              patientAppointments.set(appointment.patient_id, appointment.date);
-            }
-          });
-        }
-
-        const patientMessages = new Map();
-        const conversationToPatient = new Map();
-        if (conversations) {
-          conversations.forEach(conversation => {
-            conversationToPatient.set(conversation.id, conversation.patient_id);
-          });
-        }
-
-        if (messages) {
-          messages.forEach(message => {
-            const patientId = conversationToPatient.get(message.conversation_id);
-            if (patientId && (!patientMessages.has(patientId) || 
-                new Date(message.timestamp) > new Date(patientMessages.get(patientId)))) {
-              patientMessages.set(patientId, message.timestamp);
-            }
-          });
-        }
-
+        // Formatar os pacientes conforme necessário
         const formattedPatients = patientsData.map(patient => ({
-          id: patient.id,
-          name: patient.name,
-          email: patient.email ?? "",
-          phone: patient.phone ?? "",
-          address: patient.address ?? "",
-          notes: patient.notes ?? "",
-          payment_method: patient.payment_method ?? "particular",
-          insurance_name: patient.insurance_name ?? "",
-          lastMessageDate: patientMessages.has(patient.id) ? new Date(patientMessages.get(patient.id)) : null,
-          lastAppointmentDate: patientAppointments.has(patient.id) ? new Date(patientAppointments.get(patient.id)) : null,
-          cpf: patient.cpf ?? "",
-          birth_date: patient.birth_date ?? "",
-          biological_sex: patient.biological_sex ?? "",
-          gender_identity: patient.gender_identity ?? ""
+          ...patient,
+          email: patient.email || "",
+          phone: patient.phone || "",
+          address: patient.address || "",
+          notes: patient.notes || "",
+          payment_method: patient.payment_method || "particular",
+          insurance_name: patient.insurance_name || "",
+          lastMessageDate: null, // Esses dados não vêm da API, então inicializamos como null
+          lastAppointmentDate: null,
+          cpf: patient.cpf || "",
+          birth_date: patient.birth_date || "",
+          biological_sex: patient.biological_sex || "",
+          gender_identity: patient.gender_identity || ""
         }));
 
         setPatients(formattedPatients);
@@ -137,54 +88,70 @@ export const usePatientList = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('patients')
-        .insert({
-          name: newPatient.name,
-          email: newPatient.email || null,
-          phone: newPatient.phone || null,
-          address: newPatient.address || null,
-          notes: newPatient.notes || null,
-          payment_method: newPatient.payment_method || "particular",
-          insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || null : null,
-          cpf: newPatient.cpf || null,
-          birth_date: newPatient.birth_date || null,
-          biological_sex: newPatient.biological_sex || null,
-          gender_identity: newPatient.gender_identity || null
-        })
-        .select();
-        
-      if (error) {
-        console.error("Error inserting patient in Supabase:", error);
-        toast.error("Erro ao adicionar paciente. Por favor, tente novamente.");
-        return;
-      }
+      console.log("Iniciando adição de paciente...");
       
-      if (data && data.length > 0) {
+      // Simplificando os dados para enviar à API
+      const patientData = {
+        name: newPatient.name.trim(),
+        email: null,
+        phone: newPatient.phone ? newPatient.phone.trim() : null,
+        address: newPatient.address ? newPatient.address.trim() : null,
+        notes: newPatient.notes ? newPatient.notes.trim() : null,
+        payment_method: "particular",
+        insurance_name: null,
+        cpf: null,
+        birth_date: null,
+        biological_sex: null,
+        gender_identity: null,
+        doctor_id: null
+      };
+
+      console.log("Dados preparados para envio:", patientData);
+
+      // Usando o apiService para adicionar um novo paciente
+      const data = await apiService.post<PatientApiResponse>('/api/patients', patientData);
+      
+      console.log("Resposta da API:", data);
+      
+      if (data) {
         const newPatientObj: Patient = {
-          id: data[0].id,
-          name: data[0].name,
-          email: data[0].email || "",
-          phone: data[0].phone || "",
-          address: data[0].address || "",
-          notes: data[0].notes || "",
-          payment_method: data[0].payment_method || "particular",
-          insurance_name: data[0].insurance_name || "",
+          id: data.id,
+          name: data.name,
+          email: data.email || "",
+          phone: data.phone || "",
+          address: data.address || "",
+          notes: data.notes || "",
+          payment_method: data.payment_method || "particular",
+          insurance_name: data.insurance_name || "",
           lastMessageDate: null,
           lastAppointmentDate: null,
-          cpf: data[0].cpf || "",
-          birth_date: data[0].birth_date || "",
-          biological_sex: data[0].biological_sex || "",
-          gender_identity: data[0].gender_identity || ""
+          cpf: data.cpf || "",
+          birth_date: data.birth_date || "",
+          biological_sex: data.biological_sex || "",
+          gender_identity: data.gender_identity || "",
+          created_at: data.created_at,
+          updated_at: data.updated_at
         };
 
         setPatients([...patients, newPatientObj]);
         setIsAddPatientOpen(false);
         toast.success("Paciente adicionado com sucesso!");
       }
-    } catch (error) {
-      console.error("Error adding patient:", error);
-      toast.error("Erro ao adicionar paciente. Por favor, tente novamente.");
+    } catch (error: any) {
+      console.error("Erro detalhado ao adicionar paciente:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      let errorMessage = "Erro ao adicionar paciente. ";
+      if (error.response?.data?.message) {
+        errorMessage += error.response.data.message;
+      } else if (error.message) {
+        errorMessage += error.message;
+      }
+      
+      toast.error(errorMessage);
     }
   };
 
@@ -214,70 +181,52 @@ export const usePatientList = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('patients')
-        .update({
-          name: editingPatient.name,
-          email: editingPatient.email || null,
-          phone: editingPatient.phone || null,
-          address: editingPatient.address || null,
-          notes: editingPatient.notes || null,
-          payment_method: editingPatient.payment_method || "particular",
-          insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name || null : null,
-          cpf: editingPatient.cpf || null,
-          birth_date: editingPatient.birth_date || null,
-          biological_sex: editingPatient.biological_sex || null,
-          gender_identity: editingPatient.gender_identity || null
-        })
-        .eq('id', editingPatient.id);
-        
-      if (error) {
-        console.error("Error updating patient in Supabase:", error);
-        toast.error("Erro ao atualizar contato. Por favor, tente novamente.");
-        return;
-      }
+      // Preparar os dados para enviar à API
+      const patientData = {
+        name: editingPatient.name,
+        email: editingPatient.email || null,
+        phone: editingPatient.phone || null,
+        address: editingPatient.address || null,
+        notes: editingPatient.notes || null,
+        payment_method: editingPatient.payment_method || "particular",
+        insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name || null : null,
+        cpf: editingPatient.cpf || null,
+        birth_date: editingPatient.birth_date || null,
+        biological_sex: editingPatient.biological_sex || null,
+        gender_identity: editingPatient.gender_identity || null
+      };
+
+      // Usando o apiService para atualizar um paciente
+      const data = await apiService.put<PatientApiResponse>(`/api/patients/${editingPatient.id}`, patientData);
       
-      const updatedPatients = patients.map(patient => {
-        if (patient.id === editingPatient.id) {
-          return {
-            ...patient,
-            name: editingPatient.name,
-            email: editingPatient.email,
-            phone: editingPatient.phone,
-            address: editingPatient.address,
-            notes: editingPatient.notes,
-            payment_method: editingPatient.payment_method,
-            insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name : "",
-            cpf: editingPatient.cpf,
-            birth_date: editingPatient.birth_date,
-            biological_sex: editingPatient.biological_sex,
-            gender_identity: editingPatient.gender_identity
-          };
-        }
-        return patient;
-      });
-      
-      setPatients(updatedPatients);
-      
-      if (selectedPatient && selectedPatient.id === editingPatient.id) {
-        setSelectedPatient({
-          ...selectedPatient,
-          name: editingPatient.name,
-          email: editingPatient.email,
-          phone: editingPatient.phone,
-          address: editingPatient.address,
-          notes: editingPatient.notes,
-          payment_method: editingPatient.payment_method,
-          insurance_name: editingPatient.payment_method === "convenio" ? editingPatient.insurance_name : "",
-          cpf: editingPatient.cpf,
-          birth_date: editingPatient.birth_date,
-          biological_sex: editingPatient.biological_sex,
-          gender_identity: editingPatient.gender_identity
+      if (data) {
+        // Atualizar a lista de pacientes com os novos dados
+        const updatedPatients = patients.map(patient => {
+          if (patient.id === editingPatient.id) {
+            return {
+              ...patient,
+              ...patientData,
+              updated_at: data.updated_at
+            };
+          }
+          return patient;
         });
+        
+        setPatients(updatedPatients);
+        
+        // Se houver um paciente selecionado e for o mesmo que está sendo editado,
+        // atualizar também os dados do paciente selecionado
+        if (selectedPatient && selectedPatient.id === editingPatient.id) {
+          setSelectedPatient({
+            ...selectedPatient,
+            ...patientData,
+            updated_at: data.updated_at
+          });
+        }
+
+        setIsEditPatientOpen(false);
+        toast.success("Paciente atualizado com sucesso!");
       }
-      
-      setIsEditPatientOpen(false);
-      toast.success("Contato atualizado com sucesso!");
     } catch (error) {
       console.error("Error updating patient:", error);
       toast.error("Erro ao atualizar contato. Por favor, tente novamente.");
@@ -294,71 +243,13 @@ export const usePatientList = () => {
     if (!patientToDelete) return;
     
     try {
-      const { data: conversations, error: conversationsError } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('patient_id', patientToDelete.id);
-        
-      if (conversationsError) {
-        console.error("Error fetching conversations:", conversationsError);
-      } else if (conversations && conversations.length > 0) {
-        for (const conversation of conversations) {
-          const { error: deleteMessagesError } = await supabase
-            .from('messages')
-            .delete()
-            .eq('conversation_id', conversation.id);
-            
-          if (deleteMessagesError) {
-            console.error("Error deleting messages:", deleteMessagesError);
-            toast.error("Erro ao excluir mensagens relacionadas.");
-            return;
-          }
-        }
-        
-        const { error: deleteConversationsError } = await supabase
-          .from('conversations')
-          .delete()
-          .eq('patient_id', patientToDelete.id);
-          
-        if (deleteConversationsError) {
-          console.error("Error deleting conversations:", deleteConversationsError);
-          toast.error("Erro ao excluir conversas relacionadas.");
-          return;
-        }
-      }
+      // Usando o apiService para excluir um paciente
+      await apiService.delete(`/api/patients/${patientToDelete.id}`);
       
-      const { error: deleteAppointmentsError } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('patient_id', patientToDelete.id);
-        
-      if (deleteAppointmentsError) {
-        console.error("Error deleting appointments:", deleteAppointmentsError);
-        toast.error("Erro ao excluir consultas relacionadas.");
-        return;
-      }
-      
-      const { error: deletePatientError } = await supabase
-        .from('patients')
-        .delete()
-        .eq('id', patientToDelete.id);
-        
-      if (deletePatientError) {
-        console.error("Error deleting patient:", deletePatientError);
-        toast.error("Erro ao excluir contato. Tente novamente.");
-        return;
-      }
-      
-      const updatedPatients = patients.filter(p => p.id !== patientToDelete.id);
-      setPatients(updatedPatients);
-      
-      if (selectedPatient && selectedPatient.id === patientToDelete.id) {
-        setSelectedPatient(null);
-      }
-      
+      setPatients(patients.filter(patient => patient.id !== patientToDelete.id));
       setIsDeleteDialogOpen(false);
       setPatientToDelete(null);
-      toast.success("Contato excluído com sucesso!");
+      toast.success("Paciente excluído com sucesso!");
     } catch (error) {
       console.error("Error deleting patient:", error);
       toast.error("Erro ao excluir contato. Por favor, tente novamente.");
