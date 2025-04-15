@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -12,6 +11,25 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { LucideStethoscope, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/services/api-service";
+
+interface Organization {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
@@ -19,6 +37,7 @@ const formSchema = z.object({
   email: z.string().email({ message: "E-mail inválido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string().min(6, { message: "Confirme sua senha" }),
+  organization_name: z.string().min(2, { message: "Nome da organização deve ter pelo menos 2 caracteres" }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
@@ -39,6 +58,7 @@ export default function SignUp() {
       email: "",
       password: "",
       confirmPassword: "",
+      organization_name: "",
     },
   });
 
@@ -55,7 +75,7 @@ export default function SignUp() {
           data: {
             name: data.name,
             phone: data.phone || "",
-            role: "admin" // Using the standardized role
+            role: "admin"
           }
         }
       });
@@ -70,23 +90,37 @@ export default function SignUp() {
         setError("Erro ao criar conta: Nenhum usuário retornado");
         return;
       }
+
+      // Create organization in DynamoDB via API
+      const organizationData = {
+        id: crypto.randomUUID(),
+        name: data.organization_name,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const organizationResponse = await apiService.post<Organization>('/organizations', organizationData, authData.user.id);
       
-      // Create employee record
-      const { error: empError } = await supabase
-        .from("employees")
-        .insert([
-          {
-            id: authData.user.id,
-            name: data.name,
-            email: data.email,
-            role: "admin", // Using the standardized role
-            status: "active"
-          }
-        ]);
-        
-      if (empError) {
-        console.error("Error creating employee record:", empError);
-        // Continue anyway since the auth user was created
+      if (!organizationResponse || !organizationResponse.id) {
+        throw new Error("Erro ao criar organização");
+      }
+
+      // Create profile in DynamoDB via API
+      const profileData = {
+        id: authData.user.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || null,
+        role: "admin",
+        organization_id: organizationResponse.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const profileResponse = await apiService.post<Profile>('/profiles', profileData, authData.user.id);
+      
+      if (!profileResponse) {
+        throw new Error("Erro ao criar perfil");
       }
       
       // Auto sign-in the user after registration
@@ -97,7 +131,8 @@ export default function SignUp() {
           name: authData.user.user_metadata?.name || "Usuário",
           email: authData.user.email || "",
           role: authData.user.user_metadata?.role || "admin",
-          phone: authData.user.user_metadata?.phone
+          phone: authData.user.user_metadata?.phone,
+          organization_id: organizationResponse.id
         };
         
         localStorage.setItem("user", JSON.stringify(userData));
@@ -154,9 +189,9 @@ export default function SignUp() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Cadastro de Médico</CardTitle>
+              <CardTitle>Criar conta</CardTitle>
               <CardDescription>
-                Crie sua conta para começar a usar o sistema
+                Preencha os campos abaixo para criar sua conta
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -167,27 +202,29 @@ export default function SignUp() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome completo *</FormLabel>
+                        <FormLabel>Nome completo</FormLabel>
                         <FormControl>
-                          <Input placeholder="Dr. João Silva" {...field} />
+                          <Input placeholder="Seu nome" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="organization_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Telefone</FormLabel>
+                        <FormLabel>Nome da organização</FormLabel>
                         <FormControl>
-                          <Input placeholder="(11) 99999-9999" {...field} />
+                          <Input placeholder="Nome da sua clínica/hospital" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
                     name="email"
@@ -195,14 +232,28 @@ export default function SignUp() {
                       <FormItem>
                         <FormLabel>E-mail</FormLabel>
                         <FormControl>
-                          <Input placeholder="seu@email.com" {...field} />
+                          <Input type="email" placeholder="seu@email.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   
-                  <div className="border-t pt-4">
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone (opcional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(00) 00000-0000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="space-y-4">
                     <FormField
                       control={form.control}
                       name="password"
@@ -216,6 +267,7 @@ export default function SignUp() {
                         </FormItem>
                       )}
                     />
+                    
                     <FormField
                       control={form.control}
                       name="confirmPassword"

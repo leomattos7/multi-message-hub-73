@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/services/api-service";
 
 const employeeFormSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
@@ -37,6 +38,9 @@ interface Employee {
   role: string;
   status: "active" | "inactive";
   date_added: string;
+  created_at: string;
+  updated_at: string;
+  organization_id: string;
 }
 
 export default function EmployeeManagement() {
@@ -48,6 +52,7 @@ export default function EmployeeManagement() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
@@ -69,40 +74,89 @@ export default function EmployeeManagement() {
   });
 
   useEffect(() => {
-    fetchEmployees();
+    const checkAuthAndFetchData = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (!authUser) {
+          navigate('/login');
+          return;
+        }
+
+        // Fetch user profile from API to get organization_id
+        const profileFilters = [{
+          attribute: 'id',
+          operator: '=',
+          value: authUser.id
+        }];
+
+        const profileResponse = await apiService.get('/profiles', authUser.id, {
+          filters: JSON.stringify(profileFilters)
+        });
+
+        if (!profileResponse || !profileResponse[0]?.organization_id) {
+          setError("Usuário não está vinculado a uma organização");
+          setIsLoading(false);
+          return;
+        }
+
+        const userProfile = profileResponse[0];
+        setUser(userProfile);
+        
+        // Fetch employees with the same organization_id
+        await fetchEmployees(userProfile.organization_id);
+      } catch (error: any) {
+        console.error("Error in auth check:", error);
+        setError(error.message || "Erro ao verificar autenticação");
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthAndFetchData();
   }, []);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = async (organizationId: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      console.log("Fetching employees...");
-      const { data, error } = await supabase
-        .from("employees")
-        .select("*")
-        .order("name");
+      console.log("Fetching employees for organization:", organizationId);
+      
+      const filters = [{
+        attribute: 'organization_id',
+        operator: '=',
+        value: organizationId
+      }];
 
-      if (error) {
-        console.error("Error fetching employees:", error);
-        setError("Erro ao carregar funcionários: " + error.message);
-        throw error;
+      // Get the current user ID from Supabase auth
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        throw new Error("Usuário não autenticado");
       }
 
-      console.log("Fetched employees:", data);
+      const response = await apiService.get<Employee[]>('/profiles', authUser.id, {
+        filters: JSON.stringify(filters)
+      });
 
-      const fetchedEmployees = data.map((emp) => ({
+      if (!response) {
+        throw new Error("Nenhum funcionário encontrado");
+      }
+
+      const fetchedEmployees = response.map((emp) => ({
         id: emp.id,
         name: emp.name,
         email: emp.email,
         role: emp.role,
         status: emp.status as "active" | "inactive",
-        date_added: new Date(emp.date_added).toISOString().split('T')[0],
+        date_added: emp.created_at ? new Date(emp.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        created_at: emp.created_at,
+        updated_at: emp.updated_at,
+        organization_id: emp.organization_id
       }));
 
       setEmployees(fetchedEmployees);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching employees:", error);
-      setError("Erro ao carregar funcionários");
+      setError(error.message || "Erro ao carregar funcionários");
     } finally {
       setIsLoading(false);
     }
@@ -166,6 +220,9 @@ export default function EmployeeManagement() {
         role: newEmployee.role,
         status: newEmployee.status as "active" | "inactive",
         date_added: new Date(newEmployee.date_added).toISOString().split('T')[0],
+        created_at: newEmployee.created_at,
+        updated_at: newEmployee.updated_at,
+        organization_id: newEmployee.organization_id
       };
 
       setEmployees([...employees, formattedEmployee]);
