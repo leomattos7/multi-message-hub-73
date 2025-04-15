@@ -423,6 +423,7 @@ export default function EmployeeManagement() {
                       <SelectContent>
                         <SelectItem value="admin">Administrador</SelectItem>
                         <SelectItem value="employee">Funcionário</SelectItem>
+                        <SelectItem value="doctor">Médico</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -498,6 +499,7 @@ export default function EmployeeManagement() {
                       <SelectContent>
                         <SelectItem value="admin">Administrador</SelectItem>
                         <SelectItem value="employee">Funcionário</SelectItem>
+                        <SelectItem value="doctor">Médico</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

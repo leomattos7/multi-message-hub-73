@@ -3,6 +3,14 @@ import { toast } from "sonner";
 import { Patient, PatientApiResponse } from "@/types/patient";
 import { PatientFilters } from "@/components/ContactFilters";
 import { apiService } from "@/services/api-service";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Profile {
+  id: string;
+  organization_id: string;
+  role: string;
+  // ... outros campos do profile
+}
 
 export const usePatientList = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -48,36 +56,116 @@ export const usePatientList = () => {
   const fetchPatients = async () => {
     try {
       setIsLoading(true);
-      
-      // Usando o apiService para buscar os pacientes
-      // Tentando com o caminho correto da API
-      const patientsData = await apiService.get<PatientApiResponse[]>('/api/patients');
-      
-      if (patientsData) {
-        // Formatar os pacientes conforme necessário
-        const formattedPatients = patientsData.map(patient => ({
-          ...patient,
-          email: patient.email || "",
-          phone: patient.phone || "",
-          address: patient.address || "",
-          notes: patient.notes || "",
-          payment_method: patient.payment_method || "particular",
-          insurance_name: patient.insurance_name || "",
-          lastMessageDate: null, // Esses dados não vêm da API, então inicializamos como null
-          lastAppointmentDate: null,
-          cpf: patient.cpf || "",
-          birth_date: patient.birth_date || "",
-          biological_sex: patient.biological_sex || "",
-          gender_identity: patient.gender_identity || ""
-        }));
-
-        setPatients(formattedPatients);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
       }
+
+      // Get user profile to get organization_id and role
+      const profileResponse = await apiService.get<Profile[]>('/profiles', user.id, {
+        filters: JSON.stringify([{
+          attribute: 'id',
+          operator: '=',
+          value: user.id
+        }])
+      });
+
+      console.log("Profile:", profileResponse);
+
+      if (!profileResponse || !profileResponse[0]?.organization_id) {
+        throw new Error('Usuário não está vinculado a uma organização');
+      }
+
+      const userProfile = profileResponse[0];
+      const organizationId = userProfile.organization_id;
+      const userRole = userProfile.role;
+
+      let filters = [];
+
+      if (userRole === 'admin') {
+        // Admin can see all patients in the organization
+        filters = [{
+          attribute: 'organization_id',
+          operator: '=',
+          value: organizationId
+        }];
+      } else if (userRole === 'doctor') {
+        // Doctor can only see their own patients
+        filters = [{
+          attribute: 'organization_id',
+          operator: '=',
+          value: organizationId
+        }, {
+          attribute: 'doctor_id',
+          operator: '=',
+          value: user.id
+        }];
+      } else {
+        // Other roles can't see patients
+        setPatients([]);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Fetching patients with filters:", filters);
+      
+      const response = await apiService.get<Patient[]>('/patients', user.id, {
+        filters: JSON.stringify(filters)
+      });
+
+      console.log("Patients response:", response);
+
+      if (!response || response.length === 0) {
+        // Se não encontrar pacientes, limpa a lista e para o loading
+        setPatients([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setPatients(response);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching patients:", error);
-      toast.error("Erro ao carregar pacientes");
+      console.error('Error fetching patients:', error);
+      toast.error('Erro ao carregar pacientes');
+      setPatients([]);
       setIsLoading(false);
+    }
+  };
+
+  const addPatient = async (patientData: Patient) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Get user profile to get organization_id
+      const profileResponse = await apiService.get('/profiles', user.id, {
+        filters: JSON.stringify([{
+          attribute: 'id',
+          operator: '=',
+          value: user.id
+        }])
+      });
+
+      if (!profileResponse || !profileResponse[0]?.organization_id) {
+        throw new Error('Usuário não está vinculado a uma organização');
+      }
+
+      const organizationId = profileResponse[0].organization_id;
+
+      // Add doctor_id to patient data
+      const patientWithDoctor = {
+        ...patientData,
+        doctor_id: organizationId
+      };
+
+      await apiService.post('/patients', patientWithDoctor, user.id);
+      await fetchPatients();
+      toast.success('Paciente adicionado com sucesso');
+    } catch (error) {
+      console.error('Error adding patient:', error);
+      toast.error('Erro ao adicionar paciente');
     }
   };
 
@@ -90,26 +178,57 @@ export const usePatientList = () => {
     try {
       console.log("Iniciando adição de paciente...");
       
-      // Simplificando os dados para enviar à API
+      // Get current user from Supabase (only for auth)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
+
+      // Get user profile from API using the user's ID
+      const profileFilters = [{
+        attribute: 'id',
+        operator: '=',
+        value: user.id
+      }];
+
+      const profile = await apiService.get<any>(`/profiles?filters=${encodeURIComponent(JSON.stringify(profileFilters))}`);
+      
+      if (!profile?.[0]?.organization_id) {
+        toast.error("Usuário não vinculado a uma organização");
+        return;
+      }
+
+      const userProfile = profile[0];
+      const organizationId = userProfile.organization_id;
+      const userRole = userProfile.role;
+
+      // Only doctors and admins can add patients
+      if (userRole !== 'doctor' && userRole !== 'admin') {
+        toast.error("Apenas médicos e administradores podem adicionar pacientes");
+        return;
+      }
+
       const patientData = {
-        name: newPatient.name.trim(),
-        email: null,
-        phone: newPatient.phone ? newPatient.phone.trim() : null,
-        address: newPatient.address ? newPatient.address.trim() : null,
-        notes: newPatient.notes ? newPatient.notes.trim() : null,
+        name: newPatient.name,
+        email: newPatient.email || null,
+        phone: newPatient.phone || null,
+        address: newPatient.address || null,
+        notes: newPatient.notes || null,
         payment_method: "particular",
         insurance_name: null,
         cpf: null,
         birth_date: null,
         biological_sex: null,
         gender_identity: null,
-        doctor_id: null
+        organization_id: organizationId,
+        doctor_id: userRole === 'doctor' ? user.id : null // Se for admin, doctor_id será null
       };
 
       console.log("Dados preparados para envio:", patientData);
 
       // Usando o apiService para adicionar um novo paciente
-      const data = await apiService.post<PatientApiResponse>('/api/patients', patientData);
+      const data = await apiService.post<PatientApiResponse>('/patients', patientData);
       
       console.log("Resposta da API:", data);
       

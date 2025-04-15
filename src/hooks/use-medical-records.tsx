@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { apiService } from "@/services/api-service";
 
 interface Patient {
   id: string;
@@ -20,6 +20,15 @@ interface Patient {
   gender_identity?: string;
   cpf?: string;
   doctor_id?: string;
+}
+
+interface PatientRecord {
+  id: string;
+  patient_id: string;
+  record_type: string;
+  content: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 interface RecordSummary {
@@ -40,60 +49,79 @@ export const useMedicalRecords = () => {
     queryKey: ["patients", searchQuery],
     queryFn: async () => {
       try {
-        // Get current user
         const { data: { user } } = await supabase.auth.getUser();
-        
         if (!user) {
-          console.log("User not authenticated, returning empty array");
-          return [];
+          throw new Error('Usuário não autenticado');
         }
-        
-        let query = supabase
-          .from("patients")
-          .select("id, name, email, phone, address, notes, payment_method, insurance_name, birth_date, biological_sex, gender_identity, doctor_id");
-        
-        // Filter by current doctor if this is a multi-doctor system
-        // Commenting out doctor filtering for now to ensure we see data
-        // query = query.eq("doctor_id", user.id);
-        
-        if (searchQuery) {
-          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+
+        // Get user profile to get organization_id
+        const profileResponse = await apiService.get('/profiles', user.id, {
+          filters: JSON.stringify([{
+            attribute: 'id',
+            operator: '=',
+            value: user.id
+          }])
+        });
+
+        console.log("Profile:", profileResponse);
+
+        if (!profileResponse || !profileResponse[0]?.organization_id) {
+          throw new Error('Usuário não está vinculado a uma organização');
         }
-        
-        const { data: patientsData, error: patientsError } = await query.order("name");
-        
-        if (patientsError) {
-          console.error("Error fetching patients:", patientsError);
-          toast.error("Erro ao carregar pacientes");
-          return [];
-        }
-        
-        console.log("Fetched patients:", patientsData);
-        
-        // Add record counts (mock for now)
-        const patientsWithRecordCounts = patientsData.map(patient => ({ 
-          ...patient, 
-          record_count: Math.floor(Math.random() * 10) // Random count for display
+
+        const organizationId = profileResponse[0].organization_id;
+
+        // Fetch patients with doctor_id filter
+        const response = await apiService.get<Patient[]>('/patients', user.id, {
+          filters: JSON.stringify([{
+            attribute: 'doctor_id',
+            operator: '=',
+            value: organizationId
+          }])
+        });
+
+        // Format patients data
+        const formattedPatients = response.map(patient => ({
+          ...patient,
+          email: patient.email || "",
+          phone: patient.phone || "",
+          address: patient.address || "",
+          notes: patient.notes || "",
+          payment_method: patient.payment_method || "particular",
+          insurance_name: patient.insurance_name || "",
+          lastMessageDate: null,
+          lastAppointmentDate: null,
+          cpf: patient.cpf || "",
+          birth_date: patient.birth_date || "",
+          biological_sex: patient.biological_sex || "",
+          gender_identity: patient.gender_identity || ""
         }));
-        
-        return patientsWithRecordCounts as Patient[];
+
+        return formattedPatients;
       } catch (error) {
-        console.error("Error in queryFn:", error);
-        toast.error("Erro ao carregar pacientes");
-        // Return empty array instead of throwing to avoid breaking the UI
+        console.error('Error fetching patients:', error);
+        toast.error('Erro ao carregar pacientes');
         return [];
       }
-    },
-    // Disable query fetching for development to use mock data
-    // enabled: false
+    }
   });
 
-  // Simplified record summary to avoid database errors
-  const recordSummary: RecordSummary[] = [
-    { record_type: "consultation", count: 12 },
-    { record_type: "anamnesis", count: 8 },
-    { record_type: "exam", count: 15 }
-  ];
+  // Get record summary from API
+  const { data: recordSummary = [] } = useQuery({
+    queryKey: ["recordSummary"],
+    queryFn: async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+        
+        const summary = await apiService.get<RecordSummary[]>("/patient_records/summary");
+        return summary || [];
+      } catch (error) {
+        console.error("Error fetching record summary:", error);
+        return [];
+      }
+    }
+  });
 
   const viewPatientRecords = (patient: Patient) => {
     navigate(`/prontuarios/paciente/${patient.id}`);
@@ -103,16 +131,54 @@ export const useMedicalRecords = () => {
     navigate(`/prontuarios/paciente/${patientId}`);
   };
 
+  const addPatient = async (patientData: Patient) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Get user profile to get organization_id
+      const profileResponse = await apiService.get('/profiles', user.id, {
+        filters: JSON.stringify([{
+          attribute: 'id',
+          operator: '=',
+          value: user.id
+        }])
+      });
+
+      if (!profileResponse || !profileResponse[0]?.organization_id) {
+        throw new Error('Usuário não está vinculado a uma organização');
+      }
+
+      const organizationId = profileResponse[0].organization_id;
+
+      // Add doctor_id to patient data
+      const patientWithDoctor = {
+        ...patientData,
+        doctor_id: organizationId
+      };
+
+      await apiService.post('/patients', patientWithDoctor, user.id);
+      await refetchPatients();
+      toast.success('Paciente adicionado com sucesso');
+    } catch (error) {
+      console.error('Error adding patient:', error);
+      toast.error('Erro ao adicionar paciente');
+    }
+  };
+
   return {
     patients: patients || [],
     patientsLoading,
-    recordSummary,
+    recordSummary: recordSummary || [],
     searchQuery,
     setSearchQuery,
     isAddPatientOpen,
     setIsAddPatientOpen,
     refetchPatients,
     viewPatientRecords,
-    navigateToNewPatient
+    navigateToNewPatient,
+    addPatient
   };
 };

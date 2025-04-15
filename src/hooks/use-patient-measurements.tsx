@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MeasurementForm } from "@/types/measurement";
@@ -14,8 +13,10 @@ export const usePatientMeasurements = (patientId?: string) => {
   const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
   const [newMeasurement, setNewMeasurement] = useState<MeasurementForm>({ 
     name: '', 
-    value: '', 
-    unit: '' 
+    value: 0, 
+    unit: '',
+    patient_id: patientId!,
+    date: new Date().toISOString()
   });
 
   // Calculate BMI using the utility function
@@ -52,7 +53,9 @@ export const usePatientMeasurements = (patientId?: string) => {
         setCustomMeasurements(otherMeasurements.map(m => ({
           name: m.name,
           value: m.value,
-          unit: m.unit
+          unit: m.unit,
+          patient_id: patientId!,
+          date: new Date().toISOString()
         })));
       }
     }
@@ -84,7 +87,7 @@ export const usePatientMeasurements = (patientId?: string) => {
     );
 
     if (success) {
-      setNewMeasurement({ name: '', value: '', unit: '' });
+      setNewMeasurement({ name: '', value: 0, unit: '', patient_id: patientId!, date: new Date().toISOString() });
       setIsAddingMeasurement(false);
       await refetch();
     }
