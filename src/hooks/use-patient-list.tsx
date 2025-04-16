@@ -92,10 +92,6 @@ export const usePatientList = () => {
       } else if (userRole === 'doctor') {
         // Doctor can only see their own patients
         filters = [{
-          attribute: 'organization_id',
-          operator: '=',
-          value: organizationId
-        }, {
           attribute: 'doctor_id',
           operator: '=',
           value: user.id
@@ -228,6 +224,7 @@ export const usePatientList = () => {
         biological_sex: null,
         gender_identity: null,
         doctor_id: user.id,
+        organization_id: organizationId,
         created_at: now,
         updated_at: now
       };
@@ -323,7 +320,7 @@ export const usePatientList = () => {
       };
 
       // Usando o apiService para atualizar um paciente
-      const data = await apiService.put<PatientApiResponse>(`/api/patients/${editingPatient.id}`, patientData);
+      const data = await apiService.put<PatientApiResponse>(`/patients/${editingPatient.id}`, patientData);
       
       if (data) {
         // Atualizar a lista de pacientes com os novos dados
@@ -369,8 +366,17 @@ export const usePatientList = () => {
     if (!patientToDelete) return;
     
     try {
+      console.log("Deleting patient:", patientToDelete);
+      
+      // Get current user from Supabase (only for auth)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
+
       // Usando o apiService para excluir um paciente
-      await apiService.delete(`/api/patients/${patientToDelete.id}`);
+      await apiService.delete(`/patients/${patientToDelete.id}`);
       
       setPatients(patients.filter(patient => patient.id !== patientToDelete.id));
       setIsDeleteDialogOpen(false);

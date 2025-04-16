@@ -20,6 +20,7 @@ interface Patient {
   gender_identity?: string;
   cpf?: string;
   doctor_id?: string;
+  organization_id?: string;
 }
 
 interface PatientRecord {
@@ -71,14 +72,25 @@ export const useMedicalRecords = () => {
 
         const organizationId = profileResponse[0].organization_id;
 
-        // Fetch patients with doctor_id filter
-        const response = await apiService.get<Patient[]>('/patients', user.id, {
-          filters: JSON.stringify([{
-            attribute: 'doctor_id',
-            operator: '=',
-            value: organizationId
-          }])
-        });
+        let response: Patient[];
+
+        if(profileResponse[0].role === "doctor") {
+          response = await apiService.get<Patient[]>('/patients', user.id, {
+            filters: JSON.stringify([{
+              attribute: 'doctor_id',
+              operator: '=',
+              value: profileResponse[0].id
+            }])
+          });
+        } else {
+          response = await apiService.get<Patient[]>('/patients', user.id, {
+            filters: JSON.stringify([{
+              attribute: 'organization_id',
+              operator: '=',
+              value: organizationId
+            }])
+          });
+        }
 
         // Format patients data
         const formattedPatients = response.map(patient => ({
@@ -161,7 +173,7 @@ export const useMedicalRecords = () => {
         address: patientData.address || null,
         avatar_url: null, // Optional field
         notes: patientData.notes || null,
-        doctor_id: organizationId,
+        doctor_id: user.id,
         payment_method: patientData.payment_method || null,
         insurance_name: patientData.insurance_name || null,
         birth_date: patientData.birth_date || null,

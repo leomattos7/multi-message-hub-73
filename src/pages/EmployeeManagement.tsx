@@ -282,24 +282,62 @@ export default function EmployeeManagement() {
     try {
       console.log("Updating employee:", selectedEmployee.id, data);
       
-      const { error } = await supabase
-        .from("employees")
-        .update({
-          name: data.name,
-          email: data.email,
-          role: data.role,
-        })
-        .eq('id', selectedEmployee.id);
-
-      if (error) {
-        console.error("Error updating employee:", error);
-        setError("Erro ao atualizar funcionário: " + error.message);
-        throw error;
+      // Get current user from Supabase (only for auth)
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error("Usuário não autenticado");
       }
 
+      // 1. Update profile in DynamoDB
+      const updatedProfile = {
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        updated_at: new Date().toISOString()
+      };
+
+      await apiService.put(`/profiles/${selectedEmployee.id}`, updatedProfile, currentUser.id);
+
+      // 2. If role changed to/from doctor, handle doctor profile
+      if (selectedEmployee.role !== data.role) {
+        if (data.role === 'doctor') {
+          // Create doctor profile if role changed to doctor
+          const doctorProfile = {
+            id: selectedEmployee.id,
+            name: data.name,
+            email: data.email,
+            bio: '',
+            specialty: '',
+            profile_image_url: '',
+            public_url_slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+            theme: 'default',
+            phone: '',
+            address: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          await apiService.post('/doctor_profiles', doctorProfile, currentUser.id);
+        } else if (selectedEmployee.role === 'doctor') {
+          // Delete doctor profile if role changed from doctor
+          try {
+            await apiService.delete(`/doctor_profiles/${selectedEmployee.id}`, currentUser.id);
+          } catch (doctorError: any) {
+            console.error("Error deleting doctor profile:", doctorError);
+            // Continue even if doctor profile deletion fails
+          }
+        }
+      }
+
+      // 3. Update local state
       setEmployees(employees.map(emp => 
         emp.id === selectedEmployee.id 
-          ? { ...emp, name: data.name, email: data.email, role: data.role }
+          ? { 
+              ...emp, 
+              name: data.name, 
+              email: data.email, 
+              role: data.role,
+              updated_at: new Date().toISOString()
+            }
           : emp
       ));
 
@@ -325,15 +363,30 @@ export default function EmployeeManagement() {
       try {
         console.log("Removing employee:", selectedEmployee.id);
         
-        const { error } = await supabase
-          .from("employees")
-          .delete()
-          .eq('id', selectedEmployee.id);
+        // Get current user from Supabase (only for auth)
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!currentUser) {
+          throw new Error("Usuário não autenticado");
+        }
 
-        if (error) {
-          console.error("Error removing employee:", error);
-          setError("Erro ao remover funcionário: " + error.message);
-          throw error;
+        // 1. Delete employee profile from DynamoDB
+        await apiService.delete(`/profiles/${selectedEmployee.id}`, currentUser.id);
+
+        // 2. If the employee is a doctor, also delete their doctor profile
+        if (selectedEmployee.role === 'doctor') {
+          try {
+            await apiService.delete(`/doctor_profiles/${selectedEmployee.id}`, currentUser.id);
+          } catch (doctorError: any) {
+            console.error("Error deleting doctor profile:", doctorError);
+            // Continue even if doctor profile deletion fails
+          }
+        }
+
+        // 3. Delete user from Supabase Auth
+        const { error: authError } = await supabase.auth.admin.deleteUser(selectedEmployee.id);
+        if (authError) {
+          console.error("Error deleting Supabase auth user:", authError);
+          // Continue even if Supabase deletion fails
         }
 
         setEmployees(employees.filter(emp => emp.id !== selectedEmployee.id));
