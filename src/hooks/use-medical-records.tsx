@@ -114,7 +114,7 @@ export const useMedicalRecords = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return [];
         
-        const summary = await apiService.get<RecordSummary[]>("/patient_records/summary");
+        const summary = await apiService.get<RecordSummary[]>("/patient-records/summary");
         return summary || [];
       } catch (error) {
         console.error("Error fetching record summary:", error);
@@ -153,10 +153,21 @@ export const useMedicalRecords = () => {
 
       const organizationId = profileResponse[0].organization_id;
 
-      // Add doctor_id to patient data
+      // Prepare patient data according to the database schema
       const patientWithDoctor = {
-        ...patientData,
-        doctor_id: organizationId
+        name: patientData.name,
+        email: patientData.email || null,
+        phone: patientData.phone || null,
+        address: patientData.address || null,
+        avatar_url: null, // Optional field
+        notes: patientData.notes || null,
+        doctor_id: organizationId,
+        payment_method: patientData.payment_method || null,
+        insurance_name: patientData.insurance_name || null,
+        birth_date: patientData.birth_date || null,
+        biological_sex: patientData.biological_sex || null,
+        gender_identity: patientData.gender_identity || null,
+        cpf: patientData.cpf || null
       };
 
       await apiService.post('/patients', patientWithDoctor, user.id);

@@ -209,9 +209,15 @@ export const usePatientList = () => {
         return;
       }
 
+      // Generate a new UUID for the patient
+      const patientId = crypto.randomUUID();
+      const now = new Date().toISOString();
+
+      // Prepare patient data according to the database schema
       const patientData = {
+        id: patientId,
         name: newPatient.name,
-        email: newPatient.email || null,
+        email: null,
         phone: newPatient.phone || null,
         address: newPatient.address || null,
         notes: newPatient.notes || null,
@@ -221,14 +227,15 @@ export const usePatientList = () => {
         birth_date: null,
         biological_sex: null,
         gender_identity: null,
-        organization_id: organizationId,
-        doctor_id: userRole === 'doctor' ? user.id : null // Se for admin, doctor_id será null
+        doctor_id: user.id,
+        created_at: now,
+        updated_at: now
       };
 
       console.log("Dados preparados para envio:", patientData);
 
       // Usando o apiService para adicionar um novo paciente
-      const data = await apiService.post<PatientApiResponse>('/patients', patientData);
+      const data = await apiService.post<PatientApiResponse>('/patients', patientData, user.id);
       
       console.log("Resposta da API:", data);
       

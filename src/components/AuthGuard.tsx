@@ -7,13 +7,13 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "employee" | "owner";
+  role: "admin" | "employee" | "owner" | "doctor";
   phone?: string;
 }
 
 interface AuthGuardProps {
   children: ReactNode;
-  requiredRole?: "admin" | "employee" | undefined;
+  requiredRole?: "admin" | "employee" | "doctor" | undefined;
 }
 
 export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
@@ -66,12 +66,6 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
         
         if (!localStorage.getItem("conversations")) {
           localStorage.setItem("conversations", "[]");
-        }
-        
-        // If a specific role is required and the user doesn't have it, redirect
-        if (requiredRole && userData.role !== requiredRole) {
-          navigate("/secretaria");
-          return;
         }
       } catch (error) {
         console.error("Error checking auth:", error);

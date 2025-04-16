@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { apiService } from "@/services/api-service";
+import { AuthGuard } from "@/components/AuthGuard";
 
 const employeeFormSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
@@ -74,7 +75,7 @@ export default function EmployeeManagement() {
   });
 
   useEffect(() => {
-    const checkAuthAndFetchData = async () => {
+    const fetchEmployeesData = async () => {
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         
@@ -112,7 +113,7 @@ export default function EmployeeManagement() {
       }
     };
 
-    checkAuthAndFetchData();
+    fetchEmployeesData();
   }, []);
 
   const fetchEmployees = async (organizationId: string) => {
@@ -168,13 +169,14 @@ export default function EmployeeManagement() {
     try {
       console.log("Adding employee:", data);
       
+      // 1. Create user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: {
             name: data.name,
-            role: data.role === "admin" ? "admin" : "employee"
+            role: data.role
           }
         }
       });
@@ -185,44 +187,69 @@ export default function EmployeeManagement() {
         throw authError;
       }
 
-      console.log("Created auth user:", authData);
-      
       if (!authData.user) {
         setError("Erro ao criar usuário: Nenhum usuário retornado");
         throw new Error("No user returned from Auth signUp");
       }
 
-      const { data: newEmployee, error: insertError } = await supabase
-        .from("employees")
-        .insert([
-          {
-            id: authData.user.id,
-            name: data.name,
-            email: data.email,
-            role: data.role,
-          },
-        ])
-        .select()
-        .single();
+      // 2. Create profile in API with the same organization_id
+      const newProfile = {
+        id: authData.user.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        organization_id: user.organization_id,
+        status: "active"
+      };
 
-      if (insertError) {
-        console.error("Error adding employee to database:", insertError);
-        setError("Erro ao adicionar funcionário ao banco de dados: " + insertError.message);
-        throw insertError;
+      // Get the current user ID from Supabase auth for the x-uuid header
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error("Usuário não autenticado");
       }
 
-      console.log("New employee added:", newEmployee);
+      // Make the POST request with correct parameter order: endpoint, data, userId
+      const profileData = await apiService.post('/profiles', newProfile, currentUser.id);
 
+      // 3. If the user is a doctor, create a doctor_profile
+      if (data.role === 'doctor') {
+        try {
+          const doctorProfile = {
+            id: authData.user.id, // Same ID as the profile
+            name: data.name,
+            email: data.email,
+            bio: '',
+            specialty: '',
+            profile_image_url: '',
+            public_url_slug: data.name.toLowerCase().replace(/\s+/g, '-'), // Create a slug from the name
+            theme: 'default',
+            phone: '',
+            address: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log("Creating doctor profile with data:", doctorProfile);
+          // Use the correct endpoint for doctor profiles
+          await apiService.post('/doctor_profiles', doctorProfile, currentUser.id);
+        } catch (doctorError: any) {
+          console.error("Error creating doctor profile:", doctorError);
+          // If doctor profile creation fails, we should still proceed with the employee creation
+          toast.warning("Perfil de médico criado, mas alguns detalhes adicionais não puderam ser salvos");
+        }
+      }
+
+      // 4. Update local state with the new employee
       const formattedEmployee: Employee = {
-        id: newEmployee.id,
-        name: newEmployee.name,
-        email: newEmployee.email,
-        role: newEmployee.role,
-        status: newEmployee.status as "active" | "inactive",
-        date_added: new Date(newEmployee.date_added).toISOString().split('T')[0],
-        created_at: newEmployee.created_at,
-        updated_at: newEmployee.updated_at,
-        organization_id: newEmployee.organization_id
+        id: profileData.id,
+        name: profileData.name,
+        email: profileData.email,
+        role: profileData.role,
+        status: profileData.status as "active" | "inactive",
+        date_added: profileData.created_at ? new Date(profileData.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        created_at: profileData.created_at,
+        updated_at: profileData.updated_at,
+        organization_id: profileData.organization_id
       };
 
       setEmployees([...employees, formattedEmployee]);
@@ -335,271 +362,273 @@ export default function EmployeeManagement() {
   }, []);
 
   return (
-    <div className="w-full p-6">
-      <div className="container mx-auto max-w-6xl">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Gerenciamento de Funcionários</h1>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Adicionar Funcionário
-          </Button>
-        </div>
+    <AuthGuard requiredRole="admin">
+      <div className="w-full p-6">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold">Gerenciamento de Funcionários</h1>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Adicionar Funcionário
+            </Button>
+          </div>
 
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Funcionários</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Carregando funcionários...
-              </div>
-            ) : employees.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhum funcionário adicionado ainda
-              </div>
-            ) : (
-              <div className="divide-y">
-                {employees.map((employee) => (
-                  <div key={employee.id} className="py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center">
-                        <UserCircle className="h-6 w-6 text-slate-500" />
+          <Card>
+            <CardHeader>
+              <CardTitle>Funcionários</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Carregando funcionários...
+                </div>
+              ) : employees.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum funcionário adicionado ainda
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {employees.map((employee) => (
+                    <div key={employee.id} className="py-4 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center">
+                          <UserCircle className="h-6 w-6 text-slate-500" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{employee.name}</h3>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Mail className="mr-1 h-3 w-3" />
+                            {employee.email}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-medium">{employee.name}</h3>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Mail className="mr-1 h-3 w-3" />
-                          {employee.email}
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">
+                          {employee.role}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditDialog(employee)}
+                            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openRemoveDialog(employee)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">
-                        {employee.role}
-                      </span>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(employee)}
-                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openRemoveDialog(employee)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adicionar Funcionário</DialogTitle>
+              <DialogDescription>
+                Adicione um novo funcionário ao sistema. Isso criará uma conta de usuário.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onAddEmployee)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do funcionário" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>E-mail</FormLabel>
+                      <FormControl>
+                        <Input placeholder="email@exemplo.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Senha</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="******" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cargo</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um cargo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                          <SelectItem value="employee">Funcionário</SelectItem>
+                          <SelectItem value="doctor">Médico</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline" type="button">Cancelar</Button>
+                  </DialogClose>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Adicionando..." : "Adicionar"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Funcionário</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do funcionário.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditEmployee)} className="space-y-4">
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do funcionário" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>E-mail</FormLabel>
+                      <FormControl>
+                        <Input placeholder="email@exemplo.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cargo</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um cargo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                          <SelectItem value="employee">Funcionário</SelectItem>
+                          <SelectItem value="doctor">Médico</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline" type="button">Cancelar</Button>
+                  </DialogClose>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Remover Funcionário</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja remover {selectedEmployee?.name}?
+                Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
+              <Button
+                variant="destructive"
+                onClick={removeEmployee}
+                disabled={isLoading}
+              >
+                {isLoading ? "Removendo..." : "Remover"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Funcionário</DialogTitle>
-            <DialogDescription>
-              Adicione um novo funcionário ao sistema. Isso criará uma conta de usuário.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onAddEmployee)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do funcionário" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail</FormLabel>
-                    <FormControl>
-                      <Input placeholder="email@exemplo.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Senha</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="******" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cargo</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um cargo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="admin">Administrador</SelectItem>
-                        <SelectItem value="employee">Funcionário</SelectItem>
-                        <SelectItem value="doctor">Médico</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" type="button">Cancelar</Button>
-                </DialogClose>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Adicionando..." : "Adicionar"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Funcionário</DialogTitle>
-            <DialogDescription>
-              Atualize as informações do funcionário.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditEmployee)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do funcionário" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail</FormLabel>
-                    <FormControl>
-                      <Input placeholder="email@exemplo.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cargo</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um cargo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="admin">Administrador</SelectItem>
-                        <SelectItem value="employee">Funcionário</SelectItem>
-                        <SelectItem value="doctor">Médico</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" type="button">Cancelar</Button>
-                </DialogClose>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remover Funcionário</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja remover {selectedEmployee?.name}?
-              Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
-            <Button
-              variant="destructive"
-              onClick={removeEmployee}
-              disabled={isLoading}
-            >
-              {isLoading ? "Removendo..." : "Remover"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </AuthGuard>
   );
 }
