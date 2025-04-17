@@ -172,12 +172,12 @@ export default function EmployeeManagement() {
     setError(null);
     try {
       console.log("Adding employee:", data);
-      
       // Get the current admin user ID first
-      const { data: { user: adminUser } } = await supabase.auth.getUser();
-      if (!adminUser) {
-        throw new Error("Usuário não autenticado");
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        throw new Error('Usuário não autenticado');
       }
+      const user = JSON.parse(userStr);
 
       // 1. Create user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiService } from "@/services/api-service";
@@ -19,7 +18,6 @@ interface Patient {
   biological_sex?: string;
   gender_identity?: string;
   cpf?: string;
-  doctor_id?: string;
   organization_id?: string;
 }
 
@@ -50,47 +48,21 @@ export const useMedicalRecords = () => {
     queryKey: ["patients", searchQuery],
     queryFn: async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
           throw new Error('Usuário não autenticado');
         }
+        const user = JSON.parse(userStr);
 
         // Get user profile to get organization_id
-        const profileResponse = await apiService.get('/profiles', user.id, {
-          filters: JSON.stringify([{
-            attribute: 'id',
-            operator: '=',
-            value: user.id
-          }])
-        });
-
-        console.log("Profile:", profileResponse);
+        const profileResponse = await apiService.get('/profiles', user.id);
 
         if (!profileResponse || !profileResponse[0]?.organization_id) {
           throw new Error('Usuário não está vinculado a uma organização');
         }
 
-        const organizationId = profileResponse[0].organization_id;
-
-        let response: Patient[];
-
-        if(profileResponse[0].role === "doctor") {
-          response = await apiService.get<Patient[]>('/patients', user.id, {
-            filters: JSON.stringify([{
-              attribute: 'doctor_id',
-              operator: '=',
-              value: profileResponse[0].id
-            }])
-          });
-        } else {
-          response = await apiService.get<Patient[]>('/patients', user.id, {
-            filters: JSON.stringify([{
-              attribute: 'organization_id',
-              operator: '=',
-              value: organizationId
-            }])
-          });
-        }
+        // Get patients directly from API
+        const response = await apiService.get<Patient[]>('/patients', user.id);
 
         // Format patients data
         const formattedPatients = response.map(patient => ({
@@ -123,10 +95,13 @@ export const useMedicalRecords = () => {
     queryKey: ["recordSummary"],
     queryFn: async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return [];
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
+          return [];
+        }
+        const user = JSON.parse(userStr);
         
-        const summary = await apiService.get<RecordSummary[]>("/patient_records/summary");
+        const summary = await apiService.get<RecordSummary[]>("/patient_records/summary", user.id);
         return summary || [];
       } catch (error) {
         console.error("Error fetching record summary:", error);
@@ -145,19 +120,14 @@ export const useMedicalRecords = () => {
 
   const addPatient = async (patientData: Patient) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
         throw new Error('Usuário não autenticado');
       }
+      const user = JSON.parse(userStr);
 
       // Get user profile to get organization_id
-      const profileResponse = await apiService.get('/profiles', user.id, {
-        filters: JSON.stringify([{
-          attribute: 'id',
-          operator: '=',
-          value: user.id
-        }])
-      });
+      const profileResponse = await apiService.get('/profiles', user.id);
 
       if (!profileResponse || !profileResponse[0]?.organization_id) {
         throw new Error('Usuário não está vinculado a uma organização');
@@ -166,14 +136,14 @@ export const useMedicalRecords = () => {
       const organizationId = profileResponse[0].organization_id;
 
       // Prepare patient data according to the database schema
-      const patientWithDoctor = {
+      const patientWithOrg = {
         name: patientData.name,
         email: patientData.email || null,
         phone: patientData.phone || null,
         address: patientData.address || null,
-        avatar_url: null, // Optional field
+        avatar_url: null,
         notes: patientData.notes || null,
-        doctor_id: user.id,
+        organization_id: organizationId,
         payment_method: patientData.payment_method || null,
         insurance_name: patientData.insurance_name || null,
         birth_date: patientData.birth_date || null,
@@ -182,7 +152,7 @@ export const useMedicalRecords = () => {
         cpf: patientData.cpf || null
       };
 
-      await apiService.post('/patients', patientWithDoctor, user.id);
+      await apiService.post('/patients', patientWithOrg, user.id);
       await refetchPatients();
       toast.success('Paciente adicionado com sucesso');
     } catch (error) {

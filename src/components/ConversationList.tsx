@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Search, Filter, Inbox as InboxIcon, Tags, SlidersHorizontal, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -43,10 +42,13 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { apiService } from "@/services/api-service";
+import { Conversation } from "@/types/conversation";
+import { ConversationListItem } from "./ConversationListItem";
 
 interface ConversationListProps {
-  onSelectConversation: (conversation: any) => void;
-  selectedConversationId?: string | null;
+  onSelectConversation: (conversation: Conversation) => void;
+  selectedConversationId: string | null;
   className?: string;
   useMockData?: boolean;
 }
@@ -80,8 +82,8 @@ type UnifiedConversation = {
   requiresHumanIntervention?: boolean;
 };
 
-export function ConversationList({ 
-  onSelectConversation, 
+export function ConversationList({
+  onSelectConversation,
   selectedConversationId,
   className,
   useMockData = false
@@ -111,12 +113,42 @@ export function ConversationList({
   });
 
   // Use mock data if indicated, otherwise fetch from Supabase
-  const { data: conversations = [], isLoading, error } = useMockData 
-    ? { data: mockConversations as UnifiedConversation[], isLoading: false, error: null }
-    : useQuery({
-        queryKey: ['conversations'],
-        queryFn: () => conversationService.getConversations(),
-      });
+  const { data: conversations = [], isLoading, error } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: async () => {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        throw new Error('Usuário não autenticado');
+      }
+      const user = JSON.parse(userStr);
+      
+      // Fetch conversations
+      const conversationsResponse = await apiService.get<Conversation[]>('/conversations', user.id);
+      
+      // Fetch messages for each conversation
+      const conversationsWithMessages = await Promise.all(
+        conversationsResponse.map(async (conversation) => {
+          const messagesResponse = await apiService.get<Message[]>(`/messages?conversation_id=${conversation.id}`, user.id);
+
+          return {
+            ...conversation,
+            messages: messagesResponse || [],
+            channel: 'whatsapp',
+            unread: 0,
+            last_activity: new Date().toISOString(),
+            patient: {
+              id: conversation.patient_id,
+              name: conversation.name,
+              phone: conversation.phone,
+              avatar_url: undefined
+            }
+          };
+        })
+      );
+
+      return conversationsWithMessages;
+    }
+  });
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -254,353 +286,48 @@ export function ConversationList({
   ].filter(Boolean).length;
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-full">Loading conversations...</div>;
+    return (
+      <div className={cn("flex-1 overflow-y-auto p-4", className)}>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-20 bg-gray-100 rounded animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex items-center justify-center h-full">Error loading conversations</div>;
+    return (
+      <div className={cn("flex-1 overflow-y-auto p-4", className)}>
+        <div className="text-center text-red-500">
+          Erro ao carregar conversas
+        </div>
+      </div>
+    );
+  }
+
+  if (!conversations?.length) {
+    return (
+      <div className={cn("flex-1 overflow-y-auto p-4", className)}>
+        <div className="text-center text-gray-500">
+          Nenhuma conversa encontrada
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={cn("flex flex-col h-full border-r border-border overflow-hidden", className)}>
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar conversas..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={handleSearch}
-            />
-          </div>
-          <DropdownMenu open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className={activeFiltersCount > 0 ? "bg-primary/10" : ""}>
-                <SlidersHorizontal className="h-4 w-4" />
-                {activeFiltersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60">
-              <DropdownMenuLabel>Filtros</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              
-              {/* Status Filters */}
-              <DropdownMenuGroup>
-                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground pt-2 pb-1">Status</DropdownMenuLabel>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterStatus("all")}
-                  className={statusFilter === "all" ? "bg-accent" : ""}
-                >
-                  <span className="w-4 h-4 mr-2"></span>
-                  Todos
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterStatus("unread")}
-                  className={statusFilter === "unread" ? "bg-accent" : ""}
-                >
-                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                  Não lidas
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterStatus("read")}
-                  className={statusFilter === "read" ? "bg-accent" : ""}
-                >
-                  <XCircle className="w-4 h-4 mr-2 text-gray-400" />
-                  Lidas
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterStatus("recent")}
-                  className={statusFilter === "recent" ? "bg-accent" : ""}
-                >
-                  <Clock className="w-4 h-4 mr-2 text-blue-500" />
-                  Recentes (24h)
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterStatus("intervention")}
-                  className={statusFilter === "intervention" ? "bg-accent" : ""}
-                >
-                  <AlertCircle className="w-4 h-4 mr-2 text-red-500" />
-                  Requer intervenção
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterStatus("archived")}
-                  className={statusFilter === "archived" ? "bg-accent" : ""}
-                >
-                  <InboxIcon className="w-4 h-4 mr-2 text-gray-500" />
-                  Arquivadas
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              
-              <DropdownMenuSeparator />
-              
-              {/* Channel Filters */}
-              <DropdownMenuGroup>
-                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground pt-2 pb-1">Canal</DropdownMenuLabel>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterChannel("all")}
-                  className={channelFilter === "all" ? "bg-accent" : ""}
-                >
-                  <span className="w-4 h-4 mr-2"></span>
-                  Todos os canais
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterChannel("whatsapp")}
-                  className={channelFilter === "whatsapp" ? "bg-accent" : ""}
-                >
-                  <ChannelBadge channel="whatsapp" size="sm" className="mr-2" />
-                  WhatsApp
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterChannel("instagram")}
-                  className={channelFilter === "instagram" ? "bg-accent" : ""}
-                >
-                  <ChannelBadge channel="instagram" size="sm" className="mr-2" />
-                  Instagram
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterChannel("facebook")}
-                  className={channelFilter === "facebook" ? "bg-accent" : ""}
-                >
-                  <ChannelBadge channel="facebook" size="sm" className="mr-2" />
-                  Facebook
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleFilterChannel("email")}
-                  className={channelFilter === "email" ? "bg-accent" : ""}
-                >
-                  <ChannelBadge channel="email" size="sm" className="mr-2" />
-                  Email
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              
-              {!useMockData && allTags.length > 0 && (
-                <>
-                  <DropdownMenuSeparator />
-                  
-                  {/* Tag Filters */}
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground pt-2 pb-1">Etiquetas</DropdownMenuLabel>
-                    <DropdownMenuItem 
-                      onClick={() => handleFilterTag(null)}
-                      className={tagFilter === null ? "bg-accent" : ""}
-                    >
-                      <span className="w-4 h-4 mr-2"></span>
-                      Todas
-                    </DropdownMenuItem>
-                    
-                    {allTags.map((tag: any) => (
-                      <DropdownMenuItem 
-                        key={tag.id}
-                        onClick={() => handleFilterTag(tag.id)}
-                        className={tagFilter === tag.id ? "bg-accent" : ""}
-                      >
-                        <div 
-                          className="w-4 h-4 rounded-full mr-2"
-                          style={{ backgroundColor: tag.color }}
-                        ></div>
-                        {tag.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuGroup>
-                </>
-              )}
-              
-              <DropdownMenuSeparator />
-              
-              <div className="p-2">
-                <Button 
-                  onClick={clearAllFilters} 
-                  variant="outline" 
-                  className="w-full text-sm h-8"
-                >
-                  Limpar todos os filtros
-                </Button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          {!useMockData && (
-            <TagManager />
-          )}
-        </div>
-        
-        {/* Active filters display */}
-        {(channelFilter !== "all" || statusFilter !== "all" || tagFilter !== null) && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {channelFilter !== "all" && (
-              <div className="bg-secondary text-secondary-foreground text-xs rounded-full px-2 py-1 flex items-center">
-                <span>Canal: {channelFilter}</span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-4 w-4 ml-1 hover:bg-transparent"
-                  onClick={() => setChannelFilter("all")}
-                >
-                  <XCircle className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
-            
-            {statusFilter !== "all" && (
-              <div className="bg-secondary text-secondary-foreground text-xs rounded-full px-2 py-1 flex items-center">
-                <span>Status: {
-                  statusFilter === "unread" ? "Não lidas" :
-                  statusFilter === "read" ? "Lidas" :
-                  statusFilter === "recent" ? "Recentes" :
-                  statusFilter === "intervention" ? "Requer intervenção" :
-                  statusFilter === "archived" ? "Arquivadas" : ""
-                }</span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-4 w-4 ml-1 hover:bg-transparent"
-                  onClick={() => setStatusFilter("all")}
-                >
-                  <XCircle className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
-            
-            {tagFilter !== null && (
-              <div 
-                className="text-xs rounded-full px-2 py-1 flex items-center"
-                style={{ 
-                  backgroundColor: `${allTags.find((t: any) => t.id === tagFilter)?.color}22`,
-                  color: allTags.find((t: any) => t.id === tagFilter)?.color
-                }}
-              >
-                <span>Tag: {allTags.find((t: any) => t.id === tagFilter)?.name}</span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-4 w-4 ml-1 hover:bg-transparent"
-                  onClick={() => setTagFilter(null)}
-                >
-                  <XCircle className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        {filteredConversations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-            <InboxIcon className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">Nenhuma conversa encontrada</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {searchQuery || channelFilter !== "all" || statusFilter !== "all" || tagFilter !== null
-                ? "Tente remover alguns filtros"
-                : "Sua caixa de entrada está vazia"}
-            </p>
-            {(searchQuery || channelFilter !== "all" || statusFilter !== "all" || tagFilter !== null) && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3"
-                onClick={clearAllFilters}
-              >
-                Limpar filtros
-              </Button>
-            )}
-          </div>
-        ) : (
-          filteredConversations.map((conversation) => {
-            const isSelected = conversation.id === selectedConversationId;
-            
-            // Get name and avatar based on the data source
-            const name = useMockData 
-              ? conversation.contact?.name 
-              : conversation.patient?.name || "Unknown";
-              
-            const avatar = useMockData 
-              ? conversation.contact?.avatar 
-              : conversation.patient?.avatar_url;
-              
-            const unread = conversation.unread || 0;
-            
-            // For channel badge, ensure we have a valid ChannelType
-            const channelType = getChannelType(conversation.channel);
-            
-            // Get tags for this conversation
-            const conversationTags = conversation.tags || [];
-            
-            // Check if the conversation requires human intervention
-            const requiresIntervention = conversation.requiresHumanIntervention;
-            
-            return (
-              <div
-                key={conversation.id}
-                className={cn(
-                  "p-3 border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors",
-                  isSelected && "bg-secondary",
-                  requiresIntervention && "border-l-4 border-l-red-500"
-                )}
-                onClick={() => onSelectConversation(conversation)}
-              >
-                <div className="flex items-start gap-3">
-                  <Avatar
-                    src={avatar}
-                    name={name}
-                    showStatus
-                    status={unread > 0 ? "online" : "offline"}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-medium truncate flex items-center">
-                        {name}
-                        {requiresIntervention && (
-                          <AlertCircle className="h-4 w-4 text-red-500 ml-1 flex-shrink-0" />
-                        )}
-                      </h3>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <ChannelBadge channel={channelType} size="sm" />
-                        <span className="text-xs text-muted-foreground">
-                          {conversation.lastActivity && formatLastActivity(conversation.lastActivity)}
-                          {conversation.last_activity && formatLastActivity(conversation.last_activity)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground truncate mt-0.5">
-                      {getPreviewMessage(conversation)}
-                    </p>
-                    
-                    {requiresIntervention && (
-                      <div className="mt-1">
-                        <span className="text-xs bg-red-100 text-red-800 rounded-full px-2 py-0.5 inline-flex items-center">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          Intervenção solicitada
-                        </span>
-                      </div>
-                    )}
-                    
-                    {!useMockData && conversationTags.length > 0 && (
-                      <div className="flex flex-wrap mt-1 gap-1">
-                        {conversationTags.map((tag: any) => (
-                          <Tag 
-                            key={tag.id}
-                            id={tag.id}
-                            name={tag.name}
-                            color={tag.color}
-                            size="sm"
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
+    <div className={cn("flex-1 overflow-y-auto", className)}>
+      <div className="divide-y">
+        {filteredConversations.map((conversation) => (
+          <ConversationListItem
+            key={conversation.id}
+            conversation={conversation}
+            isSelected={conversation.id === selectedConversationId}
+            onClick={() => onSelectConversation(conversation as Conversation)}
+          />
+        ))}
       </div>
     </div>
   );

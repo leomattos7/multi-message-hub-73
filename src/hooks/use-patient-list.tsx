@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { Patient, PatientApiResponse } from "@/types/patient";
 import { PatientFilters } from "@/components/ContactFilters";
 import { apiService } from "@/services/api-service";
-import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 
 interface Profile {
@@ -57,10 +56,11 @@ export const usePatientList = () => {
   const fetchPatients = async () => {
     try {
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
         throw new Error('Usuário não autenticado');
       }
+      const user = JSON.parse(userStr);
 
       // Get user profile
       const profileResponse = await apiService.get<Profile>(`/profiles/${user.id}`, user.id);
@@ -90,10 +90,11 @@ export const usePatientList = () => {
 
   const addPatient = async (patientData: Patient) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
         throw new Error('Usuário não autenticado');
       }
+      const user = JSON.parse(userStr);
 
       // Get user profile to get organization_id
       const profileResponse = await apiService.get<Profile>(`/profiles/${user.id}`, user.id);
@@ -124,11 +125,12 @@ export const usePatientList = () => {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
         toast.error("Usuário não autenticado");
         return;
       }
+      const user = JSON.parse(userStr);
 
       // Get user profile
       const profile = await apiService.get<Profile>(`/profiles/${user.id}`, user.id);
@@ -259,11 +261,12 @@ export const usePatientList = () => {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
         toast.error("Usuário não autenticado");
         return;
       }
+      const user = JSON.parse(userStr);
 
       const patientData = {
         name: editingPatient.name,
@@ -322,11 +325,12 @@ export const usePatientList = () => {
     if (!patientToDelete) return;
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
         toast.error("Usuário não autenticado");
         return;
       }
+      const user = JSON.parse(userStr);
 
       await apiService.delete(`/patients/${patientToDelete.id}`, user.id);
       

@@ -33,39 +33,14 @@ export const conversationService = {
         .from('conversations')
         .select(`
           *,
-          patient:patients(id, name, email, phone, avatar_url),
-          conversation_to_tag(tag_id)
+          messages(*)
         `)
         .eq('doctor_id', userId)
         .order('last_activity', { ascending: false });
       
       if (error) throw error;
       
-      // Get all tags for the current user
-      const { data: tags, error: tagsError } = await supabase
-        .from('conversation_tags')
-        .select('*')
-        .eq('doctor_id', userId);
-        
-      if (tagsError) throw tagsError;
-      
-      // Map tags to conversations
-      const dataWithTags = data.map(conversation => {
-        // Handle potential error from conversation_to_tag
-        const conversationTags = Array.isArray(conversation.conversation_to_tag) 
-          ? conversation.conversation_to_tag 
-          : [];
-        
-        const tagIds = conversationTags.map((ct: any) => ct.tag_id);
-        const assignedTags = tags.filter(tag => tagIds.includes(tag.id));
-        
-        return {
-          ...conversation,
-          tags: assignedTags
-        };
-      });
-      
-      return dataWithTags;
+      return data;
     } catch (error) {
       console.error("Error fetching conversations:", error);
       return [];

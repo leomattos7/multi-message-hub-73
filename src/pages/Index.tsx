@@ -1,33 +1,100 @@
-
-import { useState } from "react";
-import { MessageCircle, Inbox, Share2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Inbox, Share2 } from "lucide-react";
 import { ConversationList } from "@/components/ConversationList";
 import { ConversationView } from "@/components/ConversationView";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { mockConversations } from "@/data/mockData";
 import { SocialConnectionsDialog } from "@/components/SocialConnectionsDialog";
 import { Button } from "@/components/ui/button";
+import { apiService } from "@/services/api-service";
+import { toast } from "sonner";
+
+interface Message {
+  id: string;
+  conversation_id: string;
+  content: string;
+  is_outgoing: string;
+}
+
+interface Conversation {
+  id: string;
+  doctor_id: string;
+  name: string;
+  phone: string;
+  patient_id: string;
+  messages?: Message[];
+  channel: string;
+  unread: number;
+  last_activity: string;
+  patient: {
+    id: string;
+    name: string;
+    phone: string;
+    avatar_url?: string;
+  };
+}
 
 export default function Index() {
   const isMobile = useIsMobile();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showConversation, setShowConversation] = useState(!isMobile);
-  const [useMockData, setUseMockData] = useState(true); // Enable mock data by default
   const [showConnectionsDialog, setShowConnectionsDialog] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Get conversations from localStorage or use mock data
-  const conversations = useMockData 
-    ? mockConversations 
-    : JSON.parse(localStorage.getItem("conversations") || "[]");
-    
-  const isLoading = false;
-  const error = null;
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        setIsLoading(true);
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
+          throw new Error('Usuário não autenticado');
+        }
+        const user = JSON.parse(userStr);
+
+        // Fetch conversations
+        const conversationsResponse = await apiService.get<Conversation[]>('/conversations', user.id);
+        
+        // Fetch messages for each conversation
+        const conversationsWithMessages = await Promise.all(
+          conversationsResponse.map(async (conversation) => {
+            const messagesResponse = await apiService.get<Message[]>(`/messages?conversation_id=${conversation.id}`, user.id);
+
+            return {
+              ...conversation,
+              messages: messagesResponse || [],
+              channel: 'whatsapp',
+              unread: 0,
+              last_activity: new Date().toISOString(),
+              patient: {
+                id: conversation.patient_id,
+                name: conversation.name,
+                phone: conversation.phone,
+                avatar_url: undefined
+              }
+            };
+          })
+        );
+
+        setConversations(conversationsWithMessages);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+        setError('Erro ao carregar conversas');
+        toast.error('Erro ao carregar conversas');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchConversations();
+  }, []);
 
   const selectedConversation = selectedConversationId 
-    ? conversations.find((c: any) => c.id === selectedConversationId) || null
+    ? conversations.find((c) => c.id === selectedConversationId) || null
     : null;
 
-  const handleSelectConversation = (conversation: any) => {
+  const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversationId(conversation.id);
     setShowConversation(true);
   };
@@ -36,22 +103,13 @@ export default function Index() {
     setShowConversation(false);
   };
 
-  const toggleMockData = () => {
-    setUseMockData(!useMockData);
-    // Reset selection when toggling data source
-    setSelectedConversationId(null);
-  };
-
   if (isLoading) {
-    return <div className="w-full h-full flex items-center justify-center">Loading conversations...</div>;
+    return <div className="w-full h-full flex items-center justify-center">Carregando conversas...</div>;
   }
 
   if (error) {
-    return <div className="w-full h-full flex items-center justify-center">Error loading conversations</div>;
+    return <div className="w-full h-full flex items-center justify-center">{error}</div>;
   }
-
-  // Count of conversations requiring human intervention
-  const interventionCount = conversations.filter((c: any) => c.requiresHumanIntervention).length;
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
@@ -62,11 +120,6 @@ export default function Index() {
               <h2 className="font-semibold text-lg flex items-center">
                 <Inbox className="mr-2 h-5 w-5" />
                 Mensagens
-                {interventionCount > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
-                    {interventionCount}
-                  </span>
-                )}
               </h2>
               <div className="flex items-center gap-2">
                 <Button 
@@ -78,19 +131,13 @@ export default function Index() {
                   <Share2 className="h-3.5 w-3.5" />
                   Conectar canais
                 </Button>
-                <button 
-                  onClick={toggleMockData} 
-                  className="text-xs bg-secondary px-2 py-1 rounded"
-                >
-                  {useMockData ? "Usar dados reais" : "Usar dados de exemplo"}
-                </button>
               </div>
             </div>
             <ConversationList 
               onSelectConversation={handleSelectConversation}
               selectedConversationId={selectedConversationId}
               className="flex-1"
-              useMockData={useMockData}
+              useMockData={false}
             />
           </div>
         )}
@@ -101,7 +148,6 @@ export default function Index() {
               <ConversationView 
                 conversation={selectedConversation}
                 onBackClick={isMobile ? handleBackToList : undefined}
-                useMockData={useMockData}
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
