@@ -15,12 +15,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { apiService } from "@/services/api-service";
 import { AuthGuard } from "@/components/AuthGuard";
+import { v4 as uuidv4 } from 'uuid';
 
 const employeeFormSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
   email: z.string().email({ message: "E-mail inválido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   role: z.string().min(1, { message: "Cargo é obrigatório" }),
+  specialization: z.string().optional(),
+  crm: z.string().optional(),
+  phone: z.string().optional(),
 });
 
 const editEmployeeFormSchema = z.object({
@@ -169,6 +173,12 @@ export default function EmployeeManagement() {
     try {
       console.log("Adding employee:", data);
       
+      // Get the current admin user ID first
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (!adminUser) {
+        throw new Error("Usuário não autenticado");
+      }
+
       // 1. Create user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
@@ -192,67 +202,61 @@ export default function EmployeeManagement() {
         throw new Error("No user returned from Auth signUp");
       }
 
+      const newUserId = authData.user.id;
+
       // 2. Create profile in API with the same organization_id
       const newProfile = {
-        id: authData.user.id,
-        name: data.name,
-        email: data.email,
-        role: data.role,
+        id: newUserId,
         organization_id: user.organization_id,
-        status: "active"
+        role: data.role,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: "active",
+        name: data.name,
+        email: data.email || "",
+        phone: data.phone || "",
       };
 
-      // Get the current user ID from Supabase auth for the x-uuid header
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) {
-        throw new Error("Usuário não autenticado");
-      }
-
-      // Make the POST request with correct parameter order: endpoint, data, userId
-      const profileData = await apiService.post('/profiles', newProfile, currentUser.id);
+      // Make the POST request using the admin user's ID for authentication
+      console.log("Creating profile with data:", newProfile);
+      console.log("Admin user ID:", adminUser.id);
+      const profileData = await apiService.post('/profiles', newProfile, adminUser.id);
 
       // 3. If the user is a doctor, create a doctor_profile
       if (data.role === 'doctor') {
         try {
           const doctorProfile = {
-            id: authData.user.id, // Same ID as the profile
+            id: newUserId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
             name: data.name,
             email: data.email,
-            bio: '',
-            specialty: '',
-            profile_image_url: '',
-            public_url_slug: data.name.toLowerCase().replace(/\s+/g, '-'), // Create a slug from the name
-            theme: 'default',
-            phone: '',
-            address: '',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            phone: data.phone || ""
           };
 
           console.log("Creating doctor profile with data:", doctorProfile);
-          // Use the correct endpoint for doctor profiles
-          await apiService.post('/doctor_profiles', doctorProfile, currentUser.id);
+          await apiService.post('/doctor_profiles', doctorProfile, adminUser.id);
         } catch (doctorError: any) {
           console.error("Error creating doctor profile:", doctorError);
-          // If doctor profile creation fails, we should still proceed with the employee creation
           toast.warning("Perfil de médico criado, mas alguns detalhes adicionais não puderam ser salvos");
         }
       }
 
-      // 4. Update local state with the new employee
-      const formattedEmployee: Employee = {
-        id: profileData.id,
-        name: profileData.name,
-        email: profileData.email,
-        role: profileData.role,
-        status: profileData.status as "active" | "inactive",
-        date_added: profileData.created_at ? new Date(profileData.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        created_at: profileData.created_at,
-        updated_at: profileData.updated_at,
-        organization_id: profileData.organization_id
+      // 4. Create employee record
+      const employeeData = {
+        id: newUserId,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || "",
+        role: data.role,
+        organization_id: user.organization_id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      setEmployees([...employees, formattedEmployee]);
+      await apiService.post('/employees', employeeData, adminUser.id);
+
+      fetchEmployees(user.organization_id);
       toast.success(`${data.name} adicionado(a) como ${data.role}`);
       setIsAddDialogOpen(false);
       form.reset();

@@ -126,7 +126,7 @@ export const useMedicalRecords = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return [];
         
-        const summary = await apiService.get<RecordSummary[]>("/patient-records/summary");
+        const summary = await apiService.get<RecordSummary[]>("/patient_records/summary");
         return summary || [];
       } catch (error) {
         console.error("Error fetching record summary:", error);

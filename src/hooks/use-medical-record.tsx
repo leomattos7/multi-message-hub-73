@@ -1,23 +1,26 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { apiService } from "@/services/api-service";
 
-export interface MedicalRecordWithPatient {
+interface Patient {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+interface MedicalRecord {
   id: string;
   patient_id: string;
-  record_date: string;
-  record_type: string;
   content: string;
   created_at: string;
   updated_at: string;
-  patient: {
-    id: string;
-    name: string;
-    email?: string;
-    phone?: string;
-  };
+}
+
+export interface MedicalRecordWithPatient extends MedicalRecord {
+  patient: Patient;
 }
 
 export const useMedicalRecord = (recordId?: string) => {
@@ -36,23 +39,25 @@ export const useMedicalRecord = (recordId?: string) => {
 
       setIsLoading(true);
       try {
-        // First, fetch the record
-        const { data: recordData, error: recordError } = await supabase
-          .from("patient_records")
-          .select(`*`)
-          .eq("id", recordId)
-          .single();
+        // Get current user from Supabase (only for auth)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error('Usuário não autenticado');
+        }
 
-        if (recordError) throw recordError;
+        // First, fetch the record
+        const recordData = await apiService.get<MedicalRecord>(`/patient_records/${recordId}`, user.id);
+        
+        if (!recordData) {
+          throw new Error('Registro não encontrado');
+        }
         
         // Then fetch the patient separately
-        const { data: patientData, error: patientError } = await supabase
-          .from("patients")
-          .select(`id, name, email, phone`)
-          .eq("id", recordData.patient_id)
-          .single();
+        const patientData = await apiService.get<Patient>(`/patients/${recordData.patient_id}`, user.id);
         
-        if (patientError) throw patientError;
+        if (!patientData) {
+          throw new Error('Paciente não encontrado');
+        }
         
         // Combine the data
         const completeRecord: MedicalRecordWithPatient = {

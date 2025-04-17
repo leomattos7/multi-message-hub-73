@@ -4,6 +4,7 @@ import { Patient, PatientApiResponse } from "@/types/patient";
 import { PatientFilters } from "@/components/ContactFilters";
 import { apiService } from "@/services/api-service";
 import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
 interface Profile {
   id: string;
@@ -61,58 +62,17 @@ export const usePatientList = () => {
         throw new Error('Usuário não autenticado');
       }
 
-      // Get user profile to get organization_id and role
-      const profileResponse = await apiService.get<Profile[]>('/profiles', user.id, {
-        filters: JSON.stringify([{
-          attribute: 'id',
-          operator: '=',
-          value: user.id
-        }])
-      });
+      // Get user profile
+      const profileResponse = await apiService.get<Profile>(`/profiles/${user.id}`, user.id);
 
-      console.log("Profile:", profileResponse);
-
-      if (!profileResponse || !profileResponse[0]?.organization_id) {
+      if (!profileResponse) {
         throw new Error('Usuário não está vinculado a uma organização');
       }
 
-      const userProfile = profileResponse[0];
-      const organizationId = userProfile.organization_id;
-      const userRole = userProfile.role;
-
-      let filters = [];
-
-      if (userRole === 'admin') {
-        // Admin can see all patients in the organization
-        filters = [{
-          attribute: 'organization_id',
-          operator: '=',
-          value: organizationId
-        }];
-      } else if (userRole === 'doctor') {
-        // Doctor can only see their own patients
-        filters = [{
-          attribute: 'doctor_id',
-          operator: '=',
-          value: user.id
-        }];
-      } else {
-        // Other roles can't see patients
-        setPatients([]);
-        setIsLoading(false);
-        return;
-      }
-
-      console.log("Fetching patients with filters:", filters);
-      
-      const response = await apiService.get<Patient[]>('/patients', user.id, {
-        filters: JSON.stringify(filters)
-      });
-
-      console.log("Patients response:", response);
+      // Get patients - API will filter based on user role and organization
+      const response = await apiService.get<Patient[]>(`/patients`, user.id);
 
       if (!response || response.length === 0) {
-        // Se não encontrar pacientes, limpa a lista e para o loading
         setPatients([]);
         setIsLoading(false);
         return;
@@ -136,27 +96,19 @@ export const usePatientList = () => {
       }
 
       // Get user profile to get organization_id
-      const profileResponse = await apiService.get('/profiles', user.id, {
-        filters: JSON.stringify([{
-          attribute: 'id',
-          operator: '=',
-          value: user.id
-        }])
-      });
+      const profileResponse = await apiService.get<Profile>(`/profiles/${user.id}`, user.id);
 
-      if (!profileResponse || !profileResponse[0]?.organization_id) {
+      if (!profileResponse) {
         throw new Error('Usuário não está vinculado a uma organização');
       }
-
-      const organizationId = profileResponse[0].organization_id;
 
       // Add doctor_id to patient data
       const patientWithDoctor = {
         ...patientData,
-        doctor_id: organizationId
+        doctor_id: profileResponse.organization_id
       };
 
-      await apiService.post('/patients', patientWithDoctor, user.id);
+      await apiService.post(`/patients`, patientWithDoctor, user.id);
       await fetchPatients();
       toast.success('Paciente adicionado com sucesso');
     } catch (error) {
@@ -172,32 +124,21 @@ export const usePatientList = () => {
     }
 
     try {
-      console.log("Iniciando adição de paciente...");
-      
-      // Get current user from Supabase (only for auth)
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Usuário não autenticado");
         return;
       }
 
-      // Get user profile from API using the user's ID
-      const profileFilters = [{
-        attribute: 'id',
-        operator: '=',
-        value: user.id
-      }];
-
-      const profile = await apiService.get<any>(`/profiles?filters=${encodeURIComponent(JSON.stringify(profileFilters))}`);
+      // Get user profile
+      const profile = await apiService.get<Profile>(`/profiles/${user.id}`, user.id);
       
-      if (!profile?.[0]?.organization_id) {
+      if (!profile) {
         toast.error("Usuário não vinculado a uma organização");
         return;
       }
 
-      const userProfile = profile[0];
-      const organizationId = userProfile.organization_id;
-      const userRole = userProfile.role;
+      const userRole = profile.role;
 
       // Only doctors and admins can add patients
       if (userRole !== 'doctor' && userRole !== 'admin') {
@@ -205,36 +146,33 @@ export const usePatientList = () => {
         return;
       }
 
-      // Generate a new UUID for the patient
-      const patientId = crypto.randomUUID();
-      const now = new Date().toISOString();
+      // Generate UUID for the new patient
+      const patientId = uuidv4();
 
-      // Prepare patient data according to the database schema
+      // Prepare patient data with empty strings instead of null
       const patientData = {
         id: patientId,
         name: newPatient.name,
-        email: null,
-        phone: newPatient.phone || null,
-        address: newPatient.address || null,
-        notes: newPatient.notes || null,
-        payment_method: "particular",
-        insurance_name: null,
-        cpf: null,
-        birth_date: null,
-        biological_sex: null,
-        gender_identity: null,
+        email: newPatient.email || "",
+        phone: newPatient.phone || "",
+        address: newPatient.address || "",
+        notes: newPatient.notes || "",
+        payment_method: newPatient.payment_method || "particular",
+        insurance_name: newPatient.payment_method === "convenio" ? newPatient.insurance_name || "" : "",
+        cpf: newPatient.cpf || "",
+        birth_date: newPatient.birth_date || "",
+        biological_sex: newPatient.biological_sex || "",
+        gender_identity: newPatient.gender_identity || "",
         doctor_id: user.id,
-        organization_id: organizationId,
-        created_at: now,
-        updated_at: now
+        organization_id: profile.organization_id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      console.log("Dados preparados para envio:", patientData);
+      console.log('Enviando dados do paciente:', patientData);
 
-      // Usando o apiService para adicionar um novo paciente
+      // Add patient
       const data = await apiService.post<PatientApiResponse>('/patients', patientData, user.id);
-      
-      console.log("Resposta da API:", data);
       
       if (data) {
         const newPatientObj: Patient = {
@@ -261,20 +199,37 @@ export const usePatientList = () => {
         toast.success("Paciente adicionado com sucesso!");
       }
     } catch (error: any) {
-      console.error("Erro detalhado ao adicionar paciente:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
+      console.error("Erro ao adicionar paciente:", error);
       
-      let errorMessage = "Erro ao adicionar paciente. ";
-      if (error.response?.data?.message) {
-        errorMessage += error.response.data.message;
-      } else if (error.message) {
-        errorMessage += error.message;
+      // Tratamento específico de erros
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        switch (status) {
+          case 400:
+            toast.error(data.message || "Dados inválidos. Por favor, verifique os campos preenchidos.");
+            break;
+          case 401:
+            toast.error("Usuário não autorizado. Por favor, faça login novamente.");
+            break;
+          case 403:
+            toast.error("Você não tem permissão para adicionar pacientes.");
+            break;
+          case 404:
+            toast.error("Organização não encontrada.");
+            break;
+          case 500:
+            toast.error("Erro no servidor. Por favor, tente novamente mais tarde.");
+            break;
+          default:
+            toast.error(data.message || "Erro ao adicionar paciente");
+        }
+      } else if (error.request) {
+        toast.error("Não foi possível conectar ao servidor. Verifique sua conexão.");
+      } else {
+        toast.error("Erro ao processar a requisição.");
       }
-      
-      toast.error(errorMessage);
     }
   };
 
@@ -304,7 +259,12 @@ export const usePatientList = () => {
     }
 
     try {
-      // Preparar os dados para enviar à API
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
+
       const patientData = {
         name: editingPatient.name,
         email: editingPatient.email || null,
@@ -319,11 +279,9 @@ export const usePatientList = () => {
         gender_identity: editingPatient.gender_identity || null
       };
 
-      // Usando o apiService para atualizar um paciente
-      const data = await apiService.put<PatientApiResponse>(`/patients/${editingPatient.id}`, patientData);
+      const data = await apiService.put<PatientApiResponse>(`/patients/${editingPatient.id}`, patientData, user.id);
       
       if (data) {
-        // Atualizar a lista de pacientes com os novos dados
         const updatedPatients = patients.map(patient => {
           if (patient.id === editingPatient.id) {
             return {
@@ -337,8 +295,6 @@ export const usePatientList = () => {
         
         setPatients(updatedPatients);
         
-        // Se houver um paciente selecionado e for o mesmo que está sendo editado,
-        // atualizar também os dados do paciente selecionado
         if (selectedPatient && selectedPatient.id === editingPatient.id) {
           setSelectedPatient({
             ...selectedPatient,
@@ -366,17 +322,13 @@ export const usePatientList = () => {
     if (!patientToDelete) return;
     
     try {
-      console.log("Deleting patient:", patientToDelete);
-      
-      // Get current user from Supabase (only for auth)
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Usuário não autenticado");
         return;
       }
 
-      // Usando o apiService para excluir um paciente
-      await apiService.delete(`/patients/${patientToDelete.id}`);
+      await apiService.delete(`/patients/${patientToDelete.id}`, user.id);
       
       setPatients(patients.filter(patient => patient.id !== patientToDelete.id));
       setIsDeleteDialogOpen(false);

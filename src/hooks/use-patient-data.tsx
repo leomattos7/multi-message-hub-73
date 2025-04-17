@@ -1,7 +1,7 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Patient } from "@/types/patient";
+import { apiService } from "@/services/api-service";
 
 export const usePatientData = (patientId?: string) => {
   const { 
@@ -13,14 +13,14 @@ export const usePatientData = (patientId?: string) => {
     queryFn: async () => {
       if (!patientId) throw new Error("Patient ID is required");
       
-      const { data, error } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("id", patientId)
-        .single();
+      // Get current user for auth
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const patientData = await apiService.get<Patient>(`/patients/${patientId}`, user.id);
       
-      if (error) throw error;
-      return data as Patient;
+      if (!patientData) throw new Error("Patient not found");
+      return patientData;
     },
     enabled: !!patientId
   });
@@ -30,23 +30,11 @@ export const usePatientData = (patientId?: string) => {
       throw new Error("Patient ID and name are required");
     }
 
-    const { error } = await supabase
-      .from("patients")
-      .update({
-        name: updatedPatient.name,
-        email: updatedPatient.email || null,
-        phone: updatedPatient.phone || null,
-        address: updatedPatient.address || null,
-        notes: updatedPatient.notes || null,
-        birth_date: updatedPatient.birth_date || null,
-        biological_sex: updatedPatient.biological_sex || null,
-        gender_identity: updatedPatient.gender_identity || null,
-        cpf: updatedPatient.cpf || null
-      })
-      .eq("id", patientId);
+    // Get current user for auth
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
 
-    if (error) throw error;
-    
+    await apiService.put(`/patients/${patientId}`, updatedPatient, user.id);
     await refetchPatient();
     return true;
   };

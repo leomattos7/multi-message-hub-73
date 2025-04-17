@@ -23,7 +23,8 @@ app.use((req, res, next) => {
 // Proxy endpoint for all API requests
 app.all('/api/*', async (req, res) => {
   try {
-    const targetUrl = `https://2suwazl6jc.execute-api.sa-east-1.amazonaws.com/serveless_health_prod${req.path}`;
+    //const targetUrl = `https://2suwazl6jc.execute-api.sa-east-1.amazonaws.com/serveless_health_prod${req.path}`;
+    const targetUrl = `http://localhost:3000${req.path}`;
     
     console.log('Proxying request to:', targetUrl);
     console.log('Request headers:', req.headers);
