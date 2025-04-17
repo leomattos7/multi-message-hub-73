@@ -1,38 +1,22 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Trash2, ListChecks } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useConsultationTypes } from "@/hooks/use-consultation-types";
 
-interface ConsultationType {
-  id?: string;
-  name: string;
-  duration: number;
-  doctor_id: string;
-}
-
-interface ConsultationTypesTabProps {
-  doctorId: string;
-  consultationTypes: ConsultationType[];
-  setConsultationTypes: React.Dispatch<React.SetStateAction<ConsultationType[]>>;
-  isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-const ConsultationTypesTab: React.FC<ConsultationTypesTabProps> = ({
-  doctorId,
-  consultationTypes,
-  setConsultationTypes,
-  isLoading,
-  setIsLoading
-}) => {
+const ConsultationTypesTab: React.FC = () => {
+  const { types, isLoading, fetchTypes, addType, deleteType } =
+    useConsultationTypes();
   const [newTypeName, setNewTypeName] = useState<string>("");
   const [newTypeDuration, setNewTypeDuration] = useState<number>(30);
 
-  const addConsultationType = async () => {
+  useEffect(() => {
+    fetchTypes();
+  }, []);
+
+  const handleAddType = async () => {
     if (!newTypeName.trim()) {
       toast.error("Nome da consulta é obrigatório");
       return;
@@ -43,56 +27,14 @@ const ConsultationTypesTab: React.FC<ConsultationTypesTabProps> = ({
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const newType = {
-        name: newTypeName.trim(),
-        duration: newTypeDuration,
-        doctor_id: doctorId
-      };
+    const success = await addType({
+      name: newTypeName.trim(),
+      duration: newTypeDuration,
+    });
 
-      const { data, error } = await supabase
-        .from('consultation_types')
-        .insert(newType)
-        .select();
-
-      if (error) {
-        console.error("Error adding consultation type:", error);
-        toast.error("Erro ao adicionar tipo de consulta");
-      } else if (data) {
-        setConsultationTypes([...consultationTypes, data[0]]);
-        setNewTypeName("");
-        setNewTypeDuration(30);
-        toast.success("Tipo de consulta adicionado com sucesso");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Erro ao adicionar tipo de consulta");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteConsultationType = async (id: string) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('consultation_types')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error("Error deleting consultation type:", error);
-        toast.error("Erro ao excluir tipo de consulta");
-      } else {
-        setConsultationTypes(consultationTypes.filter(type => type.id !== id));
-        toast.success("Tipo de consulta excluído com sucesso");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Erro ao excluir tipo de consulta");
-    } finally {
-      setIsLoading(false);
+    if (success) {
+      setNewTypeName("");
+      setNewTypeDuration(30);
     }
   };
 
@@ -120,8 +62,8 @@ const ConsultationTypesTab: React.FC<ConsultationTypesTabProps> = ({
           />
         </div>
         <div className="col-span-2 flex items-end">
-          <Button 
-            onClick={addConsultationType} 
+          <Button
+            onClick={handleAddType}
             disabled={isLoading}
             className="w-full"
           >
@@ -130,21 +72,27 @@ const ConsultationTypesTab: React.FC<ConsultationTypesTabProps> = ({
           </Button>
         </div>
       </div>
-      
-      {isLoading && consultationTypes.length === 0 ? (
+
+      {isLoading && types.length === 0 ? (
         <div className="text-center py-4 text-gray-500">
           Carregando tipos de consulta...
         </div>
-      ) : consultationTypes.length === 0 ? (
+      ) : types.length === 0 ? (
         <div className="text-center py-4 text-gray-500 border rounded-md">
           <ListChecks className="h-12 w-12 mx-auto text-gray-300 mb-3" />
           <p>Nenhum tipo de consulta configurado</p>
-          <p className="text-sm mt-1">Adicione tipos de consulta para que apareçam nas opções de agendamento</p>
+          <p className="text-sm mt-1">
+            Adicione tipos de consulta para que apareçam nas opções de
+            agendamento
+          </p>
         </div>
       ) : (
         <div className="space-y-2 mt-4">
-          {consultationTypes.map((type) => (
-            <div key={type.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-md border">
+          {types.map((type) => (
+            <div
+              key={type.id}
+              className="flex justify-between items-center p-3 bg-gray-50 rounded-md border"
+            >
               <div>
                 <p className="font-medium">{type.name}</p>
                 <p className="text-sm text-gray-500">{type.duration} minutos</p>
@@ -152,7 +100,7 @@ const ConsultationTypesTab: React.FC<ConsultationTypesTabProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => type.id && deleteConsultationType(type.id)}
+                onClick={() => deleteType(type.id)}
                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
                 disabled={isLoading}
               >

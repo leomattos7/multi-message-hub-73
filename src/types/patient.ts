@@ -17,7 +17,7 @@ export interface Patient {
   gender_identity?: string;
   gender?: string; // Added for backward compatibility
   cpf?: string;
-  
+
   // UI helper properties
   lastMessageDate?: Date | null;
   lastAppointmentDate?: Date | null;

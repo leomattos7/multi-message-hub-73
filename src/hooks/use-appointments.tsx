@@ -1,66 +1,35 @@
+import { useState } from "react";
+import { toast } from "sonner";
+import { apiService } from "../services/api-service";
+import { format, parseISO } from "date-fns";
+import { Appointment } from "@/types/appointment";
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+export function useAppointments() {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export type Appointment = {
-  id: string;
-  patient_id: string;
-  date: string;
-  time: string;
-  end_time?: string;
-  type: string;
-  status: string;
-  payment_method?: string;
-  notes?: string;
-  patient?: {
-    name: string;
-    email?: string;
-    phone?: string;
-  };
-};
+  async function fetchAppointments() {
+    try {
+      setLoading(true);
+      const response = await apiService.get<Appointment[]>("/api/appointments");
 
-export function useAppointments(date?: Date) {
-  const formattedDate = date ? date.toISOString().split('T')[0] : undefined;
+      const formattedAppointments = response.map((appointment) => ({
+        ...appointment,
+        date: format(parseISO(appointment.date), "yyyy-MM-dd"),
+      }));
 
-  const { data: appointments, isLoading, error, refetch } = useQuery({
-    queryKey: ["appointments", formattedDate],
-    queryFn: async () => {
-      // If no date is provided, fetch all appointments
-      let query = supabase
-        .from("appointments")
-        .select(`
-          *,
-          patient:patients(name, email, phone)
-        `);
-
-      // If date is provided, filter by that date
-      if (formattedDate) {
-        query = query.eq("date", formattedDate);
-      }
-
-      const { data, error } = await query.order("time");
-      
-      if (error) throw error;
-      
-      // Cast the data to make TypeScript happy
-      return (data as any[]).map(appointment => {
-        // Handle potentially errored relations
-        const patientData = typeof appointment.patient === 'object' && appointment.patient !== null
-          ? appointment.patient
-          : { name: "Unknown", email: "", phone: "" };
-          
-        return {
-          ...appointment,
-          patient: patientData
-        };
-      }) as Appointment[];
-    },
-  });
+      setAppointments(formattedAppointments);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+      toast.error("Erro ao carregar agendamentos");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return {
-    appointments: appointments || [],
-    isLoading,
-    error,
-    refetch
+    appointments,
+    loading,
+    fetchAppointments,
   };
 }

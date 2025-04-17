@@ -1,6 +1,13 @@
-
 import React, { useState, useMemo } from "react";
-import { addDays, startOfWeek } from "date-fns";
+import {
+  addDays,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  format,
+  isToday,
+  parseISO,
+} from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
@@ -11,33 +18,42 @@ import TimeColumn from "./TimeColumn";
 import DayColumn from "./DayColumn";
 import DeleteAppointmentDialog from "./DeleteAppointmentDialog";
 import { useAppointmentDeletion } from "@/hooks/useAppointmentDeletion";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface WeeklyViewProps {
   date: Date;
   onDateSelect?: (date: Date) => void;
+  appointments: Appointment[];
 }
 
-const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
+const WeeklyView: React.FC<WeeklyViewProps> = ({
+  date,
+  onDateSelect,
+  appointments,
+}) => {
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  
-  const startDate = startOfWeek(date, { weekStartsOn: 0 });
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
-  
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
+
+  const weekStart = startOfWeek(date, { weekStartsOn: 0 });
+  const weekEnd = endOfWeek(date, { weekStartsOn: 0 });
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
   // Get all appointments for the week
-  const { appointments, isLoading: isLoadingAppointments } = useAppointments();
-  
+  const { isLoading: isLoadingAppointments } = useAppointments();
+
   // Use the appointment deletion hook
   const {
     isLoading: isDeletingAppointment,
     deleteDialogOpen,
     handleDeleteClick,
     confirmDelete,
-    setDeleteDialogOpen
+    setDeleteDialogOpen,
   } = useAppointmentDeletion();
-  
+
   // Use useMemo to generate time slots based on appointments
   const timeSlots = useMemo(() => {
     return generateTimeSlots(appointments);
@@ -48,12 +64,12 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
     if (!acc[appointment.date]) {
       acc[appointment.date] = {};
     }
-    
+
     const time = appointment.time.substring(0, 5); // Get just the hour:minute part
     if (!acc[appointment.date][time]) {
       acc[appointment.date][time] = [];
     }
-    
+
     acc[appointment.date][time].push(appointment);
     return acc;
   }, {} as Record<string, Record<string, typeof appointments>>);
@@ -86,13 +102,13 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
     <div className="mt-4 overflow-x-auto">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Semana atual</h3>
-        <Button 
+        <Button
           onClick={() => {
             setSelectedDay(new Date());
             setSelectedTime("08:00");
             setSelectedAppointment(null);
             setIsNewAppointmentOpen(true);
-          }} 
+          }}
           size="sm"
           className="bg-blue-500 hover:bg-blue-600"
         >
@@ -100,7 +116,7 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
           Novo Agendamento
         </Button>
       </div>
-      
+
       <div className="grid grid-cols-8 min-w-[800px] rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
         {/* Time column */}
         <TimeColumn timeSlots={timeSlots} />
@@ -121,11 +137,14 @@ const WeeklyView = ({ date, onDateSelect }: WeeklyViewProps) => {
       </div>
 
       {/* Dialog for new appointment */}
-      <Dialog open={isNewAppointmentOpen} onOpenChange={setIsNewAppointmentOpen}>
+      <Dialog
+        open={isNewAppointmentOpen}
+        onOpenChange={setIsNewAppointmentOpen}
+      >
         {selectedDay && (
-          <AppointmentDialog 
-            date={selectedDay} 
-            time={selectedTime} 
+          <AppointmentDialog
+            date={selectedDay}
+            time={selectedTime}
             onClose={handleCloseDialog}
             appointment={selectedAppointment || undefined}
           />
