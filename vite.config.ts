@@ -7,17 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
-    proxy: {
-      '/api': {
-        target: 'https://2suwazl6jc.execute-api.sa-east-1.amazonaws.com/serveless_health_prod',
-        changeOrigin: true,
-        secure: false,
-        headers: {
-          'x-uuid': '123'
-        }
-      }
-    }
+    port: 8080
   },
   plugins: [
     react(),

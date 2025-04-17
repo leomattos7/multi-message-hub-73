@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "sonner";
 
-// Base API URL for local development
+// Base API URL for production (through proxy server)
 export const API_BASE_URL = 'http://localhost:3000/api';
 
 // Create axios instance with base URL
@@ -25,8 +25,7 @@ export const apiService = {
       const response = await api.get(endpoint, {
         headers: {
           'Content-Type': 'application/json',
-          'x-uuid': userId,
-          'Origin': 'http://localhost:8080'
+          'x-uuid': userId
         }
       });
       console.log(`Resposta GET para ${endpoint}:`, response.data);
@@ -46,8 +45,7 @@ export const apiService = {
       const response = await api.post(endpoint, data, {
         headers: {
           'Content-Type': 'application/json',
-          'x-uuid': userId,
-          'Origin': 'http://localhost:8080'
+          'x-uuid': userId
         }
       });
       return response.data as T;
@@ -66,8 +64,7 @@ export const apiService = {
       const response = await api.put(endpoint, data, {
         headers: {
           'Content-Type': 'application/json',
-          'x-uuid': userId,
-          'Origin': 'http://localhost:8080'
+          'x-uuid': userId
         }
       });
       return response.data as T;
@@ -86,8 +83,7 @@ export const apiService = {
       await api.delete(endpoint, {
         headers: {
           'Content-Type': 'application/json',
-          'x-uuid': userId,
-          'Origin': 'http://localhost:8080'
+          'x-uuid': userId
         }
       });
     } catch (error) {

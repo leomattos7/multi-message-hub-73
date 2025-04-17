@@ -6,9 +6,10 @@ const port = 3000;
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: '*',
+  origin: 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-uuid']
+  allowedHeaders: ['Content-Type', 'x-uuid', 'Origin', 'X-Requested-With'],
+  credentials: true
 }));
 
 // Parse JSON bodies
@@ -23,8 +24,7 @@ app.use((req, res, next) => {
 // Proxy endpoint for all API requests
 app.all('/api/*', async (req, res) => {
   try {
-    //const targetUrl = `https://2suwazl6jc.execute-api.sa-east-1.amazonaws.com/serveless_health_prod${req.path}`;
-    const targetUrl = `http://localhost:3000${req.path}`;
+    const targetUrl = `https://2suwazl6jc.execute-api.sa-east-1.amazonaws.com/serveless_health_prod${req.path}`;
     
     console.log('Proxying request to:', targetUrl);
     console.log('Request headers:', req.headers);
@@ -42,6 +42,11 @@ app.all('/api/*', async (req, res) => {
 
     console.log('Response status:', response.status);
     console.log('Response data:', response.data);
+
+    // Forward all response headers from the API Gateway
+    Object.entries(response.headers).forEach(([key, value]) => {
+      res.setHeader(key, value);
+    });
 
     res.status(response.status).json(response.data);
   } catch (error) {
