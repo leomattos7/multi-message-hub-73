@@ -19,15 +19,18 @@ export const apiService = {
   /**
    * Make a GET request to the API
    */
-  async get<T>(endpoint: string, userId: string): Promise<T> {
+  async get<T>(endpoint: string, userId?: string): Promise<T> {
     try {
       console.log(`Fazendo requisição GET para: ${endpoint}`);
-      const response = await api.get(endpoint, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-uuid': userId
-        }
-      });
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (userId) {
+        headers['x-uuid'] = userId;
+      }
+      
+      const response = await api.get(endpoint, { headers });
       console.log(`Resposta GET para ${endpoint}:`, response.data);
       return response.data as T;
     } catch (error) {
@@ -39,15 +42,18 @@ export const apiService = {
   /**
    * Make a POST request to the API
    */
-  async post<T>(endpoint: string, data: any, userId: string): Promise<T> {
+  async post<T>(endpoint: string, data: any, userId?: string): Promise<T> {
     try {
       console.log(`Fazendo requisição POST para: ${endpoint}`);
-      const response = await api.post(endpoint, data, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-uuid': userId
-        }
-      });
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (userId) {
+        headers['x-uuid'] = userId;
+      }
+      
+      const response = await api.post(endpoint, data, { headers });
       return response.data as T;
     } catch (error) {
       console.error(`POST request failed for ${endpoint}:`, error);
@@ -58,15 +64,18 @@ export const apiService = {
   /**
    * Make a PUT request to the API
    */
-  async put<T>(endpoint: string, data: any, userId: string): Promise<T> {
+  async put<T>(endpoint: string, data: any, userId?: string): Promise<T> {
     try {
       console.log(`Fazendo requisição PUT para: ${endpoint}`);
-      const response = await api.put(endpoint, data, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-uuid': userId
-        }
-      });
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (userId) {
+        headers['x-uuid'] = userId;
+      }
+      
+      const response = await api.put(endpoint, data, { headers });
       return response.data as T;
     } catch (error) {
       console.error(`PUT request failed for ${endpoint}:`, error);
@@ -77,15 +86,18 @@ export const apiService = {
   /**
    * Make a DELETE request to the API
    */
-  async delete(endpoint: string, userId: string): Promise<void> {
+  async delete(endpoint: string, userId?: string): Promise<void> {
     try {
       console.log(`Fazendo requisição DELETE para: ${endpoint}`);
-      await api.delete(endpoint, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-uuid': userId
-        }
-      });
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (userId) {
+        headers['x-uuid'] = userId;
+      }
+      
+      await api.delete(endpoint, { headers });
     } catch (error) {
       console.error(`DELETE request failed for ${endpoint}:`, error);
       throw error;

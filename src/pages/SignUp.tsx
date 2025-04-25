@@ -99,7 +99,7 @@ export default function SignUp() {
         updated_at: new Date().toISOString()
       };
 
-      const organizationResponse = await apiService.post<Organization>('/organizations', organizationData, authData.user.id);
+      const organizationResponse = await apiService.post<Organization>('/organizations', organizationData);
       
       if (!organizationResponse || !organizationResponse.id) {
         throw new Error("Erro ao criar organização");
