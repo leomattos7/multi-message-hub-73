@@ -173,18 +173,38 @@ export default function EmployeeManagement() {
       const currentUser = JSON.parse(userStr);
       console.log("Parsed user:", currentUser);
 
-      // Get user profile from API
-      const userProfile = await apiService.get('/profiles', currentUser.id);
-      console.log("User profile from API:", userProfile);
-
-      if (!userProfile || !userProfile[0]?.organization_id) {
-        throw new Error('Usuário não está vinculado a uma organização');
+      // Fetch organization details using current user's ID
+      const usrProfile = await apiService.get<{id: string, name: string, organization_id: string}>(`/profiles`, currentUser.id);
+      
+      if (!usrProfile) {
+        throw new Error('Não foi possível encontrar a organização');
       }
 
-      const organization_id = userProfile[0].organization_id;
+      const organization_id = usrProfile[0].organization_id;
 
-      // Gerar um novo ID para o usuário já que não estamos mais usando o ID do Supabase
-      const newUserId = uuidv4();
+      // Store the new employee in Supabase
+      const { data: supabaseData, error: supabaseError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            phone: data.phone || "",
+            role: data.role
+          }
+        }
+      });
+
+      const newUserId = supabaseData.user?.id;
+
+      if (supabaseError) {
+        throw new Error(`Erro ao criar usuário no Supabase: ${supabaseError.message}`);
+      }
+
+      if (!supabaseData.user) {
+        throw new Error('Erro ao criar usuário no Supabase: Nenhum usuário retornado');
+      }
+
 
       // 2. Create profile in API with the same organization_id
       const newProfile = {
@@ -236,10 +256,6 @@ export default function EmployeeManagement() {
         updated_at: new Date().toISOString(),
         status: "active"
       };
-
-      const { error: employeeError } = await supabase
-        .from("employees")
-        .insert([employeeData]);
 
       fetchEmployees(organization_id);
       toast.success(`${data.name} adicionado(a) como ${data.role}`);

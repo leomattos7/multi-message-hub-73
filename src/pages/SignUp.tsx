@@ -67,29 +67,6 @@ export default function SignUp() {
     setError(null);
     
     try {
-      // Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.name,
-            phone: data.phone || "",
-            role: "admin"
-          }
-        }
-      });
-      
-      if (authError) {
-        console.error("Registration error:", authError);
-        setError("Erro ao criar conta: " + authError.message);
-        return;
-      }
-      
-      if (!authData.user) {
-        setError("Erro ao criar conta: Nenhum usuário retornado");
-        return;
-      }
 
       // Create organization in DynamoDB via API
       const organizationData = {
@@ -103,6 +80,31 @@ export default function SignUp() {
       
       if (!organizationResponse || !organizationResponse.id) {
         throw new Error("Erro ao criar organização");
+      }
+      
+      // Create user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            phone: data.phone || "",
+            role: "admin",
+            organization_id: organizationResponse.id
+          }
+        }
+      });
+      
+      if (authError) {
+        console.error("Registration error:", authError);
+        setError("Erro ao criar conta: " + authError.message);
+        return;
+      }
+      
+      if (!authData.user) {
+        setError("Erro ao criar conta: Nenhum usuário retornado");
+        return;
       }
 
       // Create profile in DynamoDB via API
