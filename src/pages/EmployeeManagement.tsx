@@ -88,16 +88,7 @@ export default function EmployeeManagement() {
           return;
         }
 
-        // Fetch user profile from API to get organization_id
-        const profileFilters = [{
-          attribute: 'id',
-          operator: '=',
-          value: authUser.id
-        }];
-
-        const profileResponse = await apiService.get('/profiles', authUser.id, {
-          filters: JSON.stringify(profileFilters)
-        });
+        const profileResponse = await apiService.get('/profiles', authUser.id);
 
         if (!profileResponse || !profileResponse[0]?.organization_id) {
           setError("Usuário não está vinculado a uma organização");
@@ -138,9 +129,7 @@ export default function EmployeeManagement() {
         throw new Error("Usuário não autenticado");
       }
 
-      const response = await apiService.get<Employee[]>('/profiles', authUser.id, {
-        filters: JSON.stringify(filters)
-      });
+      const response = await apiService.get<Employee[]>('/profiles', authUser.id);
 
       if (!response) {
         throw new Error("Nenhum funcionário encontrado");
