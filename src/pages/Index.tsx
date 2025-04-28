@@ -5,14 +5,17 @@ import { ConversationView } from "@/components/ConversationView";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SocialConnectionsDialog } from "@/components/SocialConnectionsDialog";
 import { Button } from "@/components/ui/button";
-import { apiService } from "@/services/api-service";
+import { apiService, getCurrentUser } from "@/services/api-service";
 import { toast } from "sonner";
+import { User } from "@/services/api-service";
+import { getLastMessage } from "@/components/ConversationListItem";
 
 interface Message {
   id: string;
   conversation_id: string;
   content: string;
   is_outgoing: string;
+  timestamp: string;
 }
 
 interface Conversation {
@@ -46,42 +49,114 @@ export default function Index() {
     const fetchConversations = async () => {
       try {
         setIsLoading(true);
-        const userStr = localStorage.getItem("user");
-        if (!userStr) {
+        const user = getCurrentUser();
+        if (!user) {
           throw new Error('Usuário não autenticado');
         }
-        const user = JSON.parse(userStr);
 
-        // Fetch conversations
         const conversationsResponse = await apiService.get<Conversation[]>('/conversations', user.id);
         
-        // Fetch messages for each conversation
+        // First, fetch messages for all conversations
         const conversationsWithMessages = await Promise.all(
           conversationsResponse.map(async (conversation) => {
-            const messagesResponse = await apiService.get<Message[]>(`/messages?conversation_id=${conversation.id}`, user.id);
+            try {
+              const messagesResponse = await apiService.get<Message[]>(
+                `/messages?conversation_id=${conversation.id}`, 
+                user.id
+              );
 
-            return {
-              ...conversation,
-              messages: messagesResponse || [],
-              channel: 'whatsapp',
-              unread: 0,
-              last_activity: new Date().toISOString(),
-              patient: {
-                id: conversation.patient_id,
-                name: conversation.name,
-                phone: conversation.phone,
-                avatar_url: undefined
-              }
-            };
+              return {
+                ...conversation,
+                messages: messagesResponse || [],
+                channel: 'whatsapp',
+                unread: 0,
+                last_activity: new Date().toISOString(),
+                patient: {
+                  id: conversation.patient_id,
+                  name: conversation.name,
+                  phone: conversation.phone,
+                  avatar_url: undefined
+                }
+              };
+            } catch (error) {
+              console.error(`Error fetching messages for conversation ${conversation.id}:`, error);
+              return {
+                ...conversation,
+                messages: [],
+                channel: 'whatsapp',
+                unread: 0,
+                last_activity: new Date().toISOString(),
+                patient: {
+                  id: conversation.patient_id,
+                  name: conversation.name,
+                  phone: conversation.phone,
+                  avatar_url: undefined
+                }
+              };
+            }
           })
         );
 
-        setConversations(conversationsWithMessages);
+        // Now sort conversations by most recent message timestamp
+        const sortedConversations = [...conversationsWithMessages].sort((a, b) => {
+          // Get timestamps for comparison
+          const getConversationTimestamp = (conv: Conversation): number => {
+            try {
+              if (!conv.messages?.length) {
+                return new Date(conv.last_activity || "").getTime();
+              }
+              
+              // Get all valid message timestamps and find the most recent
+              const timestamps = conv.messages
+                .map(msg => {
+                  const timestamp = new Date(msg.timestamp || "").getTime();
+                  return isNaN(timestamp) ? 0 : timestamp;
+                })
+                .filter(timestamp => timestamp > 0);
+              
+              return timestamps.length > 0 ? Math.max(...timestamps) : 0;
+            } catch (error) {
+              console.error('Error processing timestamps for conversation:', conv.id, error);
+              return 0;
+            }
+          };
+
+          const timestampA = getConversationTimestamp(a);
+          const timestampB = getConversationTimestamp(b);
+
+          // Log comparison for debugging
+          console.log('Comparing conversations:', {
+            a: { 
+              id: a.id, 
+              name: a.name,
+              lastMessageTime: new Date(timestampA).toISOString(),
+              timestamp: timestampA
+            },
+            b: { 
+              id: b.id, 
+              name: b.name,
+              lastMessageTime: new Date(timestampB).toISOString(),
+              timestamp: timestampB
+            }
+          });
+
+          // Explicit comparison for newest first
+          if (timestampA > timestampB) {
+            return -1; // A é mais recente, deve vir primeiro
+          }
+          if (timestampA < timestampB) {
+            return 1;  // B é mais recente, deve vir primeiro
+          }
+          return 0;   // Mesma data, manter ordem
+        });
+
+        setConversations(sortedConversations);
         setError(null);
       } catch (error) {
         console.error('Error fetching conversations:', error);
-        setError('Erro ao carregar conversas');
-        toast.error('Erro ao carregar conversas');
+        const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar conversas';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }

@@ -271,7 +271,7 @@ export function ConversationList({
   const getPreviewMessage = (conversation: UnifiedConversation) => {
     if (conversation.messages && conversation.messages.length > 0) {
       // Get the last message content
-      const lastMessage = conversation.messages[conversation.messages.length - 1];
+      const lastMessage = conversation.messages[conversation.messages.length];
       return lastMessage.content.substring(0, 50) + (lastMessage.content.length > 50 ? '...' : '');
     }
     // Fallback
