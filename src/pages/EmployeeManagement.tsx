@@ -161,42 +161,35 @@ export default function EmployeeManagement() {
     setError(null);
     try {
       console.log("Adding employee:", data);
-      // Get the current admin user ID first
+      
+      // Get the current admin user from localStorage
       const userStr = localStorage.getItem("user");
+      console.log("User from localStorage:", userStr);
+      
       if (!userStr) {
         throw new Error('Usuário não autenticado');
       }
-      const user = JSON.parse(userStr);
+      
+      const currentUser = JSON.parse(userStr);
+      console.log("Parsed user:", currentUser);
 
-      // 1. Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.name,
-            role: data.role
-          }
-        }
-      });
+      // Get user profile from API
+      const userProfile = await apiService.get('/profiles', currentUser.id);
+      console.log("User profile from API:", userProfile);
 
-      if (authError) {
-        console.error("Error creating Supabase auth user:", authError);
-        setError("Erro ao criar usuário autenticado: " + authError.message);
-        throw authError;
+      if (!userProfile || !userProfile[0]?.organization_id) {
+        throw new Error('Usuário não está vinculado a uma organização');
       }
 
-      if (!authData.user) {
-        setError("Erro ao criar usuário: Nenhum usuário retornado");
-        throw new Error("No user returned from Auth signUp");
-      }
+      const organization_id = userProfile[0].organization_id;
 
-      const newUserId = authData.user.id;
+      // Gerar um novo ID para o usuário já que não estamos mais usando o ID do Supabase
+      const newUserId = uuidv4();
 
       // 2. Create profile in API with the same organization_id
       const newProfile = {
         id: newUserId,
-        organization_id: user.organization_id,
+        organization_id: organization_id,
         role: data.role,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -208,8 +201,8 @@ export default function EmployeeManagement() {
 
       // Make the POST request using the admin user's ID for authentication
       console.log("Creating profile with data:", newProfile);
-      console.log("Admin user ID:", adminUser.id);
-      const profileData = await apiService.post('/profiles', newProfile, adminUser.id);
+      console.log("Admin user ID:", currentUser.id);
+      await apiService.post('/profiles', newProfile, currentUser.id);
 
       // 3. If the user is a doctor, create a doctor_profile
       if (data.role === 'doctor') {
@@ -224,7 +217,7 @@ export default function EmployeeManagement() {
           };
 
           console.log("Creating doctor profile with data:", doctorProfile);
-          await apiService.post('/doctor_profiles', doctorProfile, adminUser.id);
+          await apiService.post('/doctor_profiles', doctorProfile, currentUser.id);
         } catch (doctorError: any) {
           console.error("Error creating doctor profile:", doctorError);
           toast.warning("Perfil de médico criado, mas alguns detalhes adicionais não puderam ser salvos");
@@ -238,14 +231,17 @@ export default function EmployeeManagement() {
         email: data.email,
         phone: data.phone || "",
         role: data.role,
-        organization_id: user.organization_id,
+        organization_id: organization_id,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        status: "active"
       };
 
-      await apiService.post('/employees', employeeData, adminUser.id);
+      const { error: employeeError } = await supabase
+        .from("employees")
+        .insert([employeeData]);
 
-      fetchEmployees(user.organization_id);
+      fetchEmployees(organization_id);
       toast.success(`${data.name} adicionado(a) como ${data.role}`);
       setIsAddDialogOpen(false);
       form.reset();
