@@ -67,14 +67,22 @@ export default function SignUp() {
     setError(null);
     
     try {
-
-      // Create organization in DynamoDB via API
-      const organizationData = {
-        id: crypto.randomUUID(),
-        name: data.organization_name,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      let organizationData: Organization;
+      try {
+        const checkOrganization = await apiService.get<Organization>(`/organizations/${data.organization_name}`);
+        
+        if (checkOrganization) {
+          organizationData = checkOrganization;
+        }
+      } catch (error) {
+        // Se der erro (ex: não encontrou), cria a organização
+        organizationData = {
+          id: crypto.randomUUID(),
+          name: data.organization_name,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      }
 
       const organizationResponse = await apiService.post<Organization>('/organizations', organizationData);
       
@@ -112,17 +120,19 @@ export default function SignUp() {
         id: authData.user.id,
         name: data.name,
         email: data.email,
-        phone: data.phone || null,
+        phone: data.phone || "",
         role: "admin",
         organization_id: organizationResponse.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
+      console.log("Enviando perfil para o DynamoDB:", profileData);
       const profileResponse = await apiService.post<Profile>('/profiles', profileData, authData.user.id);
+      console.log("Resposta do backend ao criar perfil:", profileResponse);
       
-      if (!profileResponse) {
-        throw new Error("Erro ao criar perfil");
+      if (!profileResponse || (profileResponse as any).error) {
+        throw new Error("Erro ao criar perfil: " + ((profileResponse as any)?.error?.message || "Resposta vazia"));
       }
       
       // Auto sign-in the user after registration
